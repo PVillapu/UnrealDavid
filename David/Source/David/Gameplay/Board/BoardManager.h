@@ -19,6 +19,16 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+public:
+	UPROPERTY(EditAnywhere, Category = "Board")
+	int BoardHeight = 6;
 
-	TSubclassOf<AActor> boardSquareBP;
+	UPROPERTY(EditAnywhere, Category = "Board")
+	int BoardWidth = 6;
+
+	UPROPERTY(EditAnywhere, Category = "Board")
+	float SquaresOffset = 2.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Board")
+	TSubclassOf<AActor> BoardSquareBP;
 };
