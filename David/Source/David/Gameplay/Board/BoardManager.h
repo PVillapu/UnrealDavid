@@ -19,6 +19,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	void InitializeBoard();
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Board")
 	int BoardHeight = 6;
@@ -31,4 +33,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Board")
 	TSubclassOf<AActor> BoardSquareBP;
+
+protected:
+	TArray<AActor*> BoardSquares;	// Just the board squares (provisional)
+
+	TArray<TArray<int32>> Board;
 };
