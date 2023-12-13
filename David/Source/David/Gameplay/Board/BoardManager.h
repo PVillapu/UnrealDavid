@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,12 +14,18 @@ public:
 
 	void GenerateBoardSquares();
 
+	void PlayCardInSquare(const struct FCardData& CardData, int32 Col, int32 Row);
+
 protected:
 	virtual void BeginPlay() override;
 
 	void InitializeBoard();
 
-public:
+private:
+
+	FORCEINLINE int GetBoardIndex(int Row, int Col) const { return Row * BoardHeight + BoardWidth; }
+
+protected:
 	UPROPERTY(EditAnywhere, Category = "Board")
 	int BoardHeight = 6;
 
@@ -34,8 +38,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Board")
 	TSubclassOf<AActor> BoardSquareBP;
 
-protected:
-	TArray<AActor*> BoardSquares;	// Just the board squares (provisional)
+	// Just the board squares (provisional)
+	UPROPERTY(Transient, SkipSerialization)
+	TArray<AActor*> BoardSquares;
 
-	TArray<TArray<int32>> Board;
+	UPROPERTY(Transient, SkipSerialization)
+	TArray<int32> Board;
+
+	UPROPERTY(Transient, SkipSerialization)
+	TMap<int32, class APieceActor*> BoardPieces;
+
+	int32 PieceIdCounter;
 };

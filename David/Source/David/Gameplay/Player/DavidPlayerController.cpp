@@ -1,22 +1,25 @@
 #include "DavidPlayerController.h"
 #include "Camera/CameraComponent.h"
+#include "Blueprint/UserWidget.h"
 
 ADavidPlayerController::ADavidPlayerController()
 {
 	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
 }
 
-void ADavidPlayerController::SetupInputComponent()
-{
-	Super::SetupInputComponent();
-
-	//InputComponent->BindAxis();
-	//InputComponent->BindAction();
-}
-
 void ADavidPlayerController::Tick(float DeltaSeconds)
 {
 	HandleInput();
+}
+
+void ADavidPlayerController::BeginPlay()
+{
+	PlayerHUD = CreateWidget<UUserWidget>(GetGameInstance(), PlayerHUDClass);
+
+	if (PlayerHUD != nullptr) 
+	{
+		PlayerHUD->AddToViewport();
+	}
 }
 
 void ADavidPlayerController::HandleInput()
@@ -38,3 +41,8 @@ void ADavidPlayerController::ProcessGeneralInteraction()
 		UE_LOG(LogTemp, Log, TEXT("No Actors were hit"));
 	}*/
 }
+
+//void ADavidPlayerController::PlayCardAction(const FInputActionValue& Value)
+//{
+//	
+//}

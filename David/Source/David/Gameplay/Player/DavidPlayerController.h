@@ -15,23 +15,30 @@ class DAVID_API ADavidPlayerController : public APlayerController
 public:
 	ADavidPlayerController();
 
-	void SetupInputComponent() override;
-
 	void Tick(float DeltaSeconds) override;
 
 protected:
+
+	virtual void BeginPlay() override;
 
 	void HandleInput();
 
 	void ProcessGeneralInteraction();
 
-	void PlayCard();
+	//void PlayCardAction(const class FInputActionValue& Value);
 
-public:
+protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game Player")
 	class UCameraComponent* PlayerCamera;
 
 	UPROPERTY(EditAnywhere, Category = "Game Player")
 	TEnumAsByte<ECollisionChannel> ActionsTraceChannel = ECC_Pawn;
+
+	UPROPERTY(EditAnywhere, Category = "Game Player")
+	TSubclassOf<UUserWidget> PlayerHUDClass;
+
+private:
+	UPROPERTY()
+	UUserWidget* PlayerHUD;
 };

@@ -12,7 +12,17 @@ class DAVID_API ADavidGameMode : public AGameModeBase
 public:
 	ADavidGameMode();
 
+	virtual void BeginPlay() override;
+
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	virtual void Logout(AController* NewPlayer) override;
+
+protected:
+
+	UPROPERTY(Transient, SkipSerialization)
+	class ABoardManager* BoardManager;
+
+	UPROPERTY(EditAnywhere, Category = "Board")
+	TSubclassOf<class ABoardManager> GameBoardClass;
 };

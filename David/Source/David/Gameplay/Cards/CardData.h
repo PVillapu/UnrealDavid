@@ -1,26 +1,29 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Engine/DataTable.h"
 #include "CardData.generated.h"
 
-UCLASS()
-class DAVID_API UCardData : public UDataAsset
+USTRUCT(BlueprintType)
+struct FCardData : public FTableRowBase
 {
-	GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 	
-public:
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Card Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     UStaticMesh* CardMesh;
 
-   /* UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Card Data")
-    TSubclassOf<class APiece> CardBehaviorClass;*/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
+    TSubclassOf<class APieceActor> CardPieceActor;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Card Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     UTexture2D* CardImage;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Card Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     FText CardDescription;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
+    int32 PieceHealth;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
+    int32 PieceAttack;
 };

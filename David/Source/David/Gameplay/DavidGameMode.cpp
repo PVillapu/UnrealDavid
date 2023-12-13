@@ -1,6 +1,7 @@
 #include "DavidGameMode.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
+#include "Board/BoardManager.h"
 
 ADavidGameMode::ADavidGameMode()
 {
@@ -12,6 +13,16 @@ ADavidGameMode::ADavidGameMode()
 			FColor::Blue,
 			TEXT("DavidGameMode initialized")
 		);
+	}
+}
+
+void ADavidGameMode::BeginPlay()
+{
+	UWorld* world = GetWorld();
+
+	if (world) 
+	{
+		BoardManager = world->SpawnActor<ABoardManager>(GameBoardClass);
 	}
 }
 
