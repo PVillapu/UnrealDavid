@@ -26,7 +26,7 @@ void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	{
 		if (HasReachedDestination() && HasCardSizeBeenStablished()) 
 		{
-			UE_LOG(LogTemp, Warning, TEXT("bIsInterpolating = false"));
+			//UE_LOG(LogTemp, Warning, TEXT("bIsInterpolating = false"));
 			bIsInterpolating = false;
 		}
 		else 
@@ -34,6 +34,22 @@ void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 			MoveCardToTarget();
 		}
 	}
+}
+
+void UCardWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+
+	//UE_LOG(LogTemp, Warning, TEXT("Hovering on card"));
+
+	OnHoveredCardDelegate.ExecuteIfBound(*this);
+}
+
+void UCardWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+
+	OnUnhoveredCardDelegate.ExecuteIfBound(*this);
 }
 
 bool UCardWidget::HasReachedDestination()

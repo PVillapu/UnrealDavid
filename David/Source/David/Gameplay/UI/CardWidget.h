@@ -21,11 +21,24 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
+
 	bool HasReachedDestination();
 
 	bool HasCardSizeBeenStablished();
 
 	void MoveCardToTarget();
+
+public:
+	// Delegate called when player is hovering this card
+	DECLARE_DELEGATE_OneParam(FOnHoveredCard, UCardWidget&)
+	FOnHoveredCard OnHoveredCardDelegate;
+	
+	// Delegate called when player is hovering this card
+	DECLARE_DELEGATE_OneParam(FOnUnhoveredCard, UCardWidget&)
+	FOnUnhoveredCard OnUnhoveredCardDelegate;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))

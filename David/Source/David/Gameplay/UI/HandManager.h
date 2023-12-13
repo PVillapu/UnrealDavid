@@ -11,7 +11,34 @@ UCLASS()
 class DAVID_API UHandManager : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void AddCardToHand(const struct FCardData& Card);
+
+private:
+	void CalculateCardsPositions() const;
+
+	void OnCardHovered(class UCardWidget& Card);
+
+	void OnCardUnhovered(class UCardWidget& Card);
+
+	FWidgetTransform CalculateCardPosition(int CardIndex) const;
+
+	float GetCardAngle(int CardIndex) const;
+
+	FVector2D GetCardPosition(int CardIndex) const;
+
+	FVector2D GetCenterPosition() const;
+
+	int GetCardIndexFromCenter(int CardIndex) const;
+
+	FVector2D GetCardHandHeight(int CardIndex) const;
+
+	float GetHoveredCardYDisplacement(int CardIndex) const;
+
+	float GetHoveredXDisplacement(int CardIndex) const;
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<class UUserWidget> CardWidget;
@@ -35,25 +62,17 @@ protected:
 	float CardSpacing = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	float HandCardsHorizontalOffset = 0.f;
+	float HandCardsHorizontalOffset = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	float HandCardsVerticalOffset = 0.f;
 
-public:
-	UFUNCTION(BlueprintCallable)
-	void AddCardToHand(const struct FCardData& Card);
+	UPROPERTY(EditAnywhere, Category = "David")
+	float HoveredCardYDisplacement = -100.f;
+
+	UPROPERTY(EditAnywhere, Category = "David")
+	float HoveredCardXDisplacement = 100.f;
 
 private:
-	FWidgetTransform CalculateCardPosition(int CardIndex) const;
-
-	float GetCardAngle(int CardIndex) const;
-
-	FVector2D GetCardPosition(int CardIndex) const;
-
-	FVector2D GetCenterPosition() const;
-
-	int GetCardIndexFromCenter(int CardIndex) const;
-
-	FVector2D GetCardHandHeight(int CardIndex) const;
+	int HoveredCardIndex = -1;
 };
