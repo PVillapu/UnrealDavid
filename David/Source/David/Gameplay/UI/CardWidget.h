@@ -14,6 +14,7 @@ class DAVID_API UCardWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable, Category = "David")
 	void SetupCard(const FCardData& Data);
 
 	void StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed);
@@ -21,17 +22,15 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
-	//virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 
-	//virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
-	
-	//virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* OutOperation) override;
+	UFUNCTION(BlueprintCallable, Category = "David")
+	void OnCustomDragStart();
 
-	//FReply CustomDetectDrag(const FPointerEvent& InMouseEvent, UWidget* WidgetDetectingDrag, FKey DragKey);
+	UFUNCTION(BlueprintCallable, Category = "David")
+	void OnCustomDragStopped(const UDragDropOperation* DragDropOperation);
 
 private:
 	bool HasReachedDestination();
@@ -70,7 +69,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
 	UTextBlock* CardDescriptionText;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "David")
 	FCardData CardData;
 
 private:

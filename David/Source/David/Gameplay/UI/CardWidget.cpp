@@ -60,66 +60,23 @@ void UCardWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 	OnUnhoveredCardDelegate.ExecuteIfBound(*this);
 }
 
-//void UCardWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
-//{
-//	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
-//
-//	this->SetVisibility(ESlateVisibility::HitTestInvisible);
-//	UDragDropOperation* DragDropOperation = NewObject<UDragDropOperation>();
-//
-//	/*DragDropOperation->WidgetReference = this;
-//	DragDropOperation->DragOffset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition()); // TODO: This class is no necessary I believe
-//	*/
-//	
-//	FVector2D abs = InGeometry.GetAbsolutePosition();
-//	UE_LOG(LogTemp, Error, TEXT("Geometry abs pos: %s"), *abs.ToString());
-//
-//	FVector2D ScreenCursorPos = InMouseEvent.GetScreenSpacePosition();
-//	UE_LOG(LogTemp, Error, TEXT("Cursor screen pos: %s"), *ScreenCursorPos.ToString());
-//	
-//	UE_LOG(LogTemp, Error, TEXT("Difference: %s"), *(abs - ScreenCursorPos).ToString());
-//	
-//	UCardWidget* CopyCard = CreateWidget<UCardWidget>(this->GetOwningPlayer(), UCardWidget::StaticClass());
-//	CopyCard->SetVisibility(ESlateVisibility::Visible);
-//	CopyCard->AddToViewport();
-//
-//	DragDropOperation->DefaultDragVisual = CopyCard;
-//	DragDropOperation->Payload = this;
-//	DragDropOperation->Pivot = EDragPivot::MouseDown;
-//
-//	OutOperation = DragDropOperation;
-//
-//	OnGrabbedCardDelegate.ExecuteIfBound(*this);
-//}
-//
-//void UCardWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
-//{
-//	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
-//
-//	this->SetVisibility(ESlateVisibility::Visible);
-//	OnLeftCardDelegate.ExecuteIfBound(*this);
-//}
+void UCardWidget::OnCustomDragStart()
+{
+	SetVisibility(ESlateVisibility::Hidden);
 
-//FReply UCardWidget::CustomDetectDrag(const FPointerEvent& InMouseEvent, UWidget* WidgetDetectingDrag, FKey DragKey)
-//{
-//	if (InMouseEvent.GetEffectingButton() == DragKey /*|| PointerEvent.IsTouchEvent()*/)
-//	{
-//		FEventReply Reply;
-//		Reply.NativeReply = FReply::Handled();
-//
-//		if (WidgetDetectingDrag)
-//		{
-//			TSharedPtr<SWidget> SlateWidgetDetectingDrag = WidgetDetectingDrag->GetCachedWidget();
-//			if (SlateWidgetDetectingDrag.IsValid())
-//			{
-//				Reply.NativeReply = Reply.NativeReply.DetectDrag(SlateWidgetDetectingDrag.ToSharedRef(), DragKey);
-//				return Reply.NativeReply;
-//			}
-//		}
-//	}
-//
-//	return FReply::Unhandled();
-//}
+	SetRenderOpacity(0.3f);
+
+	OnGrabbedCardDelegate.ExecuteIfBound(*this);
+}
+
+void UCardWidget::OnCustomDragStopped(const UDragDropOperation* DragDropOperation)
+{
+	SetVisibility(ESlateVisibility::Visible);
+
+	SetRenderOpacity(1.f);
+
+	OnLeftCardDelegate.ExecuteIfBound(*this);
+}
 
 bool UCardWidget::HasReachedDestination()
 {
