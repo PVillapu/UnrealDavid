@@ -23,6 +23,10 @@ private:
 
 	void OnCardUnhovered(class UCardWidget& Card);
 
+	void OnCardGrabbed(class UCardWidget& Card);
+
+	void OnCardLeft(class UCardWidget& Card);
+
 	FWidgetTransform CalculateCardPosition(int CardIndex) const;
 
 	float GetCardAngle(int CardIndex) const;

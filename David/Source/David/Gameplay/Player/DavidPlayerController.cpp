@@ -9,17 +9,26 @@ ADavidPlayerController::ADavidPlayerController()
 
 void ADavidPlayerController::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
 	HandleInput();
 }
 
 void ADavidPlayerController::BeginPlay()
 {
+	Super::BeginPlay();
 	PlayerHUD = CreateWidget<UUserWidget>(GetGameInstance(), PlayerHUDClass);
 
 	if (PlayerHUD != nullptr) 
 	{
 		PlayerHUD->AddToViewport();
 	}
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetHideCursorDuringCapture(false);
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+
+	bShowMouseCursor = true;
 }
 
 void ADavidPlayerController::HandleInput()

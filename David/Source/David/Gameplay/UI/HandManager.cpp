@@ -21,7 +21,9 @@ void UHandManager::AddCardToHand(const FCardData& Card)
 
 	HandCards.Add(NewCard);
 	NewCard->OnHoveredCardDelegate.BindUObject(this, &UHandManager::OnCardHovered);
-	NewCard->OnUnhoveredCardDelegate.BindUObject(this, &UHandManager::OnCardUnhovered);	// TODO: IMPORTANT - REMOVE BINDINGS WHEN CARD IS PLAYED OR DESTROYED
+	NewCard->OnUnhoveredCardDelegate.BindUObject(this, &UHandManager::OnCardUnhovered);
+	NewCard->OnGrabbedCardDelegate.BindUObject(this, &UHandManager::OnCardGrabbed);
+	NewCard->OnLeftCardDelegate.BindUObject(this, &UHandManager::OnCardLeft); // TODO: IMPORTANT - REMOVE BINDINGS WHEN CARD IS PLAYED OR DESTROYED
 
 	CalculateCardsPositions();
 }
@@ -61,6 +63,16 @@ void UHandManager::OnCardUnhovered(UCardWidget& Card)
 	if (CardIndex == HoveredCardIndex) HoveredCardIndex = -1;
 	
 	CalculateCardsPositions();
+}
+
+void UHandManager::OnCardGrabbed(UCardWidget& Card)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Drag Detected"));
+}
+
+void UHandManager::OnCardLeft(UCardWidget& Card)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Drag leave"));
 }
 
 FWidgetTransform UHandManager::CalculateCardPosition(int CardIndex) const

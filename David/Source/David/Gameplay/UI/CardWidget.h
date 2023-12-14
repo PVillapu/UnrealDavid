@@ -20,11 +20,20 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-private:
+protected:
+	//virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 
+	//virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
+	
+	//virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* OutOperation) override;
+
+	//FReply CustomDetectDrag(const FPointerEvent& InMouseEvent, UWidget* WidgetDetectingDrag, FKey DragKey);
+
+private:
 	bool HasReachedDestination();
 
 	bool HasCardSizeBeenStablished();
@@ -36,9 +45,17 @@ public:
 	DECLARE_DELEGATE_OneParam(FOnHoveredCard, UCardWidget&)
 	FOnHoveredCard OnHoveredCardDelegate;
 	
-	// Delegate called when player is hovering this card
+	// Delegate called when player stops hovering this card
 	DECLARE_DELEGATE_OneParam(FOnUnhoveredCard, UCardWidget&)
 	FOnUnhoveredCard OnUnhoveredCardDelegate;
+
+	// Delegate called when player is grabbing this card
+	DECLARE_DELEGATE_OneParam(FOnGrabbedCard, UCardWidget&)
+	FOnGrabbedCard OnGrabbedCardDelegate;
+
+	// Delegate called when player stops grabbing this card
+	DECLARE_DELEGATE_OneParam(FOnLeftCard, UCardWidget&)
+	FOnLeftCard OnLeftCardDelegate;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
