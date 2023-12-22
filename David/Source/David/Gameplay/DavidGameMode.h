@@ -25,4 +25,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Board")
 	TSubclassOf<class ABoardManager> GameBoardClass;
+
+	UPROPERTY(Transient, SkipSerialization)
+	class ADavidPlayerController* Player1;
+
+	UPROPERTY(Transient, SkipSerialization)
+	class ADavidPlayerController* Player2;
 };

@@ -13,9 +13,12 @@ class DAVID_API ADavidPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	ADavidPlayerController();
-
 	void Tick(float DeltaSeconds) override;
+
+	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D MousePosition);
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetDavidPlayerIndex(int32 PIndex);
 
 protected:
 
@@ -25,20 +28,28 @@ protected:
 
 	void ProcessGeneralInteraction();
 
-	//void PlayCardAction(const class FInputActionValue& Value);
-
 protected:
-
-	UPROPERTY(EditAnywhere, Category = "Game Player")
-	class UCameraComponent* PlayerCamera;
-
-	UPROPERTY(EditAnywhere, Category = "Game Player")
+	UPROPERTY(EditAnywhere, Category = "David")
 	TEnumAsByte<ECollisionChannel> ActionsTraceChannel = ECC_Pawn;
 
-	UPROPERTY(EditAnywhere, Category = "Game Player")
+	UPROPERTY(EditAnywhere, Category = "David")
+	TEnumAsByte<ECollisionChannel> BoardCollisionChannel;
+
+	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 
+	UPROPERTY(SkipSerialization, Transient)
+	AActor* PlayerCameraActor;
+
+	UPROPERTY(SkipSerialization, Transient)
+	class UCameraComponent* PlayerCamera;
+
+	UPROPERTY(SkipSerialization, Transient)
+	class ABoardManager* BoardManager;
+
 private:
-	UPROPERTY()
+	UPROPERTY(SkipSerialization, Transient)
 	UUserWidget* PlayerHUD;
+
+	int32 PlayerIndex;
 };

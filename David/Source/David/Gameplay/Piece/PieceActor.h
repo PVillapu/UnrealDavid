@@ -12,14 +12,20 @@ class DAVID_API APieceActor : public AActor
 public:	
 	APieceActor();
 
-	virtual void SetupPiece(class ABoardManager* BoardManager, int32 PieceId);
+	virtual void SetupPiece(class ABoardManager* BoardManager);
+
+	virtual void ProcessTurn();
+
+	virtual void ProcessAction(int32 ActionID);
 
 protected:
 	virtual void BeginPlay() override;
 
 protected:
 
+	UPROPERTY()
 	UStaticMeshComponent* StaticMeshComponent;
+	
+	UPROPERTY()
 	ABoardManager* Board;
-	int32 PieceID;
 };

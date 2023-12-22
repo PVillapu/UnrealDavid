@@ -4,15 +4,21 @@
 #include "Input/Reply.h"
 #include "DragWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "CardDragDropOperation.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/Overlay.h"
 
-void UCardWidget::SetupCard(const FCardData& Data)
+void UCardWidget::SetupCard(const FCardData& Data, const FName RowName, TSubclassOf<class UUserWidget>& CardWidgetBP, UOverlay* CardOv)
 {
 	PieceImage->SetBrushFromTexture(Data.CardImage);
 	HealthText->SetText(FText::AsNumber(Data.PieceHealth));
 	AttackText->SetText(FText::AsNumber(Data.PieceAttack));
 	CardDescriptionText->SetText(Data.CardDescription);
 
+	CardOverlay = CardOv;
 	CardData = Data;
+	CardDataRowName = RowName;
+	CardWidget = CardWidgetBP;
 }
 
 void UCardWidget::StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed)
@@ -40,13 +46,6 @@ void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 }
 
-//FReply UCardWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-//{
-//	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-//	
-//	return CustomDetectDrag(InMouseEvent, this, EKeys::LeftMouseButton);
-//}
-
 void UCardWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
@@ -60,22 +59,69 @@ void UCardWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 	OnUnhoveredCardDelegate.ExecuteIfBound(*this);
 }
 
-void UCardWidget::OnCustomDragStart()
+FReply UCardWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	SetVisibility(ESlateVisibility::Hidden);
+	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
-	SetRenderOpacity(0.3f);
+	if (InMouseEvent.GetEffectingButton() == CardDragKey /*|| PointerEvent.IsTouchEvent()*/)
+	{
+		FEventReply Reply;
+		Reply.NativeReply = FReply::Handled();
 
-	OnGrabbedCardDelegate.ExecuteIfBound(*this);
+		TSharedPtr<SWidget> SlateWidgetDetectingDrag = GetCachedWidget();
+		if (SlateWidgetDetectingDrag.IsValid())
+		{
+			Reply.NativeReply = Reply.NativeReply.DetectDrag(SlateWidgetDetectingDrag.ToSharedRef(), CardDragKey);
+			return Reply.NativeReply;
+		}
+	}
+
+	return FReply::Unhandled();
 }
 
-void UCardWidget::OnCustomDragStopped(const UDragDropOperation* DragDropOperation)
+void UCardWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
-	SetVisibility(ESlateVisibility::Visible);
+	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	SetRenderOpacity(1.f);
+	UE_LOG(LogTemp, Log, TEXT("NativeOnDragDetected"));
 
-	OnLeftCardDelegate.ExecuteIfBound(*this);
+	UCardDragDropOperation* DragDropOp = Cast<UCardDragDropOperation>(UWidgetBlueprintLibrary::CreateDragDropOperation(DragDropOperationBP));
+
+	UCardWidget* DragVisual = CreateWidget<UCardWidget>(this, CardWidget);
+	DragVisual->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+	DragDropOp->Payload = this;
+	DragDropOp->DefaultDragVisual = DragVisual;
+	DragDropOp->Pivot = EDragPivot::MouseDown;
+	//DragDropOp->Offset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+
+	if (DragVisual && CardOverlay)
+	{
+		DragVisual->SetupCard(CardData, CardDataRowName, CardWidget);
+		CardOverlay->AddChild(DragVisual);
+	}
+
+	OutOperation = DragDropOp;
+
+	OnGrabbedCardDelegate.ExecuteIfBound(*this, *DragDropOp);
+}
+
+void UCardWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
+
+	UE_LOG(LogTemp, Log, TEXT("NativeOnDragCancelled"));
+	OnLeftCardDelegate.ExecuteIfBound(*this, *InOperation);
+}
+
+void UCardWidget::OnCustomDragStart()
+{
+	//OnGrabbedCardDelegate.ExecuteIfBound(*this);
+}
+
+void UCardWidget::OnCustomDragStopped(const FPointerEvent& PointerEvent)
+{
+	//OnLeftCardDelegate.ExecuteIfBound(*this, PointerEvent.GetScreenSpacePosition());
 }
 
 bool UCardWidget::HasReachedDestination()

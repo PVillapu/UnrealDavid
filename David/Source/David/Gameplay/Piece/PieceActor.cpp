@@ -13,8 +13,15 @@ void APieceActor::BeginPlay()
 	
 }
 
-void APieceActor::SetupPiece(ABoardManager* BoardManager, int32 PieceId)
+void APieceActor::SetupPiece(ABoardManager* BoardManager)
 {
 	Board = BoardManager;
-	PieceID = PieceId;
+}
+
+void APieceActor::ProcessTurn()
+{
+}
+
+void APieceActor::ProcessAction(int32 ActionID)
+{
 }

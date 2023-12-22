@@ -2,6 +2,8 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "Board/BoardManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "../Gameplay/Player/DavidPlayerController.h"
 
 ADavidGameMode::ADavidGameMode()
 {
@@ -18,11 +20,15 @@ ADavidGameMode::ADavidGameMode()
 
 void ADavidGameMode::BeginPlay()
 {
-	UWorld* world = GetWorld();
+	UWorld* World = GetWorld();
 
-	if (world) 
+	if (World == nullptr) return;
+
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
+	if(OutActors.Num() > 0)
 	{
-		BoardManager = world->SpawnActor<ABoardManager>(GameBoardClass);
+		BoardManager = Cast<ABoardManager>(OutActors[0]);
 	}
 }
 
@@ -50,6 +56,12 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 				FColor::Blue,
 				FString::Printf(TEXT("%s joined the game!"), *NewPlayerState->GetName())
 			);
+		}
+
+		ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(NewPlayer);
+		if (DavidPlayerController) 
+		{
+			DavidPlayerController->Client_SetDavidPlayerIndex(NumberOfPlayers - 1);
 		}
 	}
 	

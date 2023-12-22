@@ -1,6 +1,7 @@
 #include "BoardManager.h"
 #include "../Cards/CardData.h"
 #include "../Piece/PieceActor.h"
+#include "../Board/BoardSquare.h"
 
 ABoardManager::ABoardManager()
 {
@@ -15,7 +16,13 @@ void ABoardManager::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("BeginPlay %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"));
 
 	InitializeBoard();
+}
+
+
+void ABoardManager::InitializeBoard()
+{
 	GenerateBoardSquares();
+	PieceIdCounter = 0;
 }
 
 void ABoardManager::GenerateBoardSquares()
@@ -40,35 +47,36 @@ void ABoardManager::GenerateBoardSquares()
 		const FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
 
 		// Spawn the actor
-		AActor* const SpawnedActor = World->SpawnActor<AActor>(BoardSquareBP, SpawnLocation, SpawnRotation, SpawnParams);
+		ABoardSquare* SpawnedSquare = World->SpawnActor<ABoardSquare>(BoardSquareBP, SpawnLocation, SpawnRotation, SpawnParams);
+		SpawnedSquare->SetBoardManager(this);
+		SpawnedSquare->SetSquareIndex(GetBoardIndex(row, col));
 
 		// Add to BoardSquares
-		if (SpawnedActor)
+		if (SpawnedSquare)
 		{
-			BoardSquares.Add(SpawnedActor);
+			BoardSquares.Add(SpawnedSquare);
 		}
 	}
 }
 
-void ABoardManager::PlayCardInSquare(const FCardData& CardData, int32 Column, int32 Row)
+void ABoardManager::PlayCardInSquare(const FCardData& CardData, int32 Square, int32 PieceID)
 {
-	// We asume that the coords are valid and piece can be played at coords
-	int32 PieceId = PieceIdCounter++;
-	Board[GetBoardIndex(Row, Column)] = PieceId;
-
 	// Spawn the piece actor
 	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData.CardPieceActor);
-	PieceInstance->SetupPiece(this, PieceId);
+	PieceInstance->SetupPiece(this);
 
 	// Place the new piece in the square
-	FVector TargetSquareLocation = BoardSquares[(Row * BoardHeight) + Column]->GetActorLocation();
+	FVector TargetSquareLocation = BoardSquares[Square]->GetActorLocation();
 	PieceInstance->SetActorLocation(TargetSquareLocation);
+
+	// Register piece
+	BoardPieces.Add(TTuple<int32, APieceActor*>(PieceID, PieceInstance));
 }
 
-void ABoardManager::InitializeBoard()
+void ABoardManager::Server_PlayCardRequest_Implementation(const FString& CardName, int32 BoardIndex)
 {
-	// Setup board
-	Board.Init(-1, BoardHeight * BoardWidth);
+}
 
-	PieceIdCounter = 0;
+void ABoardManager::PlayCard_Implementation(const FString& CardName, int32 BoardIndex)
+{
 }

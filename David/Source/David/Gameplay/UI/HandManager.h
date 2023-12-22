@@ -14,18 +14,27 @@ class DAVID_API UHandManager : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void AddCardToHand(const struct FCardData& Card);
+	void AddCardToHand(const struct FCardData& Card, const FName CardRowName);
 
 private:
 	void CalculateCardsPositions() const;
 
 	void OnCardHovered(class UCardWidget& Card);
 
-	void OnCardUnhovered(class UCardWidget& Card);
+	void OnCardUnhovered(UCardWidget& Card);
 
-	void OnCardGrabbed(class UCardWidget& Card);
+	void OnCardGrabbed(UCardWidget& Card, class UCardDragDropOperation& CardDragDropOp);
 
-	void OnCardLeft(class UCardWidget& Card);
+	void OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDropOp);
+
+	UFUNCTION()
+	void CardDrag(UDragDropOperation* Operation, const FPointerEvent& PointerEvent);
+
+	void TryCastCardInBoard(UCardWidget& Card);
+
+	void ReturnCardToHand(UCardWidget& Card);
+
+	void PlayCardInBoardSquare(UCardWidget& Card, class ABoardSquare* BoardSquare);
 
 	FWidgetTransform CalculateCardPosition(int CardIndex) const;
 
@@ -44,6 +53,9 @@ private:
 	float GetHoveredXDisplacement(int CardIndex) const;
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "David")
+	class UDataTable* CardsDataTable;
+
 	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<class UUserWidget> CardWidget;
 
@@ -79,4 +91,7 @@ protected:
 
 private:
 	int HoveredCardIndex = -1;
+
+	UPROPERTY(Transient, SkipSerialization)
+	AActor* LastMouseDragActor;
 };
