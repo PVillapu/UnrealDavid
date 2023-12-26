@@ -5,12 +5,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
-
-void ADavidPlayerController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	HandleInput();
-}
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
 
 bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVector2D MousePosition)
 {
@@ -25,7 +23,7 @@ bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVect
 
 	FVector WorldLocation, WorldDirection;
 	UGameplayStatics::DeprojectScreenToWorld(this, MousePosV, WorldLocation, WorldDirection);
-
+	
 	FVector CameraLocation = PlayerCameraManager->GetCameraLocation();
 
 	GetWorld()->LineTraceSingleByChannel(Hit, CameraLocation, (WorldLocation - CameraLocation) * 100000, BoardCollisionChannel, QueryParams);
@@ -69,6 +67,16 @@ void ADavidPlayerController::Client_SetDavidPlayerIndex_Implementation(int32 PIn
 	}
 }
 
+void ADavidPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent)) 
+	{
+		EnhancedInputComponent->BindAction(PlayCardAction, ETriggerEvent::Triggered, this, &ADavidPlayerController::OnPlayedCardAction);
+	}
+}
+
 void ADavidPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -97,11 +105,17 @@ void ADavidPlayerController::BeginPlay()
 			BoardManager = Cast<ABoardManager>(OutActors[0]);
 		}
 	}
-}
 
-void ADavidPlayerController::HandleInput()
-{
-	ProcessGeneralInteraction();
+	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		{
+			if (!InputMapping.IsNull())
+			{
+				InputSystem->AddMappingContext(InputMapping.LoadSynchronous(), 0);
+			}
+		}
+	}
 }
 
 void ADavidPlayerController::ProcessGeneralInteraction()
@@ -117,4 +131,9 @@ void ADavidPlayerController::ProcessGeneralInteraction()
 	else {
 		UE_LOG(LogTemp, Log, TEXT("No Actors were hit"));
 	}*/
+}
+
+void ADavidPlayerController::OnPlayedCardAction()
+{
+	UE_LOG(LogTemp, Log, TEXT("Holi"));
 }

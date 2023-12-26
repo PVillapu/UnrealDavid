@@ -110,6 +110,18 @@ void UHandManager::CardDrag(UDragDropOperation* Operation, const FPointerEvent& 
 		return;
 	}
 
+	UCardDragDropOperation* CardDragDropOp = Cast<UCardDragDropOperation>(Operation);
+	if (CardDragDropOp && CardDragDropOp->DraggedCard)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dragging card to %s"), *ViewportPosition.ToString());
+		UCardWidget* DraggedCard = CardDragDropOp->DraggedCard;
+		
+		
+		FWidgetTransform WidgetTargetTransform(DraggedCard->GetRenderTransform());
+		WidgetTargetTransform.Translation = CalculateCardDragPosition(ViewportPosition, ViewportSize);
+		DraggedCard->StartRepositioning(WidgetTargetTransform, 0.98f);
+	}
+
 	// Deproject viewport position to World in order to cast a line trace
 	GetWorld()->GetFirstPlayerController()->DeprojectScreenPositionToWorld(PixelPosition.X, PixelPosition.Y, WorldPosition, WorldDirection);
 	
@@ -215,4 +227,13 @@ float UHandManager::GetHoveredCardYDisplacement(int CardIndex) const
 float UHandManager::GetHoveredXDisplacement(int CardIndex) const
 {
 	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? HoveredCardXDisplacement : 0.f;
+}
+
+FVector2D UHandManager::CalculateCardDragPosition(const FVector2D ViewportPosition, const FVector2D& ViewportSize) const
+{
+	FVector2D HandWidgetSize = GetDesiredSize();
+	FVector2D Result = ViewportPosition;
+	Result.Y -= (ViewportSize.Y - HandWidgetSize.Y);
+	
+	return Result;
 }

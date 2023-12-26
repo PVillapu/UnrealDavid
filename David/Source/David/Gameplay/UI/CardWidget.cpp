@@ -87,19 +87,7 @@ void UCardWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPoint
 
 	UCardDragDropOperation* DragDropOp = Cast<UCardDragDropOperation>(UWidgetBlueprintLibrary::CreateDragDropOperation(DragDropOperationBP));
 
-	UCardWidget* DragVisual = CreateWidget<UCardWidget>(this, CardWidget);
-	DragVisual->SetVisibility(ESlateVisibility::HitTestInvisible);
-
-	DragDropOp->Payload = this;
-	DragDropOp->DefaultDragVisual = DragVisual;
-	DragDropOp->Pivot = EDragPivot::MouseDown;
-	//DragDropOp->Offset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-
-	if (DragVisual && CardOverlay)
-	{
-		DragVisual->SetupCard(CardData, CardDataRowName, CardWidget);
-		CardOverlay->AddChild(DragVisual);
-	}
+	DragDropOp->DraggedCard = this;
 
 	OutOperation = DragDropOp;
 
@@ -112,16 +100,6 @@ void UCardWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, U
 
 	UE_LOG(LogTemp, Log, TEXT("NativeOnDragCancelled"));
 	OnLeftCardDelegate.ExecuteIfBound(*this, *InOperation);
-}
-
-void UCardWidget::OnCustomDragStart()
-{
-	//OnGrabbedCardDelegate.ExecuteIfBound(*this);
-}
-
-void UCardWidget::OnCustomDragStopped(const FPointerEvent& PointerEvent)
-{
-	//OnLeftCardDelegate.ExecuteIfBound(*this, PointerEvent.GetScreenSpacePosition());
 }
 
 bool UCardWidget::HasReachedDestination()

@@ -38,12 +38,6 @@ protected:
 
 	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation);
 
-	UFUNCTION(BlueprintCallable, Category = "David")
-	void OnCustomDragStart();
-
-	UFUNCTION(BlueprintCallable, Category = "David")
-	void OnCustomDragStopped(const FPointerEvent& PointerEvent);
-
 private:
 	bool HasReachedDestination();
 

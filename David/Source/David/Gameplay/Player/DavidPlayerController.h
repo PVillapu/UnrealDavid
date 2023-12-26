@@ -13,20 +13,19 @@ class DAVID_API ADavidPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	void Tick(float DeltaSeconds) override;
-
 	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D MousePosition);
 
 	UFUNCTION(Client, Reliable)
 	void Client_SetDavidPlayerIndex(int32 PIndex);
 
 protected:
+	void SetupInputComponent() override;
 
 	virtual void BeginPlay() override;
 
-	void HandleInput();
-
 	void ProcessGeneralInteraction();
+
+	void OnPlayedCardAction();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
@@ -46,6 +45,12 @@ protected:
 
 	UPROPERTY(SkipSerialization, Transient)
 	class ABoardManager* BoardManager;
+
+	UPROPERTY(EditAnywhere, Category = "David")
+	TSoftObjectPtr<class UInputMappingContext> InputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "David")
+	class UInputAction* PlayCardAction;
 
 private:
 	UPROPERTY(SkipSerialization, Transient)

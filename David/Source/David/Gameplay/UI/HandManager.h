@@ -52,6 +52,8 @@ private:
 
 	float GetHoveredXDisplacement(int CardIndex) const;
 
+	FVector2D CalculateCardDragPosition(const FVector2D ViewportPosition, const FVector2D& ViewportSize) const;
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
 	class UDataTable* CardsDataTable;

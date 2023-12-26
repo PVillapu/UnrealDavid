@@ -19,4 +19,6 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void OnCardDragged(const FPointerEvent& PointerEvent);
 
+public:
+	class UCardWidget* DraggedCard;
 };
