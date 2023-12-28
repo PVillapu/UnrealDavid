@@ -4,6 +4,7 @@
 #include "Board/BoardManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Gameplay/Player/DavidPlayerController.h"
+#include "DavidGameState.h"
 
 ADavidGameMode::ADavidGameMode()
 {
@@ -36,17 +37,18 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	if (GEngine && GameState)
+	if (GameState == nullptr) return;
+
+	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
+	
+	ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(NewPlayer);
+	if (DavidPlayerController)
 	{
-		int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
+		DavidPlayerController->Client_SetDavidPlayerIndex(NumberOfPlayers - 1);
+	}
 
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			15.f,
-			FColor::Blue,
-			FString::Printf(TEXT("Player joined! %d players in game"), NumberOfPlayers)
-		);
-
+	if (GEngine)
+	{
 		APlayerState* NewPlayerState = NewPlayer->GetPlayerState<APlayerState>();
 		if (NewPlayerState)
 		{
@@ -54,17 +56,15 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 				1,
 				15.f,
 				FColor::Blue,
-				FString::Printf(TEXT("%s joined the game!"), *NewPlayerState->GetName())
+				FString::Printf(TEXT("%s joined the game! %d players in game"), *NewPlayerState->GetName(), NumberOfPlayers)
 			);
-		}
-
-		ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(NewPlayer);
-		if (DavidPlayerController) 
-		{
-			DavidPlayerController->Client_SetDavidPlayerIndex(NumberOfPlayers - 1);
 		}
 	}
 	
+	if (NumberOfPlayers == 2) 
+	{
+		StartGame();
+	}
 }
 
 void ADavidGameMode::Logout(AController* ExitPlayer)
@@ -75,10 +75,30 @@ void ADavidGameMode::Logout(AController* ExitPlayer)
 	if (GEngine && ExitPlayerState)
 	{
 		GEngine->AddOnScreenDebugMessage(
-			1,
+			2,
 			15.f,
 			FColor::Blue,
 			FString::Printf(TEXT("%s has left the game"), *ExitPlayerState->GetName())
 		);
 	}
+}
+
+void ADavidGameMode::StartGame()
+{
+	if (GameState == nullptr) return;
+
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(GameState);
+
+	if (DavidGameState == nullptr) return;
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			3,
+			15.f,
+			FColor::White,
+			FString::Printf(TEXT("Game starts"))
+		);
+	}
+	DavidGameState->StartTurnsCycle();
 }

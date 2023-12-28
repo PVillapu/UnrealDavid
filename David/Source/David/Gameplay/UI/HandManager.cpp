@@ -80,6 +80,8 @@ void UHandManager::OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDro
 
 	CardDragDrop->OnCardDrag.RemoveDynamic(this, &UHandManager::CardDrag);
 	TryCastCardInBoard(Card);
+
+	CalculateCardsPositions();
 }
 
 void UHandManager::CardDrag(UDragDropOperation* Operation, const FPointerEvent& PointerEvent)

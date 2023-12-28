@@ -59,7 +59,11 @@ void ADavidPlayerController::Client_SetDavidPlayerIndex_Implementation(int32 PIn
 	}
 
 	PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
-	PlayerCamera = Cast<UCameraComponent>(PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass()));
+	UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
+
+	if (CameraSpot == nullptr) return;
+
+	PlayerCamera = Cast<UCameraComponent>(CameraSpot);
 
 	if (PlayerCameraActor)
 	{

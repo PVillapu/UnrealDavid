@@ -19,6 +19,9 @@ public:
 	virtual void Logout(AController* NewPlayer) override;
 
 protected:
+	void StartGame();
+
+protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
