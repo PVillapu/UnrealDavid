@@ -25,13 +25,13 @@ public:
 	FORCEINLINE int32 GetSquareIndex() { return SquareIndex; }
 
 protected:
-	UPROPERTY()
-	ABoardManager* BoardManager;
-
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	UStaticMeshComponent* SquareMesh;
+	
+	UPROPERTY(Transient, SkipSerialization)
+	ABoardManager* BoardManager;
 
-	UPROPERTY()
+	UPROPERTY(Transient, SkipSerialization)
 	APieceActor* PieceInSquare;
 
 	int32 SquareIndex;

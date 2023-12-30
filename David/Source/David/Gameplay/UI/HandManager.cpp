@@ -192,7 +192,7 @@ void UHandManager::PlayCardInBoardSquare(UCardWidget& Card, ABoardSquare* BoardS
 	Card.SetRenderOpacity(1.f);
 	Card.SetVisibility(ESlateVisibility::Visible);
 
-	BoardSquare->GetBoardManager()->Server_PlayCardRequest(Card.GetCardDataRowName().ToString(), BoardSquare->GetSquareIndex());
+	//BoardSquare->GetBoardManager()->Server_PlayCardRequest(Card.GetCardDataRowName().ToString(), BoardSquare->GetSquareIndex());
 }
 
 FWidgetTransform UHandManager::CalculateCardPosition(int CardIndex) const

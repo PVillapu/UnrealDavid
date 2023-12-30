@@ -14,25 +14,27 @@ class DAVID_API ADavidGameState : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
-	// Class constructor
+	/* Class constructor */
 	ADavidGameState();
 
-	// Replication setup
+	void BeginPlay() override;
+
+	/* Replication setup */ 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// Starts the gameplay server flow
+	/* Starts the gameplay server flow */ 
 	void StartTurnsCycle();
 
-	// Called when a player ends its turn
+	/* Called when a player ends its turn */ 
 	void OnPlayerFinishedTurn(EDavidPlayer Player);
 
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
 
 private:
-	// Called on Server to update the turns time left 
+	/* Called on Server to update the turns time left */
 	void UpdateTurnCountdownTime();
 
-	// Changes the match state to the following one
+	/* Changes the match state to the following one */ 
 	void ChangeMatchState();
 
 	UFUNCTION()
@@ -41,31 +43,51 @@ private:
 	UFUNCTION()
 	void OnRep_CurrentTurnTimeLeft();
 
-	// Called when MatchState changes
+	/* Called when MatchState changes */
 	void OnMatchStateChange() const;
 
-	// Called when TurnTime is updated
+	/* Called when TurnTime is updated */
 	void OnTurnTimeUpdated() const;
 
+	/* Called when a player turn ends and turn must be processed */
+	void ProcessPlayerTurn();
+
+	/* Called when a player turn starts */
+	void StartPlayerTurn(EDavidPlayer Player);
+
 public:
-	// Called when the player turn changes
+	/* Called when the player turn changes */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnChanged, EDavidMatchState)
 	FOnPlayerTurnChanged OnPlayerTurnChangedDelegate;
 
-	// Called when the turn time left is updated
+	/* Called when the turn time left is updated */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnTimeUpdated, int32)
 	FOnPlayerTurnTimeUpdated OnPlayerTurnTimeUpdatedDelegate;
 
+	/* Stores the match state */
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	TEnumAsByte<EDavidMatchState> MatchState;
 
+	/* Stores the time left of the current turn */
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentTurnTimeLeft)
 	int32 CurrentTurnTimeLeft;
 
-protected:
+private:
+	/* Player turn time */
 	UPROPERTY(EditAnywhere, Category = "David")
 	int32 PlayerTurnTime = 30;
 
-private:
+	/* Ammount of gold earned by a player at the start of the turn */
+	UPROPERTY(EditAnywhere, Category = "David")
+	int32 BaseGoldEarnedAtTurnBegin = 2;
+
+	/* Timer handle for turn time */
+	UPROPERTY(Transient, SkipSerialization)
 	FTimerHandle TurnTimeLeftTimerHandler;
+
+	UPROPERTY(SkipSerialization, Transient)
+	class ABoardManager* BoardManager;
+
+	UPROPERTY(Transient, SkipSerialization)
+	TEnumAsByte<EDavidPlayer> LastTurnPlayer;
 };

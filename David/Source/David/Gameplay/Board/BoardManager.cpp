@@ -73,10 +73,7 @@ void ABoardManager::PlayCardInSquare(const FCardData& CardData, int32 Square, in
 	BoardPieces.Add(TTuple<int32, APieceActor*>(PieceID, PieceInstance));
 }
 
-void ABoardManager::Server_PlayCardRequest_Implementation(const FString& CardName, int32 BoardIndex)
+void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
 {
-}
 
-void ABoardManager::PlayCard_Implementation(const FString& CardName, int32 BoardIndex)
-{
 }

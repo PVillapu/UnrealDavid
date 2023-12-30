@@ -43,20 +43,6 @@ void ADavidPlayerController::BeginPlay()
 	SetInputMode(InputMode);
 	bShowMouseCursor = true;
 
-	// Get BoardManager reference
-	if (BoardManager == nullptr)
-	{
-		UWorld* World = GetWorld();
-		if (World == nullptr) return;
-
-		TArray<AActor*> OutActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
-		if (OutActors.Num() > 0)
-		{
-			BoardManager = Cast<ABoardManager>(OutActors[0]);
-		}
-	}
-
 	// Setup enhanced input
 	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
 	{
@@ -137,30 +123,28 @@ void ADavidPlayerController::SetupPlayer()
 	}
 
 	// Get reference to board manager if is not already set
-	if (BoardManager == nullptr)
-	{
-		UWorld* World = GetWorld();
-		if (World == nullptr) return;
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
 
-		TArray<AActor*> OutActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
-		if (OutActors.Num() > 0)
+	// Get BoardManager reference
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
+	if (OutActors.Num() > 0)
+	{
+		ABoardManager* BoardManager = Cast<ABoardManager>(OutActors[0]);
+
+		// Get the player camera spot
+		PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
+		UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
+
+		if (CameraSpot == nullptr) return;
+
+		PlayerCamera = Cast<UCameraComponent>(CameraSpot);
+
+		// Set view target to the camera
+		if (PlayerCameraActor)
 		{
-			BoardManager = Cast<ABoardManager>(OutActors[0]);
+			SetViewTarget(PlayerCameraActor);
 		}
-	}
-
-	// Get the player camera spot
-	PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
-	UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
-
-	if (CameraSpot == nullptr) return;
-
-	PlayerCamera = Cast<UCameraComponent>(CameraSpot);
-
-	// Set view target to the camera
-	if (PlayerCameraActor)
-	{
-		SetViewTarget(PlayerCameraActor);
 	}
 }

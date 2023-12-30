@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "../Misc/Enums.h"
 #include "BoardManager.generated.h"
 
 UCLASS()
@@ -16,18 +17,14 @@ public:
 
 	void PlayCardInSquare(const struct FCardData& CardData, int32 Square, int32 PieceID);
 
-	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) { return PlayerId == 0 ? Player1Camera : Player2Camera; }
+	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
 
-	UFUNCTION(Server, Reliable)
-	void Server_PlayCardRequest(const FString& CardName, int32 BoardIndex);
+	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) { return PlayerId == 0 ? Player1Camera : Player2Camera; }
 
 protected:
 	virtual void BeginPlay() override;
 
 	void InitializeBoard();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void PlayCard(const FString& CardName, int32 BoardIndex);
 
 private:
 

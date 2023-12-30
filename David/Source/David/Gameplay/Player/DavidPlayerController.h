@@ -54,9 +54,6 @@ protected:
 	UPROPERTY(SkipSerialization, Transient)
 	class UCameraComponent* PlayerCamera;
 
-	UPROPERTY(SkipSerialization, Transient)
-	class ABoardManager* BoardManager;
-
 	UPROPERTY(EditAnywhere, Category = "David")
 	TSoftObjectPtr<class UInputMappingContext> InputMapping;
 
