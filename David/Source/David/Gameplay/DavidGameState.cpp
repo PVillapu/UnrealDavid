@@ -11,53 +11,65 @@ void ADavidGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ADavidGameState, CurrentPlayerTurn);
+	DOREPLIFETIME(ADavidGameState, MatchState);
 	DOREPLIFETIME(ADavidGameState, CurrentTurnTimeLeft);
 }
 
 void ADavidGameState::StartTurnsCycle()
 {
-	ChangePlayerTurn();
-	GetWorld()->GetTimerManager().SetTimer(TurnCountdownTimerHandler, this, &ADavidGameState::UpdateTurnCountdownTime, 1.0f, true);
+	MatchState = EDavidMatchState::PLAYER_1_TURN;
+	GetWorld()->GetTimerManager().SetTimer(TurnTimeLeftTimerHandler, this, &ADavidGameState::UpdateTurnCountdownTime, 1.0f, true);
 }
 
-void ADavidGameState::Server_EndTurnButtonPressed_Implementation()
+void ADavidGameState::OnPlayerFinishedTurn(EDavidPlayer Player)
 {
-	// This is where you can access information about the client that called the RPC.
-	UNetConnection* NetConnection = GetNetConnection();
-	if (NetConnection)
-	{
-		FString ClientName = NetConnection->PlayerController ? NetConnection->PlayerController->GetName() : TEXT("Unknown");
-		UE_LOG(LogTemp, Warning, TEXT("RPC called by client: %s"), *ClientName);
-	}
-}
+	// Check that the request is made by the valid player
+	if (Player == EDavidPlayer::PLAYER_1 && MatchState != EDavidMatchState::PLAYER_1_TURN
+		|| Player == EDavidPlayer::PLAYER_2 && MatchState != EDavidMatchState::PLAYER_2_TURN) 
+		return;
 
-void ADavidGameState::OnRep_CurrentPlayerTurn()
-{
-	UE_LOG(LogTemp, Log, TEXT("Turn changed!"));
-
-	OnPlayerTurnChangedDelegate.Broadcast((EDavidPlayer)CurrentPlayerTurn);
-}
-
-void ADavidGameState::OnRep_CurrentTurnTimeLeft()
-{
-	UE_LOG(LogTemp, Log, TEXT("Seconds left: %d"), CurrentTurnTimeLeft);
-
-	OnPlayerTurnTimeUpdatedDelegate.Broadcast(CurrentTurnTimeLeft);
+	ChangeMatchState();
 }
 
 void ADavidGameState::UpdateTurnCountdownTime()
 {
 	if (--CurrentTurnTimeLeft <= 0) 
 	{
-		GetWorld()->GetTimerManager().PauseTimer(TurnCountdownTimerHandler);
-		ChangePlayerTurn();
+		GetWorld()->GetTimerManager().PauseTimer(TurnTimeLeftTimerHandler);
+		ChangeMatchState();
 	}
+
+	OnTurnTimeUpdated();
 }
 
-void ADavidGameState::ChangePlayerTurn()
+void ADavidGameState::ChangeMatchState()
 {
-	CurrentPlayerTurn = CurrentPlayerTurn == (uint8)EDavidPlayer::PLAYER_1 ? (uint8)EDavidPlayer::PLAYER_2 : (uint8)EDavidPlayer::PLAYER_1;
-	CurrentTurnTimeLeft = PlayerRoundTime;
-	GetWorld()->GetTimerManager().UnPauseTimer(TurnCountdownTimerHandler);
+	// Change match state 
+	MatchState = MatchState == EDavidMatchState::PLAYER_1_TURN ? EDavidMatchState::PLAYER_2_TURN : EDavidMatchState::PLAYER_1_TURN;
+	OnMatchStateChange();
+
+	// Set round time
+	CurrentTurnTimeLeft = PlayerTurnTime;
+	GetWorld()->GetTimerManager().UnPauseTimer(TurnTimeLeftTimerHandler);
+	OnTurnTimeUpdated();
+}
+
+void ADavidGameState::OnRep_MatchState()
+{
+	OnMatchStateChange();
+}
+
+void ADavidGameState::OnRep_CurrentTurnTimeLeft()
+{
+	OnTurnTimeUpdated();
+}
+
+void ADavidGameState::OnMatchStateChange() const
+{
+	OnPlayerTurnChangedDelegate.Broadcast(MatchState.GetValue());
+}
+
+void ADavidGameState::OnTurnTimeUpdated() const
+{
+	OnPlayerTurnTimeUpdatedDelegate.Broadcast(CurrentTurnTimeLeft);
 }

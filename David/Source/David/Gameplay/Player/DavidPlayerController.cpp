@@ -9,8 +9,75 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Net/UnrealNetwork.h"
+#include "../DavidGameState.h"
 
-bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVector2D MousePosition)
+bool ADavidPlayerController::IsPlayerTurn()
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return false;
+
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+	if (DavidGameState == nullptr) return false;
+
+	return (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_1_TURN && PlayerIndex == EDavidPlayer::PLAYER_1) 
+		|| (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_2_TURN && PlayerIndex == EDavidPlayer::PLAYER_2);
+}
+
+void ADavidPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!IsLocalPlayerController()) return;
+
+	// Create gameplay HUD and attach to viewport
+	PlayerHUD = CreateWidget<UUserWidget>(GetGameInstance(), PlayerHUDClass);
+	if (PlayerHUD != nullptr)
+	{
+		PlayerHUD->AddToViewport();
+	}
+
+	// Set input mode to only UI
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
+
+	// Get BoardManager reference
+	if (BoardManager == nullptr)
+	{
+		UWorld* World = GetWorld();
+		if (World == nullptr) return;
+
+		TArray<AActor*> OutActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
+		if (OutActors.Num() > 0)
+		{
+			BoardManager = Cast<ABoardManager>(OutActors[0]);
+		}
+	}
+
+	// Setup enhanced input
+	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		{
+			if (!InputMapping.IsNull())
+			{
+				InputSystem->AddMappingContext(InputMapping.LoadSynchronous(), 0);
+			}
+		}
+	}
+}
+
+void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADavidPlayerController, PlayerIndex);
+}
+
+bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVector2D& MousePosition)
 {
 	FIntPoint MousePos;
 	GEngine->GameViewport->Viewport->GetMousePos(MousePos);
@@ -41,11 +108,36 @@ bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVect
 	}
 }
 
-void ADavidPlayerController::Client_SetDavidPlayerIndex_Implementation(int32 PIndex)
+void ADavidPlayerController::Server_EndTurnButtonPressed_Implementation()
 {
-	PlayerIndex = PIndex;
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
 
-	if (BoardManager == nullptr) 
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+	if (DavidGameState == nullptr) return;
+
+	// Call gamestate in order to finish the turn
+	DavidGameState->OnPlayerFinishedTurn(PlayerIndex);
+}
+
+void ADavidPlayerController::OnRep_PlayerIndex()
+{
+	SetupPlayer();
+}
+
+void ADavidPlayerController::SetupPlayer()
+{
+	if (!IsLocalController()) return;
+
+	// Debug
+	if (GEngine)
+	{
+		FString Message = FString::Printf(TEXT("You are player %d"), PlayerIndex == EDavidPlayer::PLAYER_1 ? 1 : 2);
+		GEngine->AddOnScreenDebugMessage(32, 10, FColor::Purple, Message);
+	}
+
+	// Get reference to board manager if is not already set
+	if (BoardManager == nullptr)
 	{
 		UWorld* World = GetWorld();
 		if (World == nullptr) return;
@@ -58,6 +150,7 @@ void ADavidPlayerController::Client_SetDavidPlayerIndex_Implementation(int32 PIn
 		}
 	}
 
+	// Get the player camera spot
 	PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
 	UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
 
@@ -65,79 +158,9 @@ void ADavidPlayerController::Client_SetDavidPlayerIndex_Implementation(int32 PIn
 
 	PlayerCamera = Cast<UCameraComponent>(CameraSpot);
 
+	// Set view target to the camera
 	if (PlayerCameraActor)
 	{
 		SetViewTarget(PlayerCameraActor);
 	}
-}
-
-void ADavidPlayerController::SetupInputComponent()
-{
-	Super::SetupInputComponent();
-
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent)) 
-	{
-		EnhancedInputComponent->BindAction(PlayCardAction, ETriggerEvent::Triggered, this, &ADavidPlayerController::OnPlayedCardAction);
-	}
-}
-
-void ADavidPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-	PlayerHUD = CreateWidget<UUserWidget>(GetGameInstance(), PlayerHUDClass);
-
-	if (PlayerHUD != nullptr) 
-	{
-		PlayerHUD->AddToViewport();
-	}
-
-	FInputModeUIOnly InputMode;
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	SetInputMode(InputMode);
-
-	bShowMouseCursor = true;
-
-	if (BoardManager == nullptr) 
-	{
-		UWorld* World = GetWorld();
-		if (World == nullptr) return;
-
-		TArray<AActor*> OutActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
-		if (OutActors.Num() > 0)
-		{
-			BoardManager = Cast<ABoardManager>(OutActors[0]);
-		}
-	}
-
-	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-		{
-			if (!InputMapping.IsNull())
-			{
-				InputSystem->AddMappingContext(InputMapping.LoadSynchronous(), 0);
-			}
-		}
-	}
-}
-
-void ADavidPlayerController::ProcessGeneralInteraction()
-{
-	/*FHitResult Hit;
-
-	GetHitResultUnderCursor(ActionsTraceChannel, false, Hit);
-	
-	if (Hit.bBlockingHit && IsValid(Hit.GetActor())) 
-	{
-		UE_LOG(LogTemp, Log, TEXT("Trace hit actor: %s"), *Hit.GetActor()->GetName());
-	}
-	else {
-		UE_LOG(LogTemp, Log, TEXT("No Actors were hit"));
-	}*/
-}
-
-void ADavidPlayerController::OnPlayedCardAction()
-{
-	UE_LOG(LogTemp, Log, TEXT("Holi"));
 }

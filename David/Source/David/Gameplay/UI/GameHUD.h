@@ -19,13 +19,16 @@ protected:
 	void NativeDestruct() override;
 
 	UFUNCTION()
-	void OnPlayerTurnChanged(EDavidPlayer PlayerTurn);
+	void OnMatchStateChanged(EDavidMatchState PlayerTurn);
 
 	UFUNCTION()
 	void OnPlayerTurnTimeUpdated(int32 TurnTimeRemaining);
 
 	UFUNCTION()
 	void OnPlayerPressedEndTurnButton();
+
+	UFUNCTION()
+	void OnPlayerGoldUpdates(int32 PlayerGold);
 
 protected:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
@@ -39,6 +42,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UButton* EndTurnButton;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	class UTextBlock* CurrentPlayerTurnText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	class UTextBlock* PlayerGoldText;
 
 	UPROPERTY(Transient, SkipSerialization)
 	class ADavidGameState* DavidGameState;

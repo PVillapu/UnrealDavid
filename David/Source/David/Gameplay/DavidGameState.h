@@ -14,46 +14,58 @@ class DAVID_API ADavidGameState : public AGameStateBase
 	GENERATED_BODY()
 	
 public:
+	// Class constructor
 	ADavidGameState();
 
+	// Replication setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// Starts the gameplay server flow
 	void StartTurnsCycle();
 
-	UFUNCTION(Server, reliable)
-	void Server_EndTurnButtonPressed();
+	// Called when a player ends its turn
+	void OnPlayerFinishedTurn(EDavidPlayer Player);
 
-protected:
+	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
+
+private:
+	// Called on Server to update the turns time left 
+	void UpdateTurnCountdownTime();
+
+	// Changes the match state to the following one
+	void ChangeMatchState();
+
 	UFUNCTION()
-	void OnRep_CurrentPlayerTurn();
+	void OnRep_MatchState();
 
 	UFUNCTION()
 	void OnRep_CurrentTurnTimeLeft();
 
-private:
-	void UpdateTurnCountdownTime();
+	// Called when MatchState changes
+	void OnMatchStateChange() const;
 
-	void ChangePlayerTurn();
+	// Called when TurnTime is updated
+	void OnTurnTimeUpdated() const;
 
 public:
 	// Called when the player turn changes
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnChanged, EDavidPlayer)
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnChanged, EDavidMatchState)
 	FOnPlayerTurnChanged OnPlayerTurnChangedDelegate;
 
 	// Called when the turn time left is updated
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnTimeUpdated, int32)
 	FOnPlayerTurnTimeUpdated OnPlayerTurnTimeUpdatedDelegate;
 
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentPlayerTurn)
-	uint8 CurrentPlayerTurn;
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	TEnumAsByte<EDavidMatchState> MatchState;
 
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentTurnTimeLeft)
 	int32 CurrentTurnTimeLeft;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
-	int32 PlayerRoundTime = 30;
+	int32 PlayerTurnTime = 30;
 
 private:
-	FTimerHandle TurnCountdownTimerHandler;
+	FTimerHandle TurnTimeLeftTimerHandler;
 };

@@ -2,9 +2,20 @@
 
 #include "CoreMinimal.h"
 
+// Enum to handle the different gameplay states
 UENUM()
-enum class EDavidPlayer : uint8
+enum EDavidMatchState : int
 {
-	PLAYER_1 = 0	UMETA(DisplayName = "Player1"),
-	PLAYER_2		UMETA(DisplayName = "Player2"),
+	STARTING_GAME,
+	END_GAME,
+	PLAYER_1_TURN,
+	PLAYER_2_TURN,
+	PROCESSING_TURN
+};
+
+UENUM()
+enum EDavidPlayer : int 
+{
+	PLAYER_1,
+	PLAYER_2
 };

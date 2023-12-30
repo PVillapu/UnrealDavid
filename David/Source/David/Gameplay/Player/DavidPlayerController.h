@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "../Misc/Enums.h"
 #include "DavidPlayerController.generated.h"
 
 /**
@@ -13,19 +14,29 @@ class DAVID_API ADavidPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D MousePosition);
+	// Replication setup
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(Client, Reliable)
-	void Client_SetDavidPlayerIndex(int32 PIndex);
+	// Performs a line trace over the board and returns the result
+	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D& MousePosition);
+
+	// Sets the player index. Should only be called by the server
+	FORCEINLINE void SetPlayerIndex(EDavidPlayer Index) { PlayerIndex = Index; SetupPlayer(); }
+
+	FORCEINLINE EDavidPlayer GetPlayerIndex() { return PlayerIndex; }
+
+	bool IsPlayerTurn();
+
+	UFUNCTION(Server, reliable)
+	void Server_EndTurnButtonPressed();
 
 protected:
-	void SetupInputComponent() override;
-
 	virtual void BeginPlay() override;
 
-	void ProcessGeneralInteraction();
+	UFUNCTION()
+	void OnRep_PlayerIndex();
 
-	void OnPlayedCardAction();
+	void SetupPlayer();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
@@ -56,5 +67,6 @@ private:
 	UPROPERTY(SkipSerialization, Transient)
 	UUserWidget* PlayerHUD;
 
-	int32 PlayerIndex;
+	UPROPERTY(ReplicatedUsing=OnRep_PlayerIndex)
+	TEnumAsByte<EDavidPlayer> PlayerIndex;
 };

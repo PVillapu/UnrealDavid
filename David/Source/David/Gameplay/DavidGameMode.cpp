@@ -5,18 +5,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "../Gameplay/Player/DavidPlayerController.h"
 #include "DavidGameState.h"
+#include "DavidPlayerState.h"
 
 ADavidGameMode::ADavidGameMode()
 {
-	if (GEngine) 
-	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			15.f,
-			FColor::Blue,
-			TEXT("DavidGameMode initialized")
-		);
-	}
+	// Set default game classes
+	PlayerControllerClass = ADavidPlayerController::StaticClass();
+	GameStateClass = ADavidGameState::StaticClass();
+	PlayerStateClass = ADavidPlayerState::StaticClass();
 }
 
 void ADavidGameMode::BeginPlay()
@@ -37,16 +33,18 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	// Get number of players in match
 	if (GameState == nullptr) return;
-
 	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
 	
+	// Set the player index of the joined player
 	ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(NewPlayer);
 	if (DavidPlayerController)
 	{
-		DavidPlayerController->Client_SetDavidPlayerIndex(NumberOfPlayers - 1);
+		DavidPlayerController->SetPlayerIndex(NumberOfPlayers == 1 ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2);
 	}
 
+	// Debug message
 	if (GEngine)
 	{
 		APlayerState* NewPlayerState = NewPlayer->GetPlayerState<APlayerState>();
@@ -61,6 +59,7 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 		}
 	}
 	
+	// If both players has login, start the match
 	if (NumberOfPlayers == 2) 
 	{
 		StartGame();
