@@ -55,6 +55,9 @@ private:
 	/* Called when a player turn starts */
 	void StartPlayerTurn(EDavidPlayer Player);
 
+	/* Returns the player controller of the current player turn */
+	class ADavidPlayerController* GetPlayerController(EDavidPlayer Player);
+
 public:
 	/* Called when the player turn changes */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnChanged, EDavidMatchState)
@@ -74,12 +77,15 @@ public:
 
 private:
 	/* Player turn time */
-	UPROPERTY(EditAnywhere, Category = "David")
+	UPROPERTY(EditDefaultsOnly, Category = "David")
 	int32 PlayerTurnTime = 30;
 
 	/* Ammount of gold earned by a player at the start of the turn */
-	UPROPERTY(EditAnywhere, Category = "David")
+	UPROPERTY(EditDefaultsOnly, Category = "David")
 	int32 BaseGoldEarnedAtTurnBegin = 2;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	int32 InitialCardsDrawAmmount = 3;
 
 	/* Timer handle for turn time */
 	UPROPERTY(Transient, SkipSerialization)

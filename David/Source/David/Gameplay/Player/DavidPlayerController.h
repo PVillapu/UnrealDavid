@@ -23,14 +23,27 @@ public:
 	// Sets the player index. Should only be called by the server
 	FORCEINLINE void SetPlayerIndex(EDavidPlayer Index) { PlayerIndex = Index; SetupPlayer(); }
 
-	FORCEINLINE EDavidPlayer GetPlayerIndex() { return PlayerIndex; }
+	/* Returns the Player player*/
+	FORCEINLINE EDavidPlayer GetDavidPlayer() { return PlayerIndex; }
 
+	/* Return this player APlayerCards */
+	FORCEINLINE class APlayerCards* GetPlayerCards() { return PlayerCards; }
+
+	FORCEINLINE class UDataTable* GetCardsDataTable() { return CardsDataTable; }
+
+	/* Returns the player game HUD */
+	FORCEINLINE class UGameHUD* GetPlayerGameHUD() { return PlayerHUD; }
+
+	/* Returns if its this player controller turn */
 	bool IsPlayerTurn();
 
 	UFUNCTION(Server, reliable)
 	void Server_EndTurnButtonPressed();
 
-protected:
+	UFUNCTION(Server, reliable)
+	void Server_RequestPlayCard(FName CardRowName, int32 SquareID, int32 PlayID);
+
+private:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -38,15 +51,21 @@ protected:
 
 	void SetupPlayer();
 
-protected:
-	UPROPERTY(EditAnywhere, Category = "David")
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	UDataTable* CardsDataTable;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	TSubclassOf<UUserWidget> PlayerHUDClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TEnumAsByte<ECollisionChannel> ActionsTraceChannel = ECC_Pawn;
 
-	UPROPERTY(EditAnywhere, Category = "David")
+	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TEnumAsByte<ECollisionChannel> BoardCollisionChannel;
 
-	UPROPERTY(EditAnywhere, Category = "David")
-	TSubclassOf<UUserWidget> PlayerHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	class UInputAction* PlayCardAction;
 
 	UPROPERTY(SkipSerialization, Transient)
 	AActor* PlayerCameraActor;
@@ -54,16 +73,12 @@ protected:
 	UPROPERTY(SkipSerialization, Transient)
 	class UCameraComponent* PlayerCamera;
 
-	UPROPERTY(EditAnywhere, Category = "David")
-	TSoftObjectPtr<class UInputMappingContext> InputMapping;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	class UInputAction* PlayCardAction;
-
-private:
 	UPROPERTY(SkipSerialization, Transient)
-	UUserWidget* PlayerHUD;
+	class UGameHUD* PlayerHUD;
 
 	UPROPERTY(ReplicatedUsing=OnRep_PlayerIndex)
 	TEnumAsByte<EDavidPlayer> PlayerIndex;
+
+	UPROPERTY(SkipSerialization, Transient)
+	APlayerCards* PlayerCards;
 };

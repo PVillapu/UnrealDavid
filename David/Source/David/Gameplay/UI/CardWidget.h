@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "../Cards/CardData.h"
 #include "CardWidget.generated.h"
 
 /**
@@ -15,17 +14,13 @@ class DAVID_API UCardWidget : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetupCard(const FCardData& Data, const FName RowName, TSubclassOf<class UUserWidget>& CardWidget, class UOverlay* CardOverlay = nullptr);
+	void SetupCard(const struct FCardData& CardData, int32 GameCardID);
 
 	void StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed);
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	FORCEINLINE FCardData* GetCardData() { return &CardData; }
-
-	FORCEINLINE void SetCardDataRowName(const FName CardRowName) { CardDataRowName = CardRowName; }
-
-	FORCEINLINE FName GetCardDataRowName() { return CardDataRowName; }
+	FORCEINLINE int32 GetGameCardID() { return CardID; }
 
 protected:
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -81,20 +76,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<UDragDropOperation> DragDropOperationBP;
 
-	UPROPERTY(BlueprintReadOnly, Category = "David")
-	FCardData CardData;
-
-	UPROPERTY(BlueprintReadOnly, Category = "David")
-	FName CardDataRowName;
-
-	UPROPERTY(Transient, SkipSerialization)
-	class UOverlay* CardOverlay;
-
-	UPROPERTY(Transient, SkipSerialization)
-	TSubclassOf<class UUserWidget> CardWidget;
-
 private:
-	float InterpolationSpeed;
+	UPROPERTY()
 	FWidgetTransform TargetWidgetTransform;
+	
+	float InterpolationSpeed;
 	bool bIsInterpolating;
+	int32 CardID;
 };

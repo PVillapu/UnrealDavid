@@ -7,18 +7,16 @@
 #include "CardDragDropOperation.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Overlay.h"
+#include "../Cards/CardData.h"
 
-void UCardWidget::SetupCard(const FCardData& Data, const FName RowName, TSubclassOf<class UUserWidget>& CardWidgetBP, UOverlay* CardOv)
+void UCardWidget::SetupCard(const FCardData& Data, int32 GameCardID)
 {
 	PieceImage->SetBrushFromTexture(Data.CardImage);
 	HealthText->SetText(FText::AsNumber(Data.PieceHealth));
 	AttackText->SetText(FText::AsNumber(Data.PieceAttack));
 	CardDescriptionText->SetText(Data.CardDescription);
 
-	CardOverlay = CardOv;
-	CardData = Data;
-	CardDataRowName = RowName;
-	CardWidget = CardWidgetBP;
+	CardID = GameCardID;
 }
 
 void UCardWidget::StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed)
@@ -83,8 +81,6 @@ void UCardWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPoint
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	UE_LOG(LogTemp, Log, TEXT("NativeOnDragDetected"));
-
 	UCardDragDropOperation* DragDropOp = Cast<UCardDragDropOperation>(UWidgetBlueprintLibrary::CreateDragDropOperation(DragDropOperationBP));
 
 	DragDropOp->DraggedCard = this;
@@ -98,7 +94,6 @@ void UCardWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, U
 {
 	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
 
-	UE_LOG(LogTemp, Log, TEXT("NativeOnDragCancelled"));
 	OnLeftCardDelegate.ExecuteIfBound(*this, *InOperation);
 }
 

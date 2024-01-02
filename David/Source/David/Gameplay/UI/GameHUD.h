@@ -13,6 +13,9 @@ class DAVID_API UGameHUD : public UUserWidget
 {
 	GENERATED_BODY()
 
+public:
+	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManager; }
+
 protected:
 	void NativeConstruct() override;
 

@@ -11,6 +11,39 @@
 #include "InputMappingContext.h"
 #include "Net/UnrealNetwork.h"
 #include "../DavidGameState.h"
+#include "../UI/GameHUD.h"
+#include "../Player/PlayerCards.h"
+#include "../UI/HandManager.h"
+#include "Engine/DataTable.h"
+#include "../Cards/CardData.h"
+
+void ADavidPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!IsLocalPlayerController()) return;
+
+	// Create gameplay HUD and attach to viewport
+	PlayerHUD = CreateWidget<UGameHUD>(GetGameInstance(), PlayerHUDClass);
+	if (PlayerHUD != nullptr)
+	{
+		PlayerHUD->AddToViewport();
+		PlayerHUD->GetPlayerHandManager()->SetPlayerCards(PlayerCards);
+	}
+
+	// Set input mode to only UI
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
+}
+
+void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADavidPlayerController, PlayerIndex);
+}
 
 bool ADavidPlayerController::IsPlayerTurn()
 {
@@ -20,47 +53,8 @@ bool ADavidPlayerController::IsPlayerTurn()
 	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
 	if (DavidGameState == nullptr) return false;
 
-	return (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_1_TURN && PlayerIndex == EDavidPlayer::PLAYER_1) 
+	return (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_1_TURN && PlayerIndex == EDavidPlayer::PLAYER_1)
 		|| (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_2_TURN && PlayerIndex == EDavidPlayer::PLAYER_2);
-}
-
-void ADavidPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (!IsLocalPlayerController()) return;
-
-	// Create gameplay HUD and attach to viewport
-	PlayerHUD = CreateWidget<UUserWidget>(GetGameInstance(), PlayerHUDClass);
-	if (PlayerHUD != nullptr)
-	{
-		PlayerHUD->AddToViewport();
-	}
-
-	// Set input mode to only UI
-	FInputModeUIOnly InputMode;
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	SetInputMode(InputMode);
-	bShowMouseCursor = true;
-
-	// Setup enhanced input
-	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-		{
-			if (!InputMapping.IsNull())
-			{
-				InputSystem->AddMappingContext(InputMapping.LoadSynchronous(), 0);
-			}
-		}
-	}
-}
-
-void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ADavidPlayerController, PlayerIndex);
 }
 
 bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVector2D& MousePosition)
@@ -106,6 +100,11 @@ void ADavidPlayerController::Server_EndTurnButtonPressed_Implementation()
 	DavidGameState->OnPlayerFinishedTurn(PlayerIndex);
 }
 
+void ADavidPlayerController::Server_RequestPlayCard_Implementation(FName CardRowName, int32 SquareID, int32 PlayID)
+{
+
+}
+
 void ADavidPlayerController::OnRep_PlayerIndex()
 {
 	SetupPlayer();
@@ -114,13 +113,6 @@ void ADavidPlayerController::OnRep_PlayerIndex()
 void ADavidPlayerController::SetupPlayer()
 {
 	if (!IsLocalController()) return;
-
-	// Debug
-	if (GEngine)
-	{
-		FString Message = FString::Printf(TEXT("You are player %d"), PlayerIndex == EDavidPlayer::PLAYER_1 ? 1 : 2);
-		GEngine->AddOnScreenDebugMessage(32, 10, FColor::Purple, Message);
-	}
 
 	// Get reference to board manager if is not already set
 	UWorld* World = GetWorld();
@@ -147,4 +139,15 @@ void ADavidPlayerController::SetupPlayer()
 			SetViewTarget(PlayerCameraActor);
 		}
 	}
+
+	// Spawn the player cards manager
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Owner = this;
+	FTransform SpawnTransform;
+
+	PlayerCards = Cast<APlayerCards>(World->SpawnActor(APlayerCards::StaticClass(), &SpawnTransform, SpawnParameters));
+
+	// WIP for the moment we just take all existing cards in the CardsDataTable
+	TArray<FName> PlayerCardNames = CardsDataTable->GetRowNames();
+	PlayerCards->SetupPlayerCards(PlayerCardNames);
 }

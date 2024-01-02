@@ -5,23 +5,34 @@
 #include "../Player/DavidPlayerController.h"
 #include "../Board/BoardSquare.h"
 #include "../Board/BoardManager.h"
-#include "../Cards/CardData.h"
+#include "../Cards/GameCardData.h"
 #include "Engine/DataTable.h"
 #include "CardDragDropOperation.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
 
-void UHandManager::AddCardToHand(const FCardData& Card, const FName CardRowName)
+void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 {
+	// Get CardData associated with the GameCard
+	const FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
+	if (CardData == nullptr) return;
+
+	// Create Card widget
 	UCardWidget* NewCard = CreateWidget<UCardWidget>(GetOwningPlayer(), CardWidget);
-	NewCard->SetupCard(Card, CardRowName, CardWidget, CardOverlay);
+
+	// Setup Card Widget
+	NewCard->SetupCard(*CardData, GameCardData.CardID);
 	CardOverlay->AddChild(NewCard);
 
+	// Add to hand cards array
 	HandCards.Add(NewCard);
+	
+	// Bind delegates
 	NewCard->OnHoveredCardDelegate.BindUObject(this, &UHandManager::OnCardHovered);
 	NewCard->OnUnhoveredCardDelegate.BindUObject(this, &UHandManager::OnCardUnhovered);
 	NewCard->OnGrabbedCardDelegate.BindUObject(this, &UHandManager::OnCardGrabbed);
 	NewCard->OnLeftCardDelegate.BindUObject(this, &UHandManager::OnCardLeft); // TODO: IMPORTANT - REMOVE BINDINGS WHEN CARD IS PLAYED OR DESTROYED
 
+	// Calculate cards positions in hand
 	CalculateCardsPositions();
 }
 
@@ -64,8 +75,6 @@ void UHandManager::OnCardUnhovered(UCardWidget& Card)
 
 void UHandManager::OnCardGrabbed(UCardWidget& Card, UCardDragDropOperation& CardDragDropOp)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnCardGrabbed"));
-
 	CardDragDropOp.OnCardDrag.AddDynamic(this, &UHandManager::CardDrag);
 	HoveredCardIndex = -1;
 	Card.SetVisibility(ESlateVisibility::HitTestInvisible);
@@ -74,13 +83,13 @@ void UHandManager::OnCardGrabbed(UCardWidget& Card, UCardDragDropOperation& Card
 
 void UHandManager::OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDropOp)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnCardLeft"));
-
 	UCardDragDropOperation* CardDragDrop = Cast<UCardDragDropOperation>(&CardDragDropOp);
+	if (CardDragDrop) 
+	{
+		CardDragDrop->OnCardDrag.RemoveDynamic(this, &UHandManager::CardDrag);
+	}
 
-	CardDragDrop->OnCardDrag.RemoveDynamic(this, &UHandManager::CardDrag);
 	TryCastCardInBoard(Card);
-
 	CalculateCardsPositions();
 }
 
@@ -115,9 +124,7 @@ void UHandManager::CardDrag(UDragDropOperation* Operation, const FPointerEvent& 
 	UCardDragDropOperation* CardDragDropOp = Cast<UCardDragDropOperation>(Operation);
 	if (CardDragDropOp && CardDragDropOp->DraggedCard)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Dragging card to %s"), *ViewportPosition.ToString());
 		UCardWidget* DraggedCard = CardDragDropOp->DraggedCard;
-		
 		
 		FWidgetTransform WidgetTargetTransform(DraggedCard->GetRenderTransform());
 		WidgetTargetTransform.Translation = CalculateCardDragPosition(ViewportPosition, ViewportSize);
@@ -154,7 +161,7 @@ void UHandManager::TryCastCardInBoard(UCardWidget& Card)
 	// Cast to board square
 	ABoardSquare* Square = Cast<ABoardSquare>(LastMouseDragActor);
 		
-	// If there is no board square as targetm return the card to hand
+	// If there is no board square as target, return the card to hand
 	if (Square == nullptr) 
 	{
 		ReturnCardToHand(Card);
@@ -169,30 +176,25 @@ void UHandManager::ReturnCardToHand(UCardWidget& Card)
 {
 	Card.SetRenderOpacity(1.f);
 	Card.SetVisibility(ESlateVisibility::Visible);
+
+	CalculateCardsPositions();
 }
 
 void UHandManager::PlayCardInBoardSquare(UCardWidget& Card, ABoardSquare* BoardSquare)
 {
-	if (!IsValid(CardsDataTable))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Missing card data table"));
-		return;
-	}
-
-	FCardData* CardData = CardsDataTable->FindRow<FCardData>(Card.GetCardDataRowName(), "");
-	if (CardData == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No CardData found in the data table"));
-		return;
-	}
-
 	UE_LOG(LogTemp, Warning, TEXT("Sending play card request to server"));
 
-	// WIP
-	Card.SetRenderOpacity(1.f);
-	Card.SetVisibility(ESlateVisibility::Visible);
+	// Hide the card until server confirms or reject the play
+	Card.SetRenderOpacity(0.f);
+	Card.SetVisibility(ESlateVisibility::Hidden);
 
-	//BoardSquare->GetBoardManager()->Server_PlayCardRequest(Card.GetCardDataRowName().ToString(), BoardSquare->GetSquareIndex());
+	if (UWorld* World = GetWorld()) 
+	{
+		ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
+		if (DavidPlayerController == nullptr) return;
+
+		// TODO: PlayCardRequest
+	}
 }
 
 FWidgetTransform UHandManager::CalculateCardPosition(int CardIndex) const

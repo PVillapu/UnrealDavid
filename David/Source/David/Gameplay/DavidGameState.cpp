@@ -5,6 +5,7 @@
 #include "Player/DavidPlayerController.h"
 #include "EngineUtils.h"
 #include "DavidPlayerState.h"
+#include "Player/PlayerCards.h"
 
 ADavidGameState::ADavidGameState()
 {
@@ -14,6 +15,8 @@ ADavidGameState::ADavidGameState()
 
 void ADavidGameState::BeginPlay()
 {
+	Super::BeginPlay();
+
 	if (!HasAuthority()) return;
 
 	// Get BoardManager reference
@@ -42,7 +45,25 @@ void ADavidGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 void ADavidGameState::StartTurnsCycle()
 {
 	MatchState = EDavidMatchState::PLAYER_1_TURN;
+
+	// Start the turn time timer
+	CurrentTurnTimeLeft = PlayerTurnTime;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimeLeftTimerHandler, this, &ADavidGameState::UpdateTurnCountdownTime, 1.0f, true);
+
+	// Each player draws initial cards
+	ADavidPlayerController* PlayerController = GetPlayerController(EDavidPlayer::PLAYER_1);
+	if (PlayerController)
+	{
+		APlayerCards* PlayerCards = PlayerController->GetPlayerCards();
+		PlayerCards->PlayerDrawCards(InitialCardsDrawAmmount);
+	}
+
+	PlayerController = GetPlayerController(EDavidPlayer::PLAYER_2);
+	if (PlayerController)
+	{
+		APlayerCards* PlayerCards = PlayerController->GetPlayerCards();
+		PlayerCards->PlayerDrawCards(InitialCardsDrawAmmount);
+	}
 }
 
 void ADavidGameState::OnPlayerFinishedTurn(EDavidPlayer Player)
@@ -112,7 +133,7 @@ void ADavidGameState::ProcessPlayerTurn()
 {
 	if (BoardManager == nullptr) return;
 
-
+	ChangeMatchState();
 }
 
 void ADavidGameState::StartPlayerTurn(EDavidPlayer Player) 
@@ -123,11 +144,27 @@ void ADavidGameState::StartPlayerTurn(EDavidPlayer Player)
 	// Search the PlayerState to add the initial turn gold
 	for (ADavidPlayerController* DavidPlayerController : TActorRange<ADavidPlayerController>(World))
 	{
-		if (DavidPlayerController->GetPlayerIndex() == Player) 
+		if (DavidPlayerController->GetDavidPlayer() == Player) 
 		{
 			ADavidPlayerState* PlayerGameState = DavidPlayerController->GetPlayerState<ADavidPlayerState>();
 			PlayerGameState->IncreasePlayerGold(BaseGoldEarnedAtTurnBegin);
 			return;
 		}
 	}
+}
+
+ADavidPlayerController* ADavidGameState::GetPlayerController(EDavidPlayer Player)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return nullptr;
+
+	// Search for the player controller with the given ID
+	for (int i = 0; i < World->GetNumPlayerControllers(); ++i) 
+	{
+		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(UGameplayStatics::GetPlayerController(World, i));
+		if (PlayerController && PlayerController->GetDavidPlayer() == Player) return PlayerController;
+	}
+	
+	// Not found
+	return nullptr;
 }

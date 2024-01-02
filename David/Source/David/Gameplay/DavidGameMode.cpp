@@ -17,8 +17,9 @@ ADavidGameMode::ADavidGameMode()
 
 void ADavidGameMode::BeginPlay()
 {
-	UWorld* World = GetWorld();
+	Super::BeginPlay();
 
+	UWorld* World = GetWorld();
 	if (World == nullptr) return;
 
 	TArray<AActor*> OutActors;
