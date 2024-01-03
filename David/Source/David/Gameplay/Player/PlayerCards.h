@@ -17,8 +17,8 @@ public:
 
 	void PlayerDrawCards(int32 CardAmmount);
 
-	UFUNCTION(Server, reliable)
-	void Server_DrawCard(FGameCardData GameCardData);
+	UFUNCTION(Client, reliable)
+	void Client_DrawCard(FGameCardData GameCardData);
 
 	UFUNCTION(Server, reliable)
 	void Server_PlayCardRequest(int32 CardID);

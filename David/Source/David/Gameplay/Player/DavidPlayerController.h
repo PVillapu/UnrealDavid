@@ -20,15 +20,19 @@ public:
 	// Performs a line trace over the board and returns the result
 	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D& MousePosition);
 
-	// Sets the player index. Should only be called by the server
+	/* Sets the player index.Should only be called by the server */ 
 	FORCEINLINE void SetPlayerIndex(EDavidPlayer Index) { PlayerIndex = Index; SetupPlayer(); }
 
 	/* Returns the Player player*/
 	FORCEINLINE EDavidPlayer GetDavidPlayer() { return PlayerIndex; }
 
-	/* Return this player APlayerCards */
-	FORCEINLINE class APlayerCards* GetPlayerCards() { return PlayerCards; }
+	/* Sets the PlayerCards actor of this player controller */
+	FORCEINLINE void SetPlayerCards(class APlayerCards* PlayerCardsActor) { PlayerCards = PlayerCardsActor;	}
 
+	/* Returns this player APlayerCards */
+	FORCEINLINE APlayerCards* GetPlayerCards() { return PlayerCards; }
+
+	/* Returns the cards datatable */
 	FORCEINLINE class UDataTable* GetCardsDataTable() { return CardsDataTable; }
 
 	/* Returns the player game HUD */
@@ -42,6 +46,10 @@ public:
 
 	UFUNCTION(Server, reliable)
 	void Server_RequestPlayCard(FName CardRowName, int32 SquareID, int32 PlayID);
+
+	/* Called by the client when this PlayerController Client is ready to start */
+	UFUNCTION(Server, reliable)
+	void Server_PlayerReady();
 
 private:
 	virtual void BeginPlay() override;
@@ -81,4 +89,7 @@ private:
 
 	UPROPERTY(SkipSerialization, Transient)
 	APlayerCards* PlayerCards;
+
+	UPROPERTY(SkipSerialization, Transient)
+	bool bHasBeenInitialized = false;
 };

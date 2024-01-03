@@ -44,22 +44,19 @@ void UGameHUD::NativeDestruct()
 
 void UGameHUD::OnMatchStateChanged(EDavidMatchState PlayerTurn)
 {
-	// Enable end turn button if its player turn
-	if (UWorld* World = GetWorld())
+	if (ADavidPlayerController* DavidPlayerController = GetOwningPlayer<ADavidPlayerController>())
 	{
-		if (ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController())) 
+		if (DavidPlayerController->IsPlayerTurn())
 		{
-			if (DavidPlayerController->IsPlayerTurn()) 
-			{
-				EndTurnButton->SetIsEnabled(true);
-				EndTurnButton->SetRenderOpacity(1.f);
+			EndTurnButton->SetIsEnabled(true);
+			EndTurnButton->SetRenderOpacity(1.f);
 
-				CurrentPlayerTurnText->SetText(FText::FromString(FString::Printf(TEXT("Your turn"))));
+			CurrentPlayerTurnText->SetText(FText::FromString(FString::Printf(TEXT("Your turn"))));
 
-				return;
-			}
+			return;
 		}
 	}
+	else return;
 
 	// Disable the button if its not the player turn
 	EndTurnButton->SetIsEnabled(false);

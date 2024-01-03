@@ -6,6 +6,9 @@
 #include "../Gameplay/Player/DavidPlayerController.h"
 #include "DavidGameState.h"
 #include "DavidPlayerState.h"
+#include "Engine/DataTable.h"
+#include "Player/PlayerCards.h"
+#include "Misc/CustomDavidLogs.h"
 
 ADavidGameMode::ADavidGameMode()
 {
@@ -34,6 +37,8 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	UE_LOG(LogDavid, Display, TEXT("[Server] ADavidGameMode::PostLogin()"));
+
 	// Get number of players in match
 	if (GameState == nullptr) return;
 	int32 NumberOfPlayers = GameState.Get()->PlayerArray.Num();
@@ -44,6 +49,20 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		DavidPlayerController->SetPlayerIndex(NumberOfPlayers == 1 ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2);
 	}
+
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	// Spawn the player cards manager
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Owner = NewPlayer;
+	FTransform SpawnTransform;
+	APlayerCards* PlayerCards = Cast<APlayerCards>(World->SpawnActor(APlayerCards::StaticClass(), &SpawnTransform, SpawnParameters));
+	DavidPlayerController->SetPlayerCards(PlayerCards);
+
+	// WIP for the moment we just take all existing cards in the CardsDataTable
+	TArray<FName> PlayerCardNames = DavidPlayerController->GetCardsDataTable()->GetRowNames();
+	PlayerCards->SetupPlayerCards(PlayerCardNames);
 
 	// Debug message
 	if (GEngine)
@@ -58,12 +77,6 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 				FString::Printf(TEXT("%s joined the game! %d players in game"), *NewPlayerState->GetName(), NumberOfPlayers)
 			);
 		}
-	}
-	
-	// If both players has login, start the match
-	if (NumberOfPlayers == 2) 
-	{
-		StartGame();
 	}
 }
 
@@ -83,10 +96,22 @@ void ADavidGameMode::Logout(AController* ExitPlayer)
 	}
 }
 
+void ADavidGameMode::OnPlayerReady(EDavidPlayer Player)
+{
+	if (MatchStarted) return;
+
+	if (Player == EDavidPlayer::PLAYER_1) Player1Ready = true;
+	else Player2Ready = true;
+
+	if (Player2Ready && Player1Ready)
+	{
+		MatchStarted = true;
+		StartGame();
+	}
+}
+
 void ADavidGameMode::StartGame()
 {
-	if (GameState == nullptr) return;
-
 	ADavidGameState* DavidGameState = Cast<ADavidGameState>(GameState);
 
 	if (DavidGameState == nullptr) return;

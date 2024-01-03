@@ -6,9 +6,6 @@
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
-#include "InputAction.h"
-#include "InputMappingContext.h"
 #include "Net/UnrealNetwork.h"
 #include "../DavidGameState.h"
 #include "../UI/GameHUD.h"
@@ -16,6 +13,8 @@
 #include "../UI/HandManager.h"
 #include "Engine/DataTable.h"
 #include "../Cards/CardData.h"
+#include "../DavidGameMode.h"
+#include "../Misc/CustomDavidLogs.h"
 
 void ADavidPlayerController::BeginPlay()
 {
@@ -23,12 +22,13 @@ void ADavidPlayerController::BeginPlay()
 
 	if (!IsLocalPlayerController()) return;
 
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::BeginPlay()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+
 	// Create gameplay HUD and attach to viewport
-	PlayerHUD = CreateWidget<UGameHUD>(GetGameInstance(), PlayerHUDClass);
+	PlayerHUD = CreateWidget<UGameHUD>(this, PlayerHUDClass);
 	if (PlayerHUD != nullptr)
 	{
 		PlayerHUD->AddToViewport();
-		PlayerHUD->GetPlayerHandManager()->SetPlayerCards(PlayerCards);
 	}
 
 	// Set input mode to only UI
@@ -36,6 +36,8 @@ void ADavidPlayerController::BeginPlay()
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 	bShowMouseCursor = true;
+
+	if(bHasBeenInitialized) Server_PlayerReady();
 }
 
 void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -78,12 +80,10 @@ bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVect
 
 	if (Hit.bBlockingHit && IsValid(Hit.GetActor()))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Trace hit actor: %s"), *Hit.GetActor()->GetName());
 		DrawDebugLine(GetWorld(), CameraLocation, (WorldLocation - CameraLocation) * 100000, FColor::Blue, false, 10.f, 0U, 1.f);
 		return true;
 	}
 	else {
-		UE_LOG(LogTemp, Log, TEXT("No Actors were hit"));
 		return false;
 	}
 }
@@ -105,6 +105,18 @@ void ADavidPlayerController::Server_RequestPlayCard_Implementation(FName CardRow
 
 }
 
+void ADavidPlayerController::Server_PlayerReady_Implementation()
+{
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::Server_PlayerReady_Implementation()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+	if (UWorld* World = GetWorld())
+	{
+		if (ADavidGameMode* GameMode = Cast<ADavidGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			GameMode->OnPlayerReady(PlayerIndex);
+		}
+	}
+}
+
 void ADavidPlayerController::OnRep_PlayerIndex()
 {
 	SetupPlayer();
@@ -112,7 +124,9 @@ void ADavidPlayerController::OnRep_PlayerIndex()
 
 void ADavidPlayerController::SetupPlayer()
 {
-	if (!IsLocalController()) return;
+	if (!IsLocalPlayerController()) return;
+
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::SetupPlayer()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
 
 	// Get reference to board manager if is not already set
 	UWorld* World = GetWorld();
@@ -140,14 +154,6 @@ void ADavidPlayerController::SetupPlayer()
 		}
 	}
 
-	// Spawn the player cards manager
-	FActorSpawnParameters SpawnParameters;
-	SpawnParameters.Owner = this;
-	FTransform SpawnTransform;
-
-	PlayerCards = Cast<APlayerCards>(World->SpawnActor(APlayerCards::StaticClass(), &SpawnTransform, SpawnParameters));
-
-	// WIP for the moment we just take all existing cards in the CardsDataTable
-	TArray<FName> PlayerCardNames = CardsDataTable->GetRowNames();
-	PlayerCards->SetupPlayerCards(PlayerCardNames);
+	bHasBeenInitialized = true;
+	if (HasActorBegunPlay()) Server_PlayerReady();
 }

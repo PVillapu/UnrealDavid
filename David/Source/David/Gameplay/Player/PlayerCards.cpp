@@ -3,6 +3,7 @@
 #include "../Player/DavidPlayerController.h"
 #include "../UI/HandManager.h"
 #include "../UI/GameHUD.h"
+#include "../Misc/CustomDavidLogs.h"
 
 APlayerCards::APlayerCards()
 {
@@ -44,7 +45,7 @@ void APlayerCards::PlayerDrawCards(int32 CardAmmount)
 		PlayerDeckCards.RemoveAt(0);
 		PlayerHandCards.Add(DrawCard);
 
-		Server_DrawCard(DrawCard);
+		Client_DrawCard(DrawCard);
 	}
 }
 
@@ -53,17 +54,21 @@ void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)
 	ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetOwner());
 	if (PlayerController == nullptr) return;
 
+	UE_LOG(LogDavid, Display, TEXT("[%s] APlayerCards::OnPlayerDrawCard"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+
 	// Catch the PlayerHandManager
 	if (PlayerHandManager == nullptr) 
 	{
-		PlayerHandManager = PlayerController->GetPlayerGameHUD()->GetPlayerHandManager();
+		if(UGameHUD* PlayerHUD = PlayerController->GetPlayerGameHUD())
+			PlayerHandManager = PlayerHUD->GetPlayerHandManager();
 	}
 
 	// Add card
-	PlayerHandManager->AddCardToHand(GameCardData);
+	if(PlayerHandManager)
+		PlayerHandManager->AddCardToHand(GameCardData);
 }
 
-void APlayerCards::Server_DrawCard_Implementation(FGameCardData GameCardData)
+void APlayerCards::Client_DrawCard_Implementation(FGameCardData GameCardData)
 {
 	PlayerHandCards.Add(GameCardData);
 

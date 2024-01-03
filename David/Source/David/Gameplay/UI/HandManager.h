@@ -15,8 +15,6 @@ class DAVID_API UHandManager : public UUserWidget
 public:
 	void AddCardToHand(const struct FGameCardData& Card);
 
-	FORCEINLINE void SetPlayerCards(class APlayerCards* PlayerCardsActor) { PlayerCards = PlayerCardsActor; };
-
 private:
 	void CalculateCardsPositions() const;
 
@@ -97,7 +95,4 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	AActor* LastMouseDragActor;
-
-	UPROPERTY(Transient, SkipSerialization)
-	APlayerCards* PlayerCards;
 };

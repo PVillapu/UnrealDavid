@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Misc/Enums.h"
 #include "DavidGameMode.generated.h"
 
 UCLASS()
@@ -18,11 +19,12 @@ public:
 
 	virtual void Logout(AController* NewPlayer) override;
 
+	void OnPlayerReady(EDavidPlayer Player);
+
 protected:
 	void StartGame();
 
-protected:
-
+private:
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
 
@@ -34,4 +36,13 @@ protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	class ADavidPlayerController* Player2;
+
+	UPROPERTY(Transient, SkipSerialization)
+	bool MatchStarted = false;
+
+	UPROPERTY(Transient, SkipSerialization)
+	bool Player1Ready = false;
+
+	UPROPERTY(Transient, SkipSerialization)
+	bool Player2Ready = false;
 };

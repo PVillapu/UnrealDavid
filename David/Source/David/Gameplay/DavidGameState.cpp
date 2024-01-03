@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "DavidPlayerState.h"
 #include "Player/PlayerCards.h"
+#include "Misc/CustomDavidLogs.h"
 
 ADavidGameState::ADavidGameState()
 {
@@ -44,7 +45,11 @@ void ADavidGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void ADavidGameState::StartTurnsCycle()
 {
-	MatchState = EDavidMatchState::PLAYER_1_TURN;
+	// Choose the start turn player
+	int32 RandNum = FMath::RandRange(0, 1);
+	MatchState = RandNum == 0 ? EDavidMatchState::PLAYER_1_TURN : EDavidMatchState::PLAYER_2_TURN;
+	StartPlayerTurn(MatchState == EDavidMatchState::PLAYER_1_TURN ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2);
+	OnMatchStateChange();
 
 	// Start the turn time timer
 	CurrentTurnTimeLeft = PlayerTurnTime;
@@ -121,6 +126,8 @@ void ADavidGameState::OnRep_CurrentTurnTimeLeft()
 
 void ADavidGameState::OnMatchStateChange() const
 {
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidGameState::OnMatchStateChange()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+
 	OnPlayerTurnChangedDelegate.Broadcast(MatchState.GetValue());
 }
 
