@@ -1,7 +1,9 @@
 #include "BoardManager.h"
 #include "../Cards/CardData.h"
+#include "../Cards/GameCardData.h"
 #include "../Piece/PieceActor.h"
 #include "../Board/BoardSquare.h"
+#include "../Player/DavidPlayerController.h"
 
 ABoardManager::ABoardManager()
 {
@@ -9,20 +11,18 @@ ABoardManager::ABoardManager()
 	bReplicates = true;
 }
 
-void ABoardManager::BeginPlay()
-{
-	Super::BeginPlay();
-
-	UE_LOG(LogTemp, Warning, TEXT("BeginPlay %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"));
-
-	InitializeBoard();
-}
-
-
 void ABoardManager::InitializeBoard()
 {
 	GenerateBoardSquares();
 	PieceIdCounter = 0;
+
+	if (UWorld* World = GetWorld())
+	{
+		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
+
+		if (PlayerController)
+			PlayerController->InitializationPartDone(EDavidPreMatchInitialization::BOARD_INITIALIZED);
+	}
 }
 
 void ABoardManager::GenerateBoardSquares()
@@ -59,21 +59,41 @@ void ABoardManager::GenerateBoardSquares()
 	}
 }
 
-void ABoardManager::PlayCardInSquare(const FCardData& CardData, int32 Square, int32 PieceID)
+void ABoardManager::PlayCardInSquare(const FCardData& CardData, const FGameCardData& GameCardData, int32 Square)
 {
 	// Spawn the piece actor
 	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData.CardPieceActor);
-	PieceInstance->SetupPiece(this);
-
-	// Place the new piece in the square
-	FVector TargetSquareLocation = BoardSquares[Square]->GetActorLocation();
-	PieceInstance->SetActorLocation(TargetSquareLocation);
+	PieceInstance->SetupPiece(this, GameCardData, CardData);
 
 	// Register piece
-	BoardPieces.Add(TTuple<int32, APieceActor*>(PieceID, PieceInstance));
+	int32 PieceID = PieceIdCounter++;
+	BoardPieces.Add(PieceID, PieceInstance);
+
+	// Deploy the new piece in the square
+	PieceInstance->DeployInSquare(Square);
 }
 
 void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
 {
 
+}
+
+FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
+{
+	if(SquareIndex < 0 || SquareIndex >= BoardHeight * BoardWidth) return FVector();
+
+	return BoardSquares[SquareIndex]->GetTransform().GetLocation(); 
+}
+
+bool ABoardManager::CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID)
+{
+	// Check for invalid SquareID
+	if (SquareID < 0 || SquareID >= BoardHeight * BoardWidth) return false;
+
+	// Check if there is a piece in the desired play square
+	if (BoardSquares[SquareID]->GetPieceInSquare() != nullptr) return false;
+
+	// Check if the square is in the deployment line of the player
+	return (Player == EDavidPlayer::PLAYER_1 && SquareID < BoardWidth) ||
+		(Player == EDavidPlayer::PLAYER_2 && SquareID >= BoardHeight * (BoardWidth - 1));
 }

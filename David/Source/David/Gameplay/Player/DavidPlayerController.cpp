@@ -15,15 +15,51 @@
 #include "../Cards/CardData.h"
 #include "../DavidGameMode.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "../DavidPlayerState.h"
 
-void ADavidPlayerController::BeginPlay()
+void ADavidPlayerController::SetupPlayer()
 {
-	Super::BeginPlay();
-
 	if (!IsLocalPlayerController()) return;
 
-	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::BeginPlay()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::SetupPlayer()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
 
+	CreatePlayerHUD();
+
+	// Get reference to board manager if is not already set
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	// Get BoardManager reference
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
+	if (OutActors.Num() > 0)
+	{
+		ABoardManager* BoardManager = Cast<ABoardManager>(OutActors[0]);
+
+		if (BoardManager == nullptr) return;
+
+		BoardManager->InitializeBoard();
+
+		// Get the player camera spot
+		PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
+		UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
+
+		if (CameraSpot == nullptr) return;
+
+		PlayerCamera = Cast<UCameraComponent>(CameraSpot);
+
+		// Set view target to the camera
+		if (PlayerCameraActor)
+		{
+			SetViewTarget(PlayerCameraActor);
+		}
+	}
+
+	InitializationPartDone(EDavidPreMatchInitialization::PLAYER_INITIALIZED);
+}
+
+void ADavidPlayerController::CreatePlayerHUD()
+{
 	// Create gameplay HUD and attach to viewport
 	PlayerHUD = CreateWidget<UGameHUD>(this, PlayerHUDClass);
 	if (PlayerHUD != nullptr)
@@ -36,8 +72,6 @@ void ADavidPlayerController::BeginPlay()
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 	bShowMouseCursor = true;
-
-	if(bHasBeenInitialized) Server_PlayerReady();
 }
 
 void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -57,6 +91,26 @@ bool ADavidPlayerController::IsPlayerTurn()
 
 	return (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_1_TURN && PlayerIndex == EDavidPlayer::PLAYER_1)
 		|| (DavidGameState->GetMatchState() == EDavidMatchState::PLAYER_2_TURN && PlayerIndex == EDavidPlayer::PLAYER_2);
+}
+
+void ADavidPlayerController::InitializationPartDone(EDavidPreMatchInitialization Part)
+{
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::InitializationPartDone : %d"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"), (int)Part);
+
+	// Initialize the array if this is the first call
+	if (PreMatchInitializedParts.Num() == 0)
+	{
+		PreMatchInitializedParts.Init(false, (int)EDavidPreMatchInitialization::MAX_VALUE);
+	}
+
+	// Check the initialized part
+	PreMatchInitializedParts[Part] = true;
+
+	// Check if there is any part left to initialize
+	for (int i = 0; i < PreMatchInitializedParts.Num(); ++i)
+		if (!PreMatchInitializedParts[i]) return;
+
+	Server_PlayerReady();
 }
 
 bool ADavidPlayerController::GetBoardHitUnderCursor(FHitResult& Hit, const FVector2D& MousePosition)
@@ -100,11 +154,6 @@ void ADavidPlayerController::Server_EndTurnButtonPressed_Implementation()
 	DavidGameState->OnPlayerFinishedTurn(PlayerIndex);
 }
 
-void ADavidPlayerController::Server_RequestPlayCard_Implementation(FName CardRowName, int32 SquareID, int32 PlayID)
-{
-
-}
-
 void ADavidPlayerController::Server_PlayerReady_Implementation()
 {
 	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::Server_PlayerReady_Implementation()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
@@ -120,40 +169,4 @@ void ADavidPlayerController::Server_PlayerReady_Implementation()
 void ADavidPlayerController::OnRep_PlayerIndex()
 {
 	SetupPlayer();
-}
-
-void ADavidPlayerController::SetupPlayer()
-{
-	if (!IsLocalPlayerController()) return;
-
-	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidPlayerController::SetupPlayer()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
-
-	// Get reference to board manager if is not already set
-	UWorld* World = GetWorld();
-	if (World == nullptr) return;
-
-	// Get BoardManager reference
-	TArray<AActor*> OutActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
-	if (OutActors.Num() > 0)
-	{
-		ABoardManager* BoardManager = Cast<ABoardManager>(OutActors[0]);
-
-		// Get the player camera spot
-		PlayerCameraActor = BoardManager->GetPlayerCameraActor(PlayerIndex);
-		UActorComponent* CameraSpot = PlayerCameraActor->GetComponentByClass(UCameraComponent::StaticClass());
-
-		if (CameraSpot == nullptr) return;
-
-		PlayerCamera = Cast<UCameraComponent>(CameraSpot);
-
-		// Set view target to the camera
-		if (PlayerCameraActor)
-		{
-			SetViewTarget(PlayerCameraActor);
-		}
-	}
-
-	bHasBeenInitialized = true;
-	if (HasActorBegunPlay()) Server_PlayerReady();
 }

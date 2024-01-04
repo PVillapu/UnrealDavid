@@ -15,14 +15,15 @@ public:
 
 	void GenerateBoardSquares();
 
-	void PlayCardInSquare(const struct FCardData& CardData, int32 Square, int32 PieceID);
+	void PlayCardInSquare(const struct FCardData& CardData, const struct FGameCardData& GameCardData, int32 Square);
 
 	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
 
-	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) { return PlayerId == 0 ? Player1Camera : Player2Camera; }
+	FVector GetSquareLocation(int32 SquareIndex);
 
-protected:
-	virtual void BeginPlay() override;
+	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
+
+	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) { return PlayerId == 0 ? Player1Camera : Player2Camera; }
 
 	void InitializeBoard();
 

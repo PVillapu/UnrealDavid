@@ -41,23 +41,23 @@ public:
 	/* Returns if its this player controller turn */
 	bool IsPlayerTurn();
 
-	UFUNCTION(Server, reliable)
-	void Server_EndTurnButtonPressed();
+	/* Called when a mandatory pre match part of the game has been initialized */
+	void InitializationPartDone(EDavidPreMatchInitialization Part);
 
 	UFUNCTION(Server, reliable)
-	void Server_RequestPlayCard(FName CardRowName, int32 SquareID, int32 PlayID);
+	void Server_EndTurnButtonPressed();
 
 	/* Called by the client when this PlayerController Client is ready to start */
 	UFUNCTION(Server, reliable)
 	void Server_PlayerReady();
 
 private:
-	virtual void BeginPlay() override;
-
 	UFUNCTION()
 	void OnRep_PlayerIndex();
 
 	void SetupPlayer();
+
+	void CreatePlayerHUD();
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
@@ -91,5 +91,5 @@ private:
 	APlayerCards* PlayerCards;
 
 	UPROPERTY(SkipSerialization, Transient)
-	bool bHasBeenInitialized = false;
+	TArray<bool> PreMatchInitializedParts;
 };

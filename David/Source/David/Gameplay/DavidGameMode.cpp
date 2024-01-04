@@ -50,19 +50,17 @@ void ADavidGameMode::PostLogin(APlayerController* NewPlayer)
 		DavidPlayerController->SetPlayerIndex(NumberOfPlayers == 1 ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2);
 	}
 
+	if (NumberOfPlayers == 1) Player1 = DavidPlayerController;
+	else Player2 = DavidPlayerController;
+
 	UWorld* World = GetWorld();
 	if (World == nullptr) return;
 
 	// Spawn the player cards manager
-	FActorSpawnParameters SpawnParameters;
-	SpawnParameters.Owner = NewPlayer;
 	FTransform SpawnTransform;
-	APlayerCards* PlayerCards = Cast<APlayerCards>(World->SpawnActor(APlayerCards::StaticClass(), &SpawnTransform, SpawnParameters));
-	DavidPlayerController->SetPlayerCards(PlayerCards);
-
-	// WIP for the moment we just take all existing cards in the CardsDataTable
-	TArray<FName> PlayerCardNames = DavidPlayerController->GetCardsDataTable()->GetRowNames();
-	PlayerCards->SetupPlayerCards(PlayerCardNames);
+	APlayerCards* PlayerCards = Cast<APlayerCards>(World->SpawnActor(APlayerCards::StaticClass(), &SpawnTransform));
+	PlayerCards->SetOwner(NewPlayer);
+	PlayerCards->SetupPlayerCards();
 
 	// Debug message
 	if (GEngine)
@@ -103,6 +101,11 @@ void ADavidGameMode::OnPlayerReady(EDavidPlayer Player)
 	if (Player == EDavidPlayer::PLAYER_1) Player1Ready = true;
 	else Player2Ready = true;
 
+	// WIP for the moment we just take all existing cards in the CardsDataTable
+	ADavidPlayerController* DavidPlayerController = Player == EDavidPlayer::PLAYER_1 ? Player1 : Player2;
+	TArray<FName> PlayerCardNames = DavidPlayerController->GetCardsDataTable()->GetRowNames();
+	DavidPlayerController->GetPlayerCards()->SetPlayerDeck(PlayerCardNames);
+
 	if (Player2Ready && Player1Ready)
 	{
 		MatchStarted = true;
@@ -112,10 +115,6 @@ void ADavidGameMode::OnPlayerReady(EDavidPlayer Player)
 
 void ADavidGameMode::StartGame()
 {
-	ADavidGameState* DavidGameState = Cast<ADavidGameState>(GameState);
-
-	if (DavidGameState == nullptr) return;
-
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(
@@ -125,5 +124,9 @@ void ADavidGameMode::StartGame()
 			FString::Printf(TEXT("Game starts"))
 		);
 	}
-	DavidGameState->StartTurnsCycle();
+
+	if (ADavidGameState* DavidGameState = Cast<ADavidGameState>(GameState)) 
+	{
+		DavidGameState->StartTurnsCycle();
+	}
 }

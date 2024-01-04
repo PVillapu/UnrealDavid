@@ -15,6 +15,8 @@ class DAVID_API UHandManager : public UUserWidget
 public:
 	void AddCardToHand(const struct FGameCardData& Card);
 
+	void OnPlayCardResponse(int32 CardID, bool Response);
+
 private:
 	void CalculateCardsPositions() const;
 
@@ -53,18 +55,19 @@ private:
 
 	FVector2D CalculateCardDragPosition(const FVector2D ViewportPosition, const FVector2D& ViewportSize) const;
 
+	UCardWidget* GetAvailableCardWidget();
+
+	void ReturnCardWidget(UCardWidget* CardWidget);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
 	class UDataTable* CardsDataTable;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	TSubclassOf<class UUserWidget> CardWidget;
+	TSubclassOf<class UUserWidget> CardWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
 	class UOverlay* CardOverlay;
-
-	UPROPERTY()
-	TArray<class UCardWidget*> HandCards;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	float CardAngle = 10.f;
@@ -95,4 +98,10 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	AActor* LastMouseDragActor;
+
+	UPROPERTY(Transient, SkipSerialization)
+	TArray<UCardWidget*> AvailableCardWidgets;
+
+	UPROPERTY(Transient, SkipSerialization)
+	TArray<class UCardWidget*> HandCards;
 };

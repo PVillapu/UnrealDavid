@@ -16,10 +16,13 @@ class DAVID_API UGameHUD : public UUserWidget
 public:
 	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManager; }
 
-protected:
+private:
 	void NativeConstruct() override;
 
 	void NativeDestruct() override;
+
+	UFUNCTION()
+	void SetupGameHUD(class ADavidGameState* GameState, class ADavidPlayerState* PlayerState);
 
 	UFUNCTION()
 	void OnMatchStateChanged(EDavidMatchState PlayerTurn);
@@ -32,6 +35,8 @@ protected:
 
 	UFUNCTION()
 	void OnPlayerGoldUpdates(int32 PlayerGold);
+
+	void CheckForAvailablePlayerState();
 
 protected:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
@@ -53,7 +58,7 @@ protected:
 	class UTextBlock* PlayerGoldText;
 
 	UPROPERTY(Transient, SkipSerialization)
-	class ADavidGameState* DavidGameState;
+	ADavidGameState* DavidGameState;
 
 private:
 	// Delegate handlers
@@ -61,4 +66,8 @@ private:
 
 	FDelegateHandle OnPlayerTurnTimeUpdatedDelegateHandler;
 
+	FDelegateHandle OnGameStateReplicatedDelegateHandler;
+
+	// Timer handler
+	FTimerHandle PlayerStateCheckTimerHandler;
 };

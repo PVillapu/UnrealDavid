@@ -19,3 +19,13 @@ enum EDavidPlayer : int
 	PLAYER_1,
 	PLAYER_2
 };
+
+UENUM()
+enum EDavidPreMatchInitialization : int
+{
+	PLAYER_INITIALIZED = 0,
+	BOARD_INITIALIZED,
+	PLAYER_CARDS_INITIALIZED,
+	PLAYER_HUD_INITIALIZED,
+	MAX_VALUE	// Must be always the last value
+};

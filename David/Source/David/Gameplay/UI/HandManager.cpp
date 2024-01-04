@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "CardDragDropOperation.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
+#include "../Player/PlayerCards.h"
 
 void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 {
@@ -17,20 +18,14 @@ void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 	if (CardData == nullptr) return;
 
 	// Create Card widget
-	UCardWidget* NewCard = CreateWidget<UCardWidget>(GetOwningPlayer(), CardWidget);
+	UCardWidget* NewCard = GetAvailableCardWidget();
+	if (NewCard == nullptr) return;
 
 	// Setup Card Widget
 	NewCard->SetupCard(*CardData, GameCardData.CardID);
-	CardOverlay->AddChild(NewCard);
 
 	// Add to hand cards array
 	HandCards.Add(NewCard);
-	
-	// Bind delegates
-	NewCard->OnHoveredCardDelegate.BindUObject(this, &UHandManager::OnCardHovered);
-	NewCard->OnUnhoveredCardDelegate.BindUObject(this, &UHandManager::OnCardUnhovered);
-	NewCard->OnGrabbedCardDelegate.BindUObject(this, &UHandManager::OnCardGrabbed);
-	NewCard->OnLeftCardDelegate.BindUObject(this, &UHandManager::OnCardLeft); // TODO: IMPORTANT - REMOVE BINDINGS WHEN CARD IS PLAYED OR DESTROYED
 
 	// Calculate cards positions in hand
 	CalculateCardsPositions();
@@ -174,6 +169,7 @@ void UHandManager::TryCastCardInBoard(UCardWidget& Card)
 
 void UHandManager::ReturnCardToHand(UCardWidget& Card)
 {
+	// Make the card visible again
 	Card.SetRenderOpacity(1.f);
 	Card.SetVisibility(ESlateVisibility::Visible);
 
@@ -182,8 +178,6 @@ void UHandManager::ReturnCardToHand(UCardWidget& Card)
 
 void UHandManager::PlayCardInBoardSquare(UCardWidget& Card, ABoardSquare* BoardSquare)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Sending play card request to server"));
-
 	// Hide the card until server confirms or reject the play
 	Card.SetRenderOpacity(0.f);
 	Card.SetVisibility(ESlateVisibility::Hidden);
@@ -191,9 +185,29 @@ void UHandManager::PlayCardInBoardSquare(UCardWidget& Card, ABoardSquare* BoardS
 	if (UWorld* World = GetWorld()) 
 	{
 		ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
-		if (DavidPlayerController == nullptr) return;
+		if (DavidPlayerController == nullptr && DavidPlayerController->GetPlayerCards()) return;
+		
+		// Send the play card request to the server
+		DavidPlayerController->GetPlayerCards()->Server_PlayCardRequest(Card.GetGameCardID(), BoardSquare->GetSquareIndex());
+	}
+}
 
-		// TODO: PlayCardRequest
+void UHandManager::OnPlayCardResponse(int32 CardID, bool Response)
+{
+	// Search the response target Card
+	UCardWidget* Card = *HandCards.FindByPredicate([CardID](UCardWidget* HandCard) { return HandCard->GetGameCardID() == CardID; });
+	if (Card == nullptr) return;
+
+	if (Response) 
+	{
+		// If card was played, remove from hand
+		HandCards.Remove(Card);	
+		ReturnCardWidget(Card);
+	}
+	else
+	{
+		// If card was rejected, return to the player hand
+		ReturnCardToHand(*Card);
 	}
 }
 
@@ -240,4 +254,55 @@ FVector2D UHandManager::CalculateCardDragPosition(const FVector2D ViewportPositi
 	Result.Y -= (ViewportSize.Y - HandWidgetSize.Y);
 	
 	return Result;
+}
+
+UCardWidget* UHandManager::GetAvailableCardWidget()
+{
+	UCardWidget* CardWidget;
+
+	if (AvailableCardWidgets.Num() > 0)
+	{
+		// Get Card widget from the available list
+		CardWidget = AvailableCardWidgets[0];
+		AvailableCardWidgets.Remove(CardWidget);
+	}
+	else 
+	{
+		// Create Card widget
+		CardWidget = CreateWidget<UCardWidget>(GetOwningPlayer(), CardWidgetClass);
+		CardOverlay->AddChild(CardWidget);
+	}
+
+	if (CardWidget == nullptr) return nullptr;
+
+	// Enable widget
+	CardWidget->SetRenderOpacity(1);
+	CardWidget->SetVisibility(ESlateVisibility::Visible);
+
+	// Bind delegates
+	CardWidget->OnHoveredCardDelegate.BindUObject(this, &UHandManager::OnCardHovered);
+	CardWidget->OnUnhoveredCardDelegate.BindUObject(this, &UHandManager::OnCardUnhovered);
+	CardWidget->OnGrabbedCardDelegate.BindUObject(this, &UHandManager::OnCardGrabbed);
+	CardWidget->OnLeftCardDelegate.BindUObject(this, &UHandManager::OnCardLeft);
+
+	return CardWidget;
+}
+
+void UHandManager::ReturnCardWidget(UCardWidget* CardWidget)
+{
+	// Check if it is already in the available list
+	if (AvailableCardWidgets.Contains(CardWidget)) return;
+
+	// Disable it
+	CardWidget->SetRenderOpacity(0);
+	CardWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	// Unbind delegates
+	CardWidget->OnHoveredCardDelegate.Unbind();
+	CardWidget->OnUnhoveredCardDelegate.Unbind();
+	CardWidget->OnGrabbedCardDelegate.Unbind();
+	CardWidget->OnLeftCardDelegate.Unbind();
+	
+	// Return to the list of available CardWidgets
+	AvailableCardWidgets.Add(CardWidget);
 }

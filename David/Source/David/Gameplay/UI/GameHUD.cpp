@@ -5,29 +5,17 @@
 #include "../DavidGameState.h"
 #include "../Player/DavidPlayerController.h"
 #include "../DavidPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 void UGameHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	EndTurnButton->SetIsEnabled(false);
-	EndTurnButton->SetRenderOpacity(0.5f);
-
 	UWorld* World = GetWorld();
 	if (World == nullptr) return;
-	
-	DavidGameState = Cast<ADavidGameState>(World->GetGameState());
-	if (DavidGameState == nullptr) return;
 
-	// Bind delegates
-	OnPlayerTurnChangedDelegateHandler = DavidGameState->OnPlayerTurnChangedDelegate.AddUObject(this, &UGameHUD::OnMatchStateChanged);
-	OnPlayerTurnTimeUpdatedDelegateHandler = DavidGameState->OnPlayerTurnTimeUpdatedDelegate.AddUObject(this, &UGameHUD::OnPlayerTurnTimeUpdated);
-	EndTurnButton->OnClicked.AddDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
-
-	if (ADavidPlayerState* DavidPlayerState = World->GetFirstPlayerController()->GetPlayerState<ADavidPlayerState>())
-	{
-		DavidPlayerState->OnPlayerGoldChanged.AddUObject(this, &UGameHUD::OnPlayerGoldUpdates);
-	}
+	// Start the Game and Player state checker
+	World->GetTimerManager().SetTimer(PlayerStateCheckTimerHandler, this, &UGameHUD::CheckForAvailablePlayerState, 0.2f, true);
 }
 
 void UGameHUD::NativeDestruct()
@@ -40,6 +28,33 @@ void UGameHUD::NativeDestruct()
 	DavidGameState->OnPlayerTurnChangedDelegate.Remove(OnPlayerTurnChangedDelegateHandler);
 	DavidGameState->OnPlayerTurnTimeUpdatedDelegate.Remove(OnPlayerTurnTimeUpdatedDelegateHandler);
 	EndTurnButton->OnClicked.RemoveDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
+}
+
+void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* PlayerState)
+{
+	DavidGameState = Cast<ADavidGameState>(GameState);
+	if (DavidGameState == nullptr) return;
+	
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	World->GameStateSetEvent.Remove(OnGameStateReplicatedDelegateHandler);
+
+	EndTurnButton->SetIsEnabled(false);
+	EndTurnButton->SetRenderOpacity(0.5f);
+
+	// Bind delegates
+	OnPlayerTurnChangedDelegateHandler = DavidGameState->OnPlayerTurnChangedDelegate.AddUObject(this, &UGameHUD::OnMatchStateChanged);
+	OnPlayerTurnTimeUpdatedDelegateHandler = DavidGameState->OnPlayerTurnTimeUpdatedDelegate.AddUObject(this, &UGameHUD::OnPlayerTurnTimeUpdated);
+	EndTurnButton->OnClicked.AddDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
+
+	// Bind PlayerGold updates
+	if(PlayerState)
+		PlayerState->OnPlayerGoldChanged.AddUObject(this, &UGameHUD::OnPlayerGoldUpdates);
+
+	// Mark HUD initialization as done
+	if(ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController()))
+		DavidPlayerController->InitializationPartDone(EDavidPreMatchInitialization::PLAYER_HUD_INITIALIZED);
 }
 
 void UGameHUD::OnMatchStateChanged(EDavidMatchState PlayerTurn)
@@ -88,4 +103,32 @@ void UGameHUD::OnPlayerPressedEndTurnButton()
 void UGameHUD::OnPlayerGoldUpdates(int32 PlayerGold)
 {
 	PlayerGoldText->SetText(FText::FromString(FString::Printf(TEXT("%d"), PlayerGold)));
+}
+
+void UGameHUD::CheckForAvailablePlayerState()
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	if(DavidGameState == nullptr)
+		DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+
+	if (DavidGameState) 
+	{
+		APlayerController* PlayerController = World->GetFirstPlayerController();
+		for (int i = 0; i < DavidGameState->PlayerArray.Num(); ++i)
+		{
+			// Check if the player state object is available
+			if (DavidGameState->PlayerArray[i]->GetPlayerController() == PlayerController) 
+			{
+				// Stop timer
+				World->GetTimerManager().ClearTimer(PlayerStateCheckTimerHandler);
+				
+				// Get DavidPlayerState reference to call the setup function
+				ADavidPlayerState* DavidPlayerState = Cast<ADavidPlayerState>(DavidGameState->PlayerArray[i]);
+				SetupGameHUD(DavidGameState, DavidPlayerState);
+				return;
+			}
+		}
+	}
 }

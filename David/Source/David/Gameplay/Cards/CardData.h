@@ -10,7 +10,7 @@ struct FCardData : public FTableRowBase
     GENERATED_USTRUCT_BODY()
 	
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    UStaticMesh* CardMesh;
+    USkeletalMesh* PieceMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     TSubclassOf<class APieceActor> CardPieceActor;

@@ -16,7 +16,7 @@ public:
 	// Replication setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	FORCEINLINE void IncreasePlayerGold(int32 Ammount) { PlayerGold += Ammount; }
+	FORCEINLINE void IncreasePlayerGold(int32 Ammount) { PlayerGold += Ammount; OnPlayerGoldUpdated(); }
 
 private:
 	UFUNCTION()

@@ -20,12 +20,12 @@ void ADavidGameState::BeginPlay()
 
 	if (!HasAuthority()) return;
 
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
 	// Get BoardManager reference
 	if (BoardManager == nullptr)
 	{
-		UWorld* World = GetWorld();
-		if (World == nullptr) return;
-
 		TArray<AActor*> OutActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
 		if (OutActors.Num() > 0)
