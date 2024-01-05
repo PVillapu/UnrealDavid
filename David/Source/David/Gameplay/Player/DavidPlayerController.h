@@ -72,9 +72,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TEnumAsByte<ECollisionChannel> BoardCollisionChannel;
 
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	class UInputAction* PlayCardAction;
-
 	UPROPERTY(SkipSerialization, Transient)
 	AActor* PlayerCameraActor;
 
