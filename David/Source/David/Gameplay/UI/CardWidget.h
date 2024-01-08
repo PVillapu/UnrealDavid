@@ -13,7 +13,6 @@ class DAVID_API UCardWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable)
 	void SetupCard(const struct FCardData& CardData, int32 GameCardID);
 
 	void StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed);

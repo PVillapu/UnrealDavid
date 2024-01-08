@@ -133,7 +133,6 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 		// Reject the request
 		Client_CardRequestResponse(CardID, false);
 	}
-
 }
 
 void APlayerCards::Client_CardRequestResponse_Implementation(int32 CardID, bool Response)

@@ -17,7 +17,7 @@ public:
 	// Replication setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// Performs a line trace over the board and returns the result
+	// Performs a line trace over the board and returns the result ------------ REMOVE ----------
 	bool GetBoardHitUnderCursor(FHitResult& Result, const FVector2D& MousePosition);
 
 	/* Sets the player index.Should only be called by the server */ 

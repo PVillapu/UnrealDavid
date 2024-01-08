@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../Misc/Enums.h"
+#include "../Piece/PieceAction.h"
+#include "Containers/Queue.h"
 #include "BoardManager.generated.h"
 
 UCLASS()
@@ -27,11 +29,13 @@ public:
 
 	void InitializeBoard();
 
+	void AddTurnAction(FPieceAction* PieceAction);
+
 private:
 
-	FORCEINLINE int32 GetBoardIndex(int32 Row, int32 Col) const { return Row * BoardHeight + BoardWidth; }
+	FORCEINLINE int32 GetBoardIndex(int32 Row, int32 Col) const { return Row * BoardHeight + Col; }
 
-protected:
+private:
 	UPROPERTY(EditAnywhere, Category = "David")
 	int32 BoardHeight = 6;
 
@@ -56,6 +60,8 @@ protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TMap<int32, class APieceActor*> BoardPieces;
+
+	TQueue<FPieceAction*> TurnActionsQueue;
 
 	int32 PieceIdCounter;
 };

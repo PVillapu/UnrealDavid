@@ -25,6 +25,11 @@ void ABoardManager::InitializeBoard()
 	}
 }
 
+void ABoardManager::AddTurnAction(FPieceAction* PieceAction)
+{
+	TurnActionsQueue.Enqueue(PieceAction);
+}
+
 void ABoardManager::GenerateBoardSquares()
 {
 	UWorld* World = GetWorld();
@@ -43,7 +48,7 @@ void ABoardManager::GenerateBoardSquares()
 		const int col = i % BoardHeight;
 
 		// Set the spawn location and rotation
-		const FVector SpawnLocation = FVector(row * SquaresOffset, col * SquaresOffset, 0.0f);
+		const FVector SpawnLocation = FVector(col * SquaresOffset, row * SquaresOffset, 0.0f);
 		const FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
 
 		// Spawn the actor
@@ -63,11 +68,13 @@ void ABoardManager::PlayCardInSquare(const FCardData& CardData, const FGameCardD
 {
 	// Spawn the piece actor
 	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData.CardPieceActor);
-	PieceInstance->SetupPiece(this, GameCardData, CardData);
 
 	// Register piece
 	int32 PieceID = PieceIdCounter++;
 	BoardPieces.Add(PieceID, PieceInstance);
+
+	// Setup piece
+	PieceInstance->SetupPiece(this, GameCardData, CardData, PieceID);
 
 	// Deploy the new piece in the square
 	PieceInstance->DeployInSquare(Square);

@@ -8,9 +8,6 @@ USTRUCT(BlueprintType)
 struct FCardData : public FTableRowBase
 {
     GENERATED_USTRUCT_BODY()
-	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    USkeletalMesh* PieceMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     TSubclassOf<class APieceActor> CardPieceActor;
