@@ -113,14 +113,14 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 
 		// Get Cards data to complete the request
 		FGameCardData* GameCardData = PlayerHandCards.FindByPredicate([CardID](FGameCardData& HandCard) { return HandCard.CardID == CardID; });
-		UDataTable* CardsDataTable = PlayerController->GetCardsDataTable();
-		FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData->CardName, "");
 
-		if (GameCardData && CardData) 
+		if (GameCardData) 
 		{
+			EDavidPlayer Player = PlayerController->GetDavidPlayer();
+
 			// Accept the request and play the card
 			Client_CardRequestResponse(CardID, true);
-			BoardManager->PlayCardInSquare(*CardData, *GameCardData, SquareID);
+			BoardManager->PlayCardInSquare(*GameCardData, SquareID, Player);
 		}
 		else 
 		{

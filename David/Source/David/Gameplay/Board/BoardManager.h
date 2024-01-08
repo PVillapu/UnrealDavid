@@ -17,9 +17,11 @@ public:
 
 	void GenerateBoardSquares();
 
-	void PlayCardInSquare(const struct FCardData& CardData, const struct FGameCardData& GameCardData, int32 Square);
+	void PlayCardInSquare(struct FGameCardData& CardData, int32 SquareID, EDavidPlayer Player);
 
 	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
+
+	void PlayTurnActions();
 
 	FVector GetSquareLocation(int32 SquareIndex);
 
@@ -32,6 +34,9 @@ public:
 	void AddTurnAction(FPieceAction* PieceAction);
 
 private:
+
+	UFUNCTION(NetMulticast, reliable)
+	void NetMulticast_DeployPieceInSquare(FGameCardData CardData, int32 SquareID, int32 PieceID, EDavidPlayer Player);
 
 	FORCEINLINE int32 GetBoardIndex(int32 Row, int32 Col) const { return Row * BoardHeight + Col; }
 

@@ -7,11 +7,13 @@
 APieceActor::APieceActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = false;
+
 	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
 }
 
-void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, const FCardData& CardData, int32 ID)
+void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, const FCardData& CardData, int32 ID, EDavidPlayer PieceOwner)
 {
 	BoardManager = BoardManager;
 
@@ -19,14 +21,21 @@ void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardDa
 	CurrentAttack = BaseAttack = GameCardData.PieceAttack;
 
 	PieceID = ID;
+	PlayerOwner = PieceOwner;
 }
 
 void APieceActor::ProcessTurn()
 {
+	bHasBeenProcessed = true;
 }
 
-void APieceActor::ProcessActions(const FPieceAction& Action)
+void APieceActor::ProcessAction(const FPieceAction& Action)
 {
+}
+
+void APieceActor::OnBeginTurn()
+{
+	bHasBeenProcessed = false;
 }
 
 void APieceActor::RegisterPieceAction(EPieceAction PieceAction) const
@@ -45,18 +54,6 @@ void APieceActor::DeployInSquare(int32 SquareIndex)
 
 void APieceActor::OnDeployPieceInSquare(int32 SquareIndex)
 {
-	// Get BoardManager reference
-	if (BoardManager == nullptr) 
-	{
-		// Get BoardManager reference
-		TArray<AActor*> OutActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABoardManager::StaticClass(), OutActors);
-		if (OutActors.Num() > 0)
-		{
-			BoardManager = Cast<ABoardManager>(OutActors[0]);
-		}
-	}
-
 	FVector DeployLocation = BoardManager->GetSquareLocation(SquareIndex);
 	SetActorLocation(DeployLocation);
 }

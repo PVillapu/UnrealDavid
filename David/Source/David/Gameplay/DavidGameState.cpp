@@ -98,7 +98,7 @@ void ADavidGameState::ChangeMatchState()
 	{
 		LastTurnPlayer = MatchState == EDavidMatchState::PLAYER_1_TURN ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2;
 		MatchState = EDavidMatchState::PROCESSING_TURN;
-		ProcessPlayerTurn();
+		ProcessPlayerTurn(LastTurnPlayer == EDavidMatchState::PLAYER_1_TURN ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2);
 	}
 	else if (MatchState == EDavidMatchState::PROCESSING_TURN) 
 	{
@@ -136,9 +136,12 @@ void ADavidGameState::OnTurnTimeUpdated() const
 	OnPlayerTurnTimeUpdatedDelegate.Broadcast(CurrentTurnTimeLeft);
 }
 
-void ADavidGameState::ProcessPlayerTurn()
+void ADavidGameState::ProcessPlayerTurn(EDavidPlayer Player)
 {
 	if (BoardManager == nullptr) return;
+
+	BoardManager->ProcessPlayerTurn(Player);
+	BoardManager->PlayTurnActions();
 
 	ChangeMatchState();
 }
