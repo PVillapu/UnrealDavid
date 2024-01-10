@@ -6,6 +6,10 @@
 #include "../Misc/Enums.h"
 #include "PieceActor.generated.h"
 
+/* 
+Piece actor, all methods that correspond to the turn processing must have Process_ prefix,
+and all methods used to play actions nust have Action_ prefix
+*/
 UCLASS()
 class DAVID_API APieceActor : public AActor
 {
@@ -16,6 +20,8 @@ private:
 
 public:	
 	APieceActor();
+
+	void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
 	virtual void SetupPiece(class ABoardManager* BoardManager, const struct FGameCardData& GameCardData, const struct FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
@@ -37,13 +43,36 @@ public:
 	FORCEINLINE bool HasBeenProcessed() { return bHasBeenProcessed; }
 
 	/* Return the player that own this piece */
-	FORCEINLINE EDavidPlayer GetOwnerPlayer() { return PlayerOwner;	}
+	FORCEINLINE EDavidPlayer GetOwnerPlayer() { return DavidPlayerOwner;	}
+
+	/* Sets the current square of this piece */
+	FORCEINLINE void SetBoardSquare(class ABoardSquare* SquareActor) { Square = SquareActor; }
+
+	/* Gets the current square of this piece */
+	FORCEINLINE ABoardSquare* GetBoardSquare() { return Square; }
 
 protected:
 	virtual void OnDeployPieceInSquare(int32 SquareIndex);
 
 	/* Registers a PieceAction in the board to later play it */
 	void RegisterPieceAction(EPieceAction PieceAction) const;
+
+	/* Registers a PieceAction in the board to later play it */
+	void RegisterPieceAction(EPieceAction PieceAction, TArray<uint8>& Payload) const;
+
+	/* -------------------- Turn process methods ----------------------- */
+
+	void Process_MoveForward();
+
+	void Process_AttackFrontPiece();
+
+	/* -------------------- Turn actions methods ------------------------ */
+
+	virtual void Action_MoveForward(const TArray<uint8>& Payload);
+
+	virtual void Action_AttackFrontPiece();
+
+	void HandlePieceMovement(float DeltaSeconds);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
@@ -67,7 +96,26 @@ protected:
 	UPROPERTY(Transient, SkipSerialization)
 	bool bHasBeenProcessed = false;
 
+	EDavidPlayer DavidPlayerOwner;
+
+	UPROPERTY(Transient, SkipSerialization)
+	ABoardSquare* Square;
+	
 	int32 PieceID;
 
-	EDavidPlayer PlayerOwner;
+	/* ---------- Movement variables  ---------------- */
+
+	UPROPERTY(Transient, SkipSerialization)
+	FVector TargetLocation;
+
+	UPROPERTY(Transient, SkipSerialization)
+	FVector OriginLocation;
+
+	/* Time that takes the movement to reach the destination */
+	float MovementTime = 0.7f;
+
+	/* Stores the time since movement started */
+	float MovementDelta = 0.f;
+
+	bool bIsMoving = false;
 };

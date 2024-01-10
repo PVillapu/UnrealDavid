@@ -51,6 +51,9 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_PlayerReady();
 
+	UFUNCTION(Server, reliable)
+	void Server_PlayerActionsProcessed();
+
 private:
 	UFUNCTION()
 	void OnRep_PlayerIndex();

@@ -165,6 +165,18 @@ void ADavidPlayerController::Server_PlayerReady_Implementation()
 	}
 }
 
+void ADavidPlayerController::Server_PlayerActionsProcessed_Implementation()
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+	if (DavidGameState == nullptr) return;
+
+	// Notify gamestate
+	DavidGameState->OnPlayerPlayedTurnActions();
+}
+
 void ADavidPlayerController::OnRep_PlayerIndex()
 {
 	SetupPlayer();

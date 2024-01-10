@@ -5,6 +5,7 @@
 #include "../Board/BoardSquare.h"
 #include "../Player/DavidPlayerController.h"
 #include "../Cards/GameCardData.h"
+#include "../DavidGameState.h"
 
 ABoardManager::ABoardManager()
 {
@@ -26,9 +27,9 @@ void ABoardManager::InitializeBoard()
 	}
 }
 
-void ABoardManager::AddTurnAction(FPieceAction* PieceAction)
+void ABoardManager::RegisterTurnAction(const FPieceAction& PieceAction)
 {
-	TurnActionsQueue.Enqueue(PieceAction);
+	TurnActionsQueue.Add(PieceAction);
 }
 
 void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID, EDavidPlayer Player)
@@ -63,6 +64,13 @@ void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardDat
 
 	// Deploy the new piece in the square
 	PieceInstance->DeployInSquare(SquareID);
+
+	// Update board state in server
+	if (HasAuthority())
+	{
+		BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
+		PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
+	}
 }
 
 FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
@@ -93,7 +101,7 @@ APieceActor* FindNextPieceToProcess(const TArray<ABoardSquare*>& BoardSquares, E
 		int32 SquareIndex = Player == EDavidPlayer::PLAYER_1 ? i : (BoardSquares.Num() - 1) - i;
 
 		APieceActor* Piece = BoardSquares[SquareIndex]->GetPieceInSquare();
-		if (Piece->GetOwnerPlayer() != Player || Piece->HasBeenProcessed()) continue;
+		if (Piece == nullptr || Piece->GetOwnerPlayer() != Player || Piece->HasBeenProcessed()) continue;
 
 		// Found the next piece to be processed
 		return Piece;
@@ -126,15 +134,73 @@ void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
 	} while (PieceToProcess);
 }
 
-void ABoardManager::PlayTurnActions()
+void ABoardManager::SendTurnActions()
 {
+	NetMulticast_SendTurnActions(TurnActionsQueue);
+}
 
+void ABoardManager::NetMulticast_SendTurnActions_Implementation(const TArray<FPieceAction>& Actions)
+{
+	TurnActionsQueue = Actions;
+
+	PlayTurnAction();
+}
+
+void ABoardManager::PlayTurnAction()
+{
+	// Once all actions has been processed, send a message to server and wait
+	if (TurnActionsQueue.IsEmpty()) 
+	{
+		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetWorld()->GetFirstPlayerController());
+		
+		if(PlayerController)
+			PlayerController->Server_PlayerActionsProcessed();
+
+		return;
+	}
+
+	// Pop the next piece action to process
+	const FPieceAction PieceAction = TurnActionsQueue[0];
+	TurnActionsQueue.RemoveAt(0);
+
+	// Find the piece that needs to process the action
+	APieceActor* PieceActor = *BoardPieces.Find(PieceAction.PieceID);
+	if (PieceActor) 
+	{
+		// Process the action
+		PieceActor->ProcessAction(PieceAction);
+	}
+}
+
+void ABoardManager::OnActionComplete()
+{
+	PlayTurnAction();
+}
+
+bool ABoardManager::IsSquareOccupied(int32 Square) const
+{
+	return IsValidSquare(Square) && BoardSquares[Square]->GetPieceInSquare() != nullptr;
+}
+
+void ABoardManager::MovePieceToSquare(APieceActor* Piece, int32 TargetSquare)
+{
+	// Remove reference of the last board square
+	if(Piece->GetBoardSquare())
+		Piece->GetBoardSquare()->SetPieceInSquare(nullptr);
+
+	// Update board and piece
+	BoardSquares[TargetSquare]->SetPieceInSquare(Piece);
+	Piece->SetBoardSquare(BoardSquares[TargetSquare]);
+}
+
+APieceActor* ABoardManager::GetPieceInSquare(int32 BoardSquare) const
+{
+	return BoardSquares[BoardSquare]->GetPieceInSquare();
 }
 
 void ABoardManager::GenerateBoardSquares()
 {
 	UWorld* World = GetWorld();
-
 	if (World == nullptr) return;
 
 	// Set the spawn parameters

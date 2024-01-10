@@ -18,7 +18,7 @@ public:
 
 	FORCEINLINE void SetPieceInSquare(class APieceActor* Piece) { PieceInSquare = Piece; }
 
-	FORCEINLINE APieceActor* GetPieceInSquare() { return PieceInSquare; }
+	FORCEINLINE APieceActor* GetPieceInSquare() const { return PieceInSquare; }
 
 	FORCEINLINE void SetSquareIndex(int32 Index) { SquareIndex = Index; }
 

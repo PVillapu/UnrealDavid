@@ -4,8 +4,9 @@
 #include "GameFramework/Actor.h"
 #include "../Misc/Enums.h"
 #include "../Piece/PieceAction.h"
-#include "Containers/Queue.h"
 #include "BoardManager.generated.h"
+
+class ABoardSquare;
 
 UCLASS()
 class DAVID_API ABoardManager : public AActor
@@ -21,22 +22,41 @@ public:
 
 	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
 
-	void PlayTurnActions();
+	void SendTurnActions();
+
+	void PlayTurnAction();
+
+	void OnActionComplete();
 
 	FVector GetSquareLocation(int32 SquareIndex);
 
 	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
 
-	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) { return PlayerId == 0 ? Player1Camera : Player2Camera; }
-
 	void InitializeBoard();
 
-	void AddTurnAction(FPieceAction* PieceAction);
+	void RegisterTurnAction(const FPieceAction& PieceAction);
+
+	bool IsSquareOccupied(int32 TargetSquare) const;
+
+	void MovePieceToSquare(class APieceActor* Piece, int32 TargetSquare);
+
+	APieceActor* GetPieceInSquare(int32 BoardSquare) const;
+
+	FORCEINLINE bool IsValidSquare(int32 SquareIndex) const { return (SquareIndex >= 0 && SquareIndex < BoardSquares.Num()); }
+
+	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) const { return PlayerId == 0 ? Player1Camera : Player2Camera; }
+
+	FORCEINLINE int32 GetBoardHeight() const { return BoardHeight; }
+
+	FORCEINLINE int32 GetBoardWidth() const { return BoardWidth; }
 
 private:
 
 	UFUNCTION(NetMulticast, reliable)
 	void NetMulticast_DeployPieceInSquare(FGameCardData CardData, int32 SquareID, int32 PieceID, EDavidPlayer Player);
+
+	UFUNCTION(NetMulticast, reliable)
+	void NetMulticast_SendTurnActions(const TArray<FPieceAction>& TurnActions);
 
 	FORCEINLINE int32 GetBoardIndex(int32 Row, int32 Col) const { return Row * BoardHeight + Col; }
 
@@ -64,9 +84,10 @@ private:
 	TArray<ABoardSquare*> BoardSquares;
 
 	UPROPERTY(Transient, SkipSerialization)
-	TMap<int32, class APieceActor*> BoardPieces;
+	TMap<int32, APieceActor*> BoardPieces;
 
-	TQueue<FPieceAction*> TurnActionsQueue;
+	UPROPERTY()
+	TArray<FPieceAction> TurnActionsQueue;
 
 	int32 PieceIdCounter;
 };

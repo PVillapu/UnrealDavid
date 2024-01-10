@@ -28,6 +28,8 @@ public:
 	/* Called when a player ends its turn */ 
 	void OnPlayerFinishedTurn(EDavidPlayer Player);
 
+	void OnPlayerPlayedTurnActions();
+
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
 
 private:
@@ -50,7 +52,7 @@ private:
 	void OnTurnTimeUpdated() const;
 
 	/* Called when a player turn ends and turn must be processed */
-	void ProcessPlayerTurn(EDavidPlayer Player);
+	void PlayPlayerTurn(EDavidPlayer Player);
 
 	/* Called when a player turn starts */
 	void StartPlayerTurn(EDavidPlayer Player);
@@ -96,4 +98,6 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidPlayer> LastTurnPlayer;
+
+	int32 ClientActionsProcessed = 0;
 };
