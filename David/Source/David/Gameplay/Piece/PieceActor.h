@@ -16,7 +16,7 @@ class DAVID_API APieceActor : public AActor
 	GENERATED_BODY()
 	
 private:
-	enum EPieceAction : int32 { MoveForward = 0, FrontAttack};
+	enum EPieceAction : int32 { MoveForward = 0, FrontAttack, TakePieceDamage, Die};
 
 public:	
 	APieceActor();
@@ -36,20 +36,24 @@ public:
 	/* Called by the server when the piece is played in the board */
 	void DeployInSquare(int32 SquareIndex);
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_DeployPieceInSquare(int32 SquareIndex);
 
 	/* Returns true if this piece has been processed in this turn */
-	FORCEINLINE bool HasBeenProcessed() { return bHasBeenProcessed; }
+	FORCEINLINE bool HasBeenProcessed() const { return bHasBeenProcessed; }
 
 	/* Return the player that own this piece */
-	FORCEINLINE EDavidPlayer GetOwnerPlayer() { return DavidPlayerOwner;	}
+	FORCEINLINE EDavidPlayer GetOwnerPlayer() const { return DavidPlayerOwner;	}
 
 	/* Sets the current square of this piece */
 	FORCEINLINE void SetBoardSquare(class ABoardSquare* SquareActor) { Square = SquareActor; }
 
 	/* Gets the current square of this piece */
-	FORCEINLINE ABoardSquare* GetBoardSquare() { return Square; }
+	FORCEINLINE ABoardSquare* GetBoardSquare() const { return Square; }
+
+	FORCEINLINE int32 GetPieceID() const { return PieceID; }
 
 protected:
 	virtual void OnDeployPieceInSquare(int32 SquareIndex);
@@ -71,6 +75,10 @@ protected:
 	virtual void Action_MoveForward(const TArray<uint8>& Payload);
 
 	virtual void Action_AttackFrontPiece();
+
+	virtual void Action_TakeDamage(const TArray<uint8>& Payload);
+
+	virtual void Action_Die();
 
 	void HandlePieceMovement(float DeltaSeconds);
 

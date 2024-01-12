@@ -16,6 +16,8 @@ class DAVID_API ABoardManager : public AActor
 public:	
 	ABoardManager();
 
+	void Tick(float DeltaSeconds) override;
+
 	void GenerateBoardSquares();
 
 	void PlayCardInSquare(struct FGameCardData& CardData, int32 SquareID, EDavidPlayer Player);
@@ -28,6 +30,12 @@ public:
 
 	void OnActionComplete();
 
+	/* This is called during the turn process phase */
+	void OnPieceDeathInTurnProcess(class APieceActor* Piece);
+
+	/* Must be called when a piece performs the last action in board before being destroyed */
+	void RemoveActivePiece(APieceActor* Piece);
+
 	FVector GetSquareLocation(int32 SquareIndex);
 
 	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
@@ -38,7 +46,7 @@ public:
 
 	bool IsSquareOccupied(int32 TargetSquare) const;
 
-	void MovePieceToSquare(class APieceActor* Piece, int32 TargetSquare);
+	void MovePieceToSquare(APieceActor* Piece, int32 TargetSquare);
 
 	APieceActor* GetPieceInSquare(int32 BoardSquare) const;
 
@@ -83,11 +91,17 @@ private:
 	UPROPERTY(Transient, SkipSerialization)
 	TArray<ABoardSquare*> BoardSquares;
 
+	/* This is used by the server to process the turn */
 	UPROPERTY(Transient, SkipSerialization)
-	TMap<int32, APieceActor*> BoardPieces;
+	TMap<int32, APieceActor*> ServerBoardPieces;
+
+	/* This is used by the clients to perform piece actions */
+	UPROPERTY(Transient, SkipSerialization)
+	TMap<int32, APieceActor*> ActiveBoardPieces;
 
 	UPROPERTY()
 	TArray<FPieceAction> TurnActionsQueue;
 
 	int32 PieceIdCounter;
+	bool bPlayNextAction;
 };

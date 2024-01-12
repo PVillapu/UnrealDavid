@@ -6,11 +6,20 @@
 #include "../Player/DavidPlayerController.h"
 #include "../Cards/GameCardData.h"
 #include "../DavidGameState.h"
+#include "../Misc/CustomDavidLogs.h"
 
 ABoardManager::ABoardManager()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	// Only server needs to tick this actor
+	if(HasAuthority()) PrimaryActorTick.bCanEverTick = true;
+
 	bReplicates = true;
+}
+
+void ABoardManager::Tick(float DeltaSeconds)
+{
+	if (bPlayNextAction)
+		PlayTurnAction();
 }
 
 void ABoardManager::InitializeBoard()
@@ -57,7 +66,8 @@ void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardDat
 	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);
 
 	// Register piece
-	BoardPieces.Add(PieceID, PieceInstance);
+	ActiveBoardPieces.Add(PieceID, PieceInstance);
+	ServerBoardPieces.Add(PieceID, PieceInstance);
 
 	// Setup piece
 	PieceInstance->SetupPiece(this, GameCardData, *CardData, PieceID, Player);
@@ -117,7 +127,7 @@ void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
 	APieceActor* PieceToProcess = nullptr;
 
 	// Call OnBeginTurn of each piece to be processed
-	for (const TPair<int32, APieceActor*>& Pair : BoardPieces)
+	for (const TPair<int32, APieceActor*>& Pair : ServerBoardPieces)
 	{
 		if (Pair.Value->GetOwnerPlayer() == PlayerTurn)
 			Pair.Value->OnBeginTurn();
@@ -143,16 +153,20 @@ void ABoardManager::NetMulticast_SendTurnActions_Implementation(const TArray<FPi
 {
 	TurnActionsQueue = Actions;
 
+	bPlayNextAction = true;
+
 	PlayTurnAction();
 }
 
 void ABoardManager::PlayTurnAction()
 {
+	bPlayNextAction = false;
+
 	// Once all actions has been processed, send a message to server and wait
 	if (TurnActionsQueue.IsEmpty()) 
 	{
 		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetWorld()->GetFirstPlayerController());
-		
+
 		if(PlayerController)
 			PlayerController->Server_PlayerActionsProcessed();
 
@@ -164,17 +178,38 @@ void ABoardManager::PlayTurnAction()
 	TurnActionsQueue.RemoveAt(0);
 
 	// Find the piece that needs to process the action
-	APieceActor* PieceActor = *BoardPieces.Find(PieceAction.PieceID);
-	if (PieceActor) 
+	if (ActiveBoardPieces.Contains(PieceAction.PieceID)) 
 	{
-		// Process the action
-		PieceActor->ProcessAction(PieceAction);
+		APieceActor* PieceActor = *ActiveBoardPieces.Find(PieceAction.PieceID);
+		if (PieceActor)
+		{
+			// Process the action
+			PieceActor->ProcessAction(PieceAction);
+		}
 	}
 }
 
 void ABoardManager::OnActionComplete()
 {
-	PlayTurnAction();
+	bPlayNextAction = true;
+}
+
+void ABoardManager::OnPieceDeathInTurnProcess(APieceActor* Piece)
+{
+	if (Piece == nullptr) return;
+
+	const ABoardSquare* BoardSquare = Piece->GetBoardSquare();
+	const int32 PieceLocation = BoardSquare->GetSquareIndex();
+
+	// Remove the piece from board
+	Piece->SetBoardSquare(nullptr);
+	ServerBoardPieces.Remove(Piece->GetPieceID());
+	BoardSquares[PieceLocation]->SetPieceInSquare(nullptr);
+}
+
+void ABoardManager::RemoveActivePiece(APieceActor* Piece)
+{
+	ActiveBoardPieces.Remove(Piece->GetPieceID());
 }
 
 bool ABoardManager::IsSquareOccupied(int32 Square) const

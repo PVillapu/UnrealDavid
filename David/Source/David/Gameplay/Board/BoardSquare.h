@@ -14,7 +14,7 @@ public:
 
 	FORCEINLINE void SetBoardManager(class ABoardManager* BM) { BoardManager = BM; }
 
-	FORCEINLINE ABoardManager* GetBoardManager() { return BoardManager; }
+	FORCEINLINE ABoardManager* GetBoardManager() const { return BoardManager; }
 
 	FORCEINLINE void SetPieceInSquare(class APieceActor* Piece) { PieceInSquare = Piece; }
 
@@ -22,7 +22,7 @@ public:
 
 	FORCEINLINE void SetSquareIndex(int32 Index) { SquareIndex = Index; }
 
-	FORCEINLINE int32 GetSquareIndex() { return SquareIndex; }
+	FORCEINLINE int32 GetSquareIndex() const { return SquareIndex; }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")

@@ -83,7 +83,9 @@ void ADavidGameState::OnPlayerFinishedTurn(EDavidPlayer Player)
 
 void ADavidGameState::OnPlayerPlayedTurnActions()
 {
-	if (++ClientActionsProcessed >= 2) ChangeMatchState();
+	if (MatchState != EDavidMatchState::PROCESSING_TURN) return;
+
+	if (++ClientActionsProcessed == 2) ChangeMatchState();
 }
 
 void ADavidGameState::UpdateTurnCountdownTime()
@@ -103,11 +105,13 @@ void ADavidGameState::ChangeMatchState()
 	{
 		LastTurnPlayer = MatchState == EDavidMatchState::PLAYER_1_TURN ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2;
 		MatchState = EDavidMatchState::PROCESSING_TURN;
+		OnMatchStateChange();
 		PlayPlayerTurn(LastTurnPlayer);
 	}
 	else if (MatchState == EDavidMatchState::PROCESSING_TURN) 
 	{
 		MatchState = LastTurnPlayer == EDavidPlayer::PLAYER_1 ? EDavidMatchState::PLAYER_2_TURN : EDavidMatchState::PLAYER_1_TURN;
+		OnMatchStateChange();
 		StartPlayerTurn(LastTurnPlayer == EDavidPlayer::PLAYER_1 ? EDavidPlayer::PLAYER_2 : EDavidPlayer::PLAYER_1);
 
 		// Set round time
@@ -115,8 +119,6 @@ void ADavidGameState::ChangeMatchState()
 		GetWorld()->GetTimerManager().UnPauseTimer(TurnTimeLeftTimerHandler);
 		OnTurnTimeUpdated();
 	}
-
-	OnMatchStateChange();
 }
 
 void ADavidGameState::OnRep_MatchState()
@@ -131,7 +133,7 @@ void ADavidGameState::OnRep_CurrentTurnTimeLeft()
 
 void ADavidGameState::OnMatchStateChange() const
 {
-	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidGameState::OnMatchStateChange()"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+	UE_LOG(LogDavid, Display, TEXT("[%s] ADavidGameState::OnMatchStateChange to %d"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"), (int)MatchState.GetValue());
 
 	OnPlayerTurnChangedDelegate.Broadcast(MatchState.GetValue());
 }

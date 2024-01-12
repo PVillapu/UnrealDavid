@@ -4,6 +4,7 @@
 #include "../Cards/CardData.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Board/BoardSquare.h"
+#include "../Misc/CustomDavidLogs.h"
 
 APieceActor::APieceActor()
 {
@@ -57,6 +58,22 @@ void APieceActor::DeployInSquare(int32 SquareIndex)
 	Multicast_DeployPieceInSquare(SquareIndex);
 }
 
+float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	TArray<uint8> Payload;
+	Payload.Reserve(sizeof(float));
+	FMemory::Memcpy(Payload.GetData(), &DamageAmount, sizeof(float));
+	RegisterPieceAction(EPieceAction::TakePieceDamage, Payload);
+
+	if (CurrentHealth -= DamageAmount <= 0)
+	{
+		BoardManager->OnPieceDeathInTurnProcess(this);
+		RegisterPieceAction(EPieceAction::Die);
+	}
+
+	return DamageAmount;
+}
+
 void APieceActor::Multicast_DeployPieceInSquare_Implementation(int32 SquareIndex)
 {
 	OnDeployPieceInSquare(SquareIndex);
@@ -82,9 +99,19 @@ void APieceActor::ProcessTurn()
 
 	if (!BoardManager->IsValidSquare(TargetSquare)) return;
 
-	if (BoardManager->IsSquareOccupied(TargetSquare)) 
+	if (BoardManager->IsSquareOccupied(TargetSquare)) // Attack
 	{
-		// Attack
+		APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquare);
+		
+		if (PieceToAttack) 
+		{
+			TArray<uint8> Payload;
+			Payload.Reserve(sizeof(int32));
+			FMemory::Memcpy(Payload.GetData(), &TargetSquare, sizeof(int32));
+			RegisterPieceAction(EPieceAction::FrontAttack, Payload);
+
+			UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
+		}
 	}
 	else // Move forward
 	{
@@ -121,6 +148,16 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 			Action_AttackFrontPiece();
 			break;
 		}
+		case EPieceAction::TakePieceDamage:
+		{
+			Action_TakeDamage(Action.Payload);
+			break;
+		}
+		case EPieceAction::Die: 
+		{
+			Action_Die();
+			break;
+		}
 		default: 
 		{
 			BoardManager->OnActionComplete();
@@ -145,6 +182,37 @@ void APieceActor::Action_MoveForward(const TArray<uint8>& Payload)
 void APieceActor::Action_AttackFrontPiece()
 {
 	BoardManager->OnActionComplete();
+
+}
+
+void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
+{
+	ABoardManager* BM = BoardManager;
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda([BM]
+	{
+		UE_LOG(LogDavid, Display, TEXT("Ouch!"));
+		BM->OnActionComplete();
+	});
+
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 0.5f, false);
+}
+
+void APieceActor::Action_Die()
+{
+	APieceActor* Piece = this;
+	ABoardManager* BM = BoardManager;
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda([BM, Piece]
+	{
+		BM->RemoveActivePiece(Piece);
+		Piece->Destroy();
+		BM->OnActionComplete();
+	});
+
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.f, false);
 }
 
 void APieceActor::HandlePieceMovement(float DeltaSeconds)
