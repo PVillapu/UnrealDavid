@@ -18,6 +18,8 @@ void ADavidGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CurrentPlayer1Score = CurrentPlayer2Score = 0;
+
 	if (!HasAuthority()) return;
 
 	UWorld* World = GetWorld();
@@ -55,6 +57,8 @@ void ADavidGameState::StartTurnsCycle()
 	CurrentTurnTimeLeft = PlayerTurnTime;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimeLeftTimerHandler, this, &ADavidGameState::UpdateTurnCountdownTime, 1.0f, true);
 
+	ScorePlayer1 = ScorePlayer2 = 0;
+
 	// Each player draws initial cards
 	ADavidPlayerController* PlayerController = GetPlayerController(EDavidPlayer::PLAYER_1);
 	if (PlayerController)
@@ -86,6 +90,49 @@ void ADavidGameState::OnPlayerPlayedTurnActions()
 	if (MatchState != EDavidMatchState::PROCESSING_TURN) return;
 
 	if (++ClientActionsProcessed == 2) ChangeMatchState();
+}
+
+void ADavidGameState::Process_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount)
+{
+	if (Player == EDavidPlayer::PLAYER_1) 
+	{
+		ScorePlayer1 += ScoreAmmount;
+	}
+	else 
+	{
+		ScorePlayer2 += ScoreAmmount;
+	}
+}
+
+void ADavidGameState::Action_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount)
+{
+	if (Player == EDavidPlayer::PLAYER_1)
+	{
+		CurrentPlayer1Score += ScoreAmmount;
+	}
+	else
+	{
+		CurrentPlayer2Score += ScoreAmmount;
+	}
+
+	OnPlayersScoreChanges.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
+}
+
+void ADavidGameState::OnTurnActionsProcessed()
+{
+	// Check if current client score is the same as the server end round score
+	if (ScorePlayer1 != CurrentPlayer1Score || ScorePlayer2 != CurrentPlayer2Score) 
+	{
+		CurrentPlayer1Score = ScorePlayer1;
+		CurrentPlayer2Score = ScorePlayer2;
+		OnPlayersScoreChanges.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
+	}
+}
+
+void ADavidGameState::NetMulticast_SetFinalTurnScore_Implementation(int32 Score1, int32 Score2)
+{
+	ScorePlayer1 = Score1;
+	ScorePlayer2 = Score2;
 }
 
 void ADavidGameState::UpdateTurnCountdownTime()
@@ -151,6 +198,9 @@ void ADavidGameState::PlayPlayerTurn(EDavidPlayer Player)
 	// Process the player turn
 	BoardManager->ProcessPlayerTurn(Player);
 	
+	// Update the score to reach at the end of the round
+	NetMulticast_SetFinalTurnScore(ScorePlayer1, ScorePlayer2);
+
 	// Send all generated actions to clients and wait both to finish
 	BoardManager->SendTurnActions();
 }

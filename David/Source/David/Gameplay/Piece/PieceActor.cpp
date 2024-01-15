@@ -95,19 +95,19 @@ void APieceActor::ProcessTurn()
 
 	// Get the target square of the piece
 	const int32 FowardIndex = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? 1 : -1;
-	const int32 TargetSquare = Square->GetSquareIndex() + BoardManager->GetBoardWidth() * FowardIndex;
+	const int32 TargetSquareIndex = Square->GetSquareIndex() + BoardManager->GetBoardWidth() * FowardIndex;
 
-	if (!BoardManager->IsValidSquare(TargetSquare)) return;
+	if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
 
-	if (BoardManager->IsSquareOccupied(TargetSquare)) // Attack
+	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
 	{
-		APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquare);
+		APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 		
 		if (PieceToAttack) 
 		{
 			TArray<uint8> Payload;
 			Payload.Reserve(sizeof(int32));
-			FMemory::Memcpy(Payload.GetData(), &TargetSquare, sizeof(int32));
+			FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 			RegisterPieceAction(EPieceAction::FrontAttack, Payload);
 
 			UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
@@ -117,9 +117,14 @@ void APieceActor::ProcessTurn()
 	{
 		TArray<uint8> Payload;
 		Payload.Reserve(sizeof(int32));
-		FMemory::Memcpy(Payload.GetData(), &TargetSquare, sizeof(int32));
+		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 
-		BoardManager->MovePieceToSquare(this, TargetSquare);
+		BoardManager->MovePieceToSquare(this, TargetSquareIndex);
+		
+		ABoardSquare* BoardSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+		if(BoardSquare)
+			BoardSquare->Process_SetSquarePlayerColor(DavidPlayerOwner);
+
 		RegisterPieceAction(EPieceAction::MoveForward, Payload);
 	}
 }
@@ -169,14 +174,16 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 void APieceActor::Action_MoveForward(const TArray<uint8>& Payload)
 {
 	// Get the target square from the payload
-	int32 TargetSquare;
-	FMemory::Memcpy(&TargetSquare, Payload.GetData(), sizeof(int32));
+	int32 TargetSquareIndex;
+	FMemory::Memcpy(&TargetSquareIndex, Payload.GetData(), sizeof(int32));
 
 	bIsMoving = true;
 	MovementDelta = 0.f;
 	OriginLocation = GetActorLocation();
 
-	TargetLocation = BoardManager->GetSquareLocation(TargetSquare);
+	TargetLocation = BoardManager->GetSquareLocation(TargetSquareIndex);
+
+	TargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
 }
 
 void APieceActor::Action_AttackFrontPiece()
@@ -227,6 +234,10 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 		bIsMoving = false;
 		BoardManager->OnActionComplete();
 		SetActorLocation(TargetLocation);
+
+		if (TargetSquare)
+			TargetSquare->Action_SetSquarePlayerColor(DavidPlayerOwner);
+
 		return;
 	}
 

@@ -36,6 +36,9 @@ private:
 	UFUNCTION()
 	void OnPlayerGoldUpdates(int32 PlayerGold);
 
+	UFUNCTION()
+	void OnPlayersScoreChanges(int32 Player1Score, int32 Player2Score);
+
 	void CheckForAvailablePlayerState();
 
 protected:
@@ -52,10 +55,13 @@ protected:
 	class UButton* EndTurnButton;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UTextBlock* CurrentPlayerTurnText;
+	UTextBlock* CurrentPlayerTurnText;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	class UTextBlock* PlayerGoldText;
+	UTextBlock* PlayerGoldText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* PlayersScoreText;
 
 	UPROPERTY(Transient, SkipSerialization)
 	ADavidGameState* DavidGameState;
@@ -66,7 +72,9 @@ private:
 
 	FDelegateHandle OnPlayerTurnTimeUpdatedDelegateHandler;
 
-	FDelegateHandle OnGameStateReplicatedDelegateHandler;
+	FDelegateHandle OnGameStateReplicatedDelegateHandler; // TODO: Check
+
+	FDelegateHandle OnPlayersScoreChangedDelegateHandler;
 
 	// Timer handler
 	FTimerHandle PlayerStateCheckTimerHandler;

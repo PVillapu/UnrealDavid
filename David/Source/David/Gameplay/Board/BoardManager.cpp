@@ -75,11 +75,23 @@ void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardDat
 	// Deploy the new piece in the square
 	PieceInstance->DeployInSquare(SquareID);
 
+	ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
+
+	if (GameState)
+	{
+		BoardSquares[SquareID]->Action_SetSquarePlayerColor(Player);
+	}
+
 	// Update board state in server
 	if (HasAuthority())
 	{
 		BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
 		PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
+
+		if (GameState) 
+		{
+			GameState->Process_IncreasePlayerScore(Player, 1);
+		}
 	}
 }
 
@@ -168,7 +180,7 @@ void ABoardManager::PlayTurnAction()
 		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetWorld()->GetFirstPlayerController());
 
 		if(PlayerController)
-			PlayerController->Server_PlayerActionsProcessed();
+			PlayerController->OnTurnActionsCompleted();
 
 		return;
 	}
@@ -231,6 +243,13 @@ void ABoardManager::MovePieceToSquare(APieceActor* Piece, int32 TargetSquare)
 APieceActor* ABoardManager::GetPieceInSquare(int32 BoardSquare) const
 {
 	return BoardSquares[BoardSquare]->GetPieceInSquare();
+}
+
+ABoardSquare* ABoardManager::GetBoardSquare(int32 BoardIndex) const
+{
+	if (BoardIndex < 0 || BoardIndex >= BoardHeight * BoardWidth) return nullptr;
+
+	return BoardSquares[BoardIndex];
 }
 
 void ABoardManager::GenerateBoardSquares()

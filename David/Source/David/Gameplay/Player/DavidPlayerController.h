@@ -54,6 +54,8 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_PlayerActionsProcessed();
 
+	void OnTurnActionsCompleted();
+
 private:
 	UFUNCTION()
 	void OnRep_PlayerIndex();

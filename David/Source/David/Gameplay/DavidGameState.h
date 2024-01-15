@@ -30,6 +30,18 @@ public:
 
 	void OnPlayerPlayedTurnActions();
 
+	/* Increases a player score during ProcessTurn(). Should only be called by server */
+	void Process_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount);
+
+	/* Called during action play. Called by clients */
+	void Action_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount);
+
+	/* Called by the client when all actions has been played */
+	void OnTurnActionsProcessed();
+
+	UFUNCTION(NetMulticast, reliable)
+	void NetMulticast_SetFinalTurnScore(int32 Player1Score, int32 Player2Score);
+	
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
 
 private:
@@ -69,6 +81,10 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnTimeUpdated, int32)
 	FOnPlayerTurnTimeUpdated OnPlayerTurnTimeUpdatedDelegate;
 
+	/* Called when player score changes */
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPlayersScoreChanges, int32, int32)
+	FOnPlayersScoreChanges OnPlayersScoreChanges;
+
 	/* Stores the match state */
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	TEnumAsByte<EDavidMatchState> MatchState;
@@ -98,6 +114,18 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidPlayer> LastTurnPlayer;
+
+	/* Server-driven scores */
+	UPROPERTY(Transient, SkipSerialization)
+	int32 ScorePlayer1;
+	UPROPERTY(Transient, SkipSerialization)
+	int32 ScorePlayer2;
+
+	/* Client-driven scores */
+	UPROPERTY(Transient, SkipSerialization)
+	int32 CurrentPlayer1Score;
+	UPROPERTY(Transient, SkipSerialization)
+	int32 CurrentPlayer2Score;
 
 	int32 ClientActionsProcessed = 0;
 };

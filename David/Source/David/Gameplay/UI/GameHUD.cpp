@@ -27,6 +27,7 @@ void UGameHUD::NativeDestruct()
 	// Unbind delegates
 	DavidGameState->OnPlayerTurnChangedDelegate.Remove(OnPlayerTurnChangedDelegateHandler);
 	DavidGameState->OnPlayerTurnTimeUpdatedDelegate.Remove(OnPlayerTurnTimeUpdatedDelegateHandler);
+	DavidGameState->OnPlayersScoreChanges.Remove(OnPlayersScoreChangedDelegateHandler);
 	EndTurnButton->OnClicked.RemoveDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
 }
 
@@ -46,6 +47,7 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 	// Bind delegates
 	OnPlayerTurnChangedDelegateHandler = DavidGameState->OnPlayerTurnChangedDelegate.AddUObject(this, &UGameHUD::OnMatchStateChanged);
 	OnPlayerTurnTimeUpdatedDelegateHandler = DavidGameState->OnPlayerTurnTimeUpdatedDelegate.AddUObject(this, &UGameHUD::OnPlayerTurnTimeUpdated);
+	OnPlayersScoreChangedDelegateHandler = DavidGameState->OnPlayersScoreChanges.AddUObject(this, &UGameHUD::OnPlayersScoreChanges);
 	EndTurnButton->OnClicked.AddDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
 
 	// Bind PlayerGold updates
@@ -103,6 +105,11 @@ void UGameHUD::OnPlayerPressedEndTurnButton()
 void UGameHUD::OnPlayerGoldUpdates(int32 PlayerGold)
 {
 	PlayerGoldText->SetText(FText::FromString(FString::Printf(TEXT("%d"), PlayerGold)));
+}
+
+void UGameHUD::OnPlayersScoreChanges(int32 Player1Score, int32 Player2Score)
+{
+	PlayersScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d vs %d"), Player1Score, Player2Score)));
 }
 
 void UGameHUD::CheckForAvailablePlayerState()

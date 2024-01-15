@@ -119,6 +119,9 @@ protected:
 	UPROPERTY(Transient, SkipSerialization)
 	FVector OriginLocation;
 
+	UPROPERTY(Transient, SkipSerialization)
+	ABoardSquare* TargetSquare;
+
 	/* Time that takes the movement to reach the destination */
 	float MovementTime = 0.7f;
 

@@ -29,3 +29,11 @@ enum EDavidPreMatchInitialization : int
 	PLAYER_HUD_INITIALIZED,
 	MAX_VALUE	// Must be always the last value
 };
+
+UENUM()
+enum EDavidSquareColor : int 
+{
+	PLAYER_1_COLOR = 0,
+	PLAYER_2_COLOR,
+	NEUTRAL
+};

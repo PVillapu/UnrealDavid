@@ -50,6 +50,8 @@ public:
 
 	APieceActor* GetPieceInSquare(int32 BoardSquare) const;
 
+	ABoardSquare* GetBoardSquare(int32 BoardIndex) const;
+
 	FORCEINLINE bool IsValidSquare(int32 SquareIndex) const { return (SquareIndex >= 0 && SquareIndex < BoardSquares.Num()); }
 
 	FORCEINLINE class AActor* GetPlayerCameraActor(int32 PlayerId) const { return PlayerId == 0 ? Player1Camera : Player2Camera; }
@@ -57,7 +59,6 @@ public:
 	FORCEINLINE int32 GetBoardHeight() const { return BoardHeight; }
 
 	FORCEINLINE int32 GetBoardWidth() const { return BoardWidth; }
-
 private:
 
 	UFUNCTION(NetMulticast, reliable)
@@ -79,7 +80,7 @@ private:
 	float SquaresOffset = 2.5f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	TSubclassOf<class ABoardSquare> BoardSquareBP;
+	TSubclassOf<ABoardSquare> BoardSquareBP;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	AActor* Player1Camera;
