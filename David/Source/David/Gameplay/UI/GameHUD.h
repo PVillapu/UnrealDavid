@@ -39,6 +39,12 @@ private:
 	UFUNCTION()
 	void OnPlayersScoreChanges(int32 Player1Score, int32 Player2Score);
 
+	UFUNCTION()
+	void OnRoundCompleted(int32 TotalRounds);
+
+	UFUNCTION()
+	void OnGameFinished(int32 Winner);
+
 	void CheckForAvailablePlayerState();
 
 protected:
@@ -63,6 +69,15 @@ protected:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UTextBlock* PlayersScoreText;
 
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* CurrentRoundText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	class UOverlay* EndgameOverlay;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UTextBlock* EndgameText;
+
 	UPROPERTY(Transient, SkipSerialization)
 	ADavidGameState* DavidGameState;
 
@@ -75,6 +90,10 @@ private:
 	FDelegateHandle OnGameStateReplicatedDelegateHandler; // TODO: Check
 
 	FDelegateHandle OnPlayersScoreChangedDelegateHandler;
+
+	FDelegateHandle OnRoundCompletedDelegateHandler;
+
+	FDelegateHandle OnGameFinishedDelegateHandler;
 
 	// Timer handler
 	FTimerHandle PlayerStateCheckTimerHandler;

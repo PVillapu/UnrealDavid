@@ -2,6 +2,7 @@
 #include "../DavidGameState.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "Components/Overlay.h"
 #include "../DavidGameState.h"
 #include "../Player/DavidPlayerController.h"
 #include "../DavidPlayerState.h"
@@ -16,6 +17,8 @@ void UGameHUD::NativeConstruct()
 
 	// Start the Game and Player state checker
 	World->GetTimerManager().SetTimer(PlayerStateCheckTimerHandler, this, &UGameHUD::CheckForAvailablePlayerState, 0.2f, true);
+
+	EndgameOverlay->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UGameHUD::NativeDestruct()
@@ -27,7 +30,9 @@ void UGameHUD::NativeDestruct()
 	// Unbind delegates
 	DavidGameState->OnPlayerTurnChangedDelegate.Remove(OnPlayerTurnChangedDelegateHandler);
 	DavidGameState->OnPlayerTurnTimeUpdatedDelegate.Remove(OnPlayerTurnTimeUpdatedDelegateHandler);
-	DavidGameState->OnPlayersScoreChanges.Remove(OnPlayersScoreChangedDelegateHandler);
+	DavidGameState->OnPlayersScoreChangesDelegate.Remove(OnPlayersScoreChangedDelegateHandler);
+	DavidGameState->OnRoundCompletedDelegate.Remove(OnRoundCompletedDelegateHandler);
+	DavidGameState->OnGameFinishedDelegate.Remove(OnGameFinishedDelegateHandler);
 	EndTurnButton->OnClicked.RemoveDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
 }
 
@@ -47,7 +52,9 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 	// Bind delegates
 	OnPlayerTurnChangedDelegateHandler = DavidGameState->OnPlayerTurnChangedDelegate.AddUObject(this, &UGameHUD::OnMatchStateChanged);
 	OnPlayerTurnTimeUpdatedDelegateHandler = DavidGameState->OnPlayerTurnTimeUpdatedDelegate.AddUObject(this, &UGameHUD::OnPlayerTurnTimeUpdated);
-	OnPlayersScoreChangedDelegateHandler = DavidGameState->OnPlayersScoreChanges.AddUObject(this, &UGameHUD::OnPlayersScoreChanges);
+	OnPlayersScoreChangedDelegateHandler = DavidGameState->OnPlayersScoreChangesDelegate.AddUObject(this, &UGameHUD::OnPlayersScoreChanges);
+	OnRoundCompletedDelegateHandler = DavidGameState->OnRoundCompletedDelegate.AddUObject(this, &UGameHUD::OnRoundCompleted);
+	OnGameFinishedDelegateHandler = DavidGameState->OnGameFinishedDelegate.AddUObject(this, &UGameHUD::OnGameFinished);
 	EndTurnButton->OnClicked.AddDynamic(this, &UGameHUD::OnPlayerPressedEndTurnButton);
 
 	// Bind PlayerGold updates
@@ -61,6 +68,8 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 
 void UGameHUD::OnMatchStateChanged(EDavidMatchState PlayerTurn)
 {
+	if (PlayerTurn == EDavidMatchState::END_GAME) return;
+
 	if (ADavidPlayerController* DavidPlayerController = GetOwningPlayer<ADavidPlayerController>())
 	{
 		if (DavidPlayerController->IsPlayerTurn())
@@ -110,6 +119,35 @@ void UGameHUD::OnPlayerGoldUpdates(int32 PlayerGold)
 void UGameHUD::OnPlayersScoreChanges(int32 Player1Score, int32 Player2Score)
 {
 	PlayersScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d vs %d"), Player1Score, Player2Score)));
+}
+
+void UGameHUD::OnRoundCompleted(int32 TotalRounds)
+{
+	CurrentRoundText->SetText(FText::FromString(FString::Printf(TEXT("Round %d"), TotalRounds)));
+}
+
+void UGameHUD::OnGameFinished(int32 Winner)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	ADavidPlayerController* PlayerController = World->GetFirstPlayerController<ADavidPlayerController>();
+	EDavidPlayer LocalDavidPlayer = PlayerController->GetDavidPlayer();
+
+	if (Winner == 0)	// Tie
+	{
+		EndgameText->SetText(FText::FromString(FString::Printf(TEXT("Tie"))));
+	}
+	else if ((LocalDavidPlayer == EDavidPlayer::PLAYER_1 && Winner == 1) || (LocalDavidPlayer == EDavidPlayer::PLAYER_2 && Winner == 2))	// Local player won
+	{
+		EndgameText->SetText(FText::FromString(FString::Printf(TEXT("You win!"))));
+	}
+	else    // Local player lost
+	{
+		EndgameText->SetText(FText::FromString(FString::Printf(TEXT("You lost!"))));
+	}
+
+	EndgameOverlay->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UGameHUD::CheckForAvailablePlayerState()

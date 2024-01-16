@@ -14,7 +14,7 @@ public:
 	ABoardSquare();
 
 	/* Called during ProcessTurn() to change the players score */
-	void Process_SetSquarePlayerColor(EDavidPlayer Player) const;
+	void Process_SetSquarePlayerColor(EDavidPlayer Player);
 
 	/* Called during PlayAction() to change the square appeareance */
 	void Action_SetSquarePlayerColor(EDavidPlayer Player);
@@ -31,7 +31,7 @@ public:
 
 	FORCEINLINE int32 GetSquareIndex() const { return SquareIndex; }
 
-	FORCEINLINE EDavidSquareColor GetSquareColor() const { return SquareColor; }
+	FORCEINLINE EDavidSquareColor GetSquareColor() const { return ProcessSquareColor; }
 
 private:
 	void ChangeSquareColor();
@@ -54,6 +54,10 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidSquareColor> SquareColor;
+	
+	/* Used only by the server to process the turn */
+	UPROPERTY(Transient, SkipSerialization)
+	TEnumAsByte<EDavidSquareColor> ProcessSquareColor;
 
 	int32 SquareIndex;
 };

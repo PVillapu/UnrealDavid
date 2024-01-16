@@ -50,6 +50,19 @@ void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID
 	NetMulticast_DeployPieceInSquare(GameCardData, SquareID, PieceID, Player);
 }
 
+void ABoardManager::CalculatePlayersScore(int32& Player1Score, int32& Player2Score)
+{
+	Player1Score = Player2Score = 0;
+
+	for (ABoardSquare* Square : BoardSquares) 
+	{
+		EDavidSquareColor Color = Square->GetSquareColor();
+		if (Color == EDavidSquareColor::NEUTRAL) continue;
+		else if (Color == EDavidSquareColor::PLAYER_1_COLOR) ++Player1Score;
+		else ++Player2Score;
+	}
+}
+
 void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardData GameCardData, int32 SquareID, int32 PieceID, EDavidPlayer Player)
 {
 	UWorld* World = GetWorld();
@@ -88,10 +101,7 @@ void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardDat
 		BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
 		PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
 
-		if (GameState) 
-		{
-			GameState->Process_IncreasePlayerScore(Player, 1);
-		}
+		BoardSquares[SquareID]->Process_SetSquarePlayerColor(Player);
 	}
 }
 

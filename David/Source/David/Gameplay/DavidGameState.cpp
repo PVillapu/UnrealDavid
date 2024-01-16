@@ -47,6 +47,9 @@ void ADavidGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void ADavidGameState::StartTurnsCycle()
 {
+	RoundsPlayed = 0;
+	RoundTurnsPlayed = 0;
+
 	// Choose the start turn player
 	int32 RandNum = FMath::RandRange(0, 1);
 	MatchState = RandNum == 0 ? EDavidMatchState::PLAYER_1_TURN : EDavidMatchState::PLAYER_2_TURN;
@@ -92,16 +95,13 @@ void ADavidGameState::OnPlayerPlayedTurnActions()
 	if (++ClientActionsProcessed == 2) ChangeMatchState();
 }
 
-void ADavidGameState::Process_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount)
+void ADavidGameState::SendEndTurnScores()
 {
-	if (Player == EDavidPlayer::PLAYER_1) 
-	{
-		ScorePlayer1 += ScoreAmmount;
-	}
-	else 
-	{
-		ScorePlayer2 += ScoreAmmount;
-	}
+	// Calculate players score
+	BoardManager->CalculatePlayersScore(ScorePlayer1, ScorePlayer2);
+
+	// Send to clients
+	NetMulticast_SetFinalTurnScore(ScorePlayer1, ScorePlayer2);
 }
 
 void ADavidGameState::Action_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount)
@@ -115,7 +115,7 @@ void ADavidGameState::Action_IncreasePlayerScore(EDavidPlayer Player, int32 Scor
 		CurrentPlayer2Score += ScoreAmmount;
 	}
 
-	OnPlayersScoreChanges.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
+	OnPlayersScoreChangesDelegate.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
 }
 
 void ADavidGameState::OnTurnActionsProcessed()
@@ -125,14 +125,24 @@ void ADavidGameState::OnTurnActionsProcessed()
 	{
 		CurrentPlayer1Score = ScorePlayer1;
 		CurrentPlayer2Score = ScorePlayer2;
-		OnPlayersScoreChanges.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
+		OnPlayersScoreChangesDelegate.Broadcast(CurrentPlayer1Score, CurrentPlayer2Score);
 	}
+}
+
+void ADavidGameState::NetMulticast_GameEnded_Implementation(int32 Winner)
+{
+	OnGameFinishedDelegate.Broadcast((EDavidPlayer)Winner);
 }
 
 void ADavidGameState::NetMulticast_SetFinalTurnScore_Implementation(int32 Score1, int32 Score2)
 {
 	ScorePlayer1 = Score1;
 	ScorePlayer2 = Score2;
+}
+
+void ADavidGameState::NetMulticast_CurrentRoundUpdated_Implementation(int32 Round)
+{
+	OnRoundCompletedDelegate.Broadcast(Round);
 }
 
 void ADavidGameState::UpdateTurnCountdownTime()
@@ -157,6 +167,22 @@ void ADavidGameState::ChangeMatchState()
 	}
 	else if (MatchState == EDavidMatchState::PROCESSING_TURN) 
 	{
+		// Check if round is over
+		if (++RoundTurnsPlayed == 2) 
+		{	
+			RoundsPlayed++;
+			NetMulticast_CurrentRoundUpdated(RoundsPlayed);
+
+			// Endgame
+			if (RoundsPlayed >= GameTotalRounds) 
+			{
+				OnGameFinished();
+				return;
+			}
+
+			RoundTurnsPlayed = 0;
+		}
+
 		MatchState = LastTurnPlayer == EDavidPlayer::PLAYER_1 ? EDavidMatchState::PLAYER_2_TURN : EDavidMatchState::PLAYER_1_TURN;
 		OnMatchStateChange();
 		StartPlayerTurn(LastTurnPlayer == EDavidPlayer::PLAYER_1 ? EDavidPlayer::PLAYER_2 : EDavidPlayer::PLAYER_1);
@@ -198,8 +224,8 @@ void ADavidGameState::PlayPlayerTurn(EDavidPlayer Player)
 	// Process the player turn
 	BoardManager->ProcessPlayerTurn(Player);
 	
-	// Update the score to reach at the end of the round
-	NetMulticast_SetFinalTurnScore(ScorePlayer1, ScorePlayer2);
+	// Calculate players end round score and send to clients
+	SendEndTurnScores();
 
 	// Send all generated actions to clients and wait both to finish
 	BoardManager->SendTurnActions();
@@ -236,4 +262,20 @@ ADavidPlayerController* ADavidGameState::GetPlayerController(EDavidPlayer Player
 	
 	// Not found
 	return nullptr;
+}
+
+void ADavidGameState::OnGameFinished()
+{
+	MatchState = EDavidMatchState::END_GAME;
+
+	// Winner: 0 -> Tie / 1 -> P1 / 2 -> P2
+	int32 Winner;
+	if (ScorePlayer1 > ScorePlayer2) Winner = 1;
+	else if (ScorePlayer1 < ScorePlayer2) Winner = 2;
+	else Winner = 0;
+
+	// Stop turn timer
+	GetWorld()->GetTimerManager().ClearTimer(TurnTimeLeftTimerHandler);
+
+	NetMulticast_GameEnded(Winner);
 }

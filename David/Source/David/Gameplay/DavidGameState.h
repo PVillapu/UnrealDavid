@@ -30,9 +30,6 @@ public:
 
 	void OnPlayerPlayedTurnActions();
 
-	/* Increases a player score during ProcessTurn(). Should only be called by server */
-	void Process_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount);
-
 	/* Called during action play. Called by clients */
 	void Action_IncreasePlayerScore(EDavidPlayer Player, int32 ScoreAmmount);
 
@@ -41,6 +38,12 @@ public:
 
 	UFUNCTION(NetMulticast, reliable)
 	void NetMulticast_SetFinalTurnScore(int32 Player1Score, int32 Player2Score);
+
+	UFUNCTION(NetMulticast, reliable)
+	void NetMulticast_GameEnded(int32 Winner);
+
+	UFUNCTION(NetMulticast, reliable)
+	void NetMulticast_CurrentRoundUpdated(int32 Round);
 	
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
 
@@ -50,6 +53,9 @@ private:
 
 	/* Changes the match state to the following one */ 
 	void ChangeMatchState();
+
+	/* Calculates the current player scores and send them to clients */
+	void SendEndTurnScores();
 
 	UFUNCTION()
 	void OnRep_MatchState();
@@ -72,6 +78,8 @@ private:
 	/* Returns the player controller of the current player turn */
 	class ADavidPlayerController* GetPlayerController(EDavidPlayer Player);
 
+	void OnGameFinished();
+
 public:
 	/* Called when the player turn changes */
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerTurnChanged, EDavidMatchState)
@@ -83,7 +91,15 @@ public:
 
 	/* Called when player score changes */
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPlayersScoreChanges, int32, int32)
-	FOnPlayersScoreChanges OnPlayersScoreChanges;
+	FOnPlayersScoreChanges OnPlayersScoreChangesDelegate;
+
+	/* Called when a round is completed */
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundCompleted, int32)
+	FOnRoundCompleted OnRoundCompletedDelegate;
+
+	/* Called when a round is completed */
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameFinished, int32)
+	FOnGameFinished OnGameFinishedDelegate;
 
 	/* Stores the match state */
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
@@ -97,6 +113,10 @@ private:
 	/* Player turn time */
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	int32 PlayerTurnTime = 30;
+
+	/* Total rounds until endgame */
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	int32 GameTotalRounds = 20;
 
 	/* Ammount of gold earned by a player at the start of the turn */
 	UPROPERTY(EditDefaultsOnly, Category = "David")
@@ -114,6 +134,14 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidPlayer> LastTurnPlayer;
+
+	/* Current rounds played in game */
+	UPROPERTY(Transient, SkipSerialization)
+	int32 RoundsPlayed;
+
+	/* Auxiliar counter for rounds control */
+	UPROPERTY(Transient, SkipSerialization)
+	int32 RoundTurnsPlayed;
 
 	/* Server-driven scores */
 	UPROPERTY(Transient, SkipSerialization)

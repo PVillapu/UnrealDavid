@@ -22,6 +22,8 @@ public:
 
 	void PlayCardInSquare(struct FGameCardData& CardData, int32 SquareID, EDavidPlayer Player);
 
+	void CalculatePlayersScore(int32& OutPlayer1Score, int32& OutPlayer2Score);
+
 	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
 
 	void SendTurnActions();

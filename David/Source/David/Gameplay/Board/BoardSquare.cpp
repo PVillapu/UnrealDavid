@@ -11,32 +11,12 @@ ABoardSquare::ABoardSquare()
 	SquareMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Square mesh"));
 	SquareMesh->SetupAttachment(RootComponent);
 
-	SquareColor = EDavidSquareColor::NEUTRAL;
+	SquareColor = ProcessSquareColor = EDavidSquareColor::NEUTRAL;
 }
 
-void ABoardSquare::Process_SetSquarePlayerColor(EDavidPlayer Player) const
+void ABoardSquare::Process_SetSquarePlayerColor(EDavidPlayer Player)
 {
-	// If the square was neutral, increase player score
-	if (SquareColor == EDavidSquareColor::NEUTRAL) 
-	{
-		if (UWorld* World = GetWorld())
-		{
-			ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
-			GameState->Process_IncreasePlayerScore(Player, 1);
-		}
-	}
-	// If square color changes from one player to another, increase new player score and decrease the other player score
-	else if ((SquareColor == EDavidSquareColor::PLAYER_1_COLOR && Player == EDavidPlayer::PLAYER_2)
-		|| (SquareColor == EDavidSquareColor::PLAYER_2_COLOR && Player == EDavidPlayer::PLAYER_1)) 
-	{
-		if (UWorld* World = GetWorld())
-		{
-			ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
-			EDavidPlayer OtherPlayer = Player == EDavidPlayer::PLAYER_1 ? EDavidPlayer::PLAYER_2 : EDavidPlayer::PLAYER_1;
-			GameState->Process_IncreasePlayerScore(Player, 1);
-			GameState->Process_IncreasePlayerScore(OtherPlayer, -1);
-		}
-	}
+	ProcessSquareColor = Player == EDavidPlayer::PLAYER_1 ? EDavidSquareColor::PLAYER_1_COLOR : EDavidSquareColor::PLAYER_2_COLOR;
 }
 
 void ABoardSquare::Action_SetSquarePlayerColor(EDavidPlayer Player)

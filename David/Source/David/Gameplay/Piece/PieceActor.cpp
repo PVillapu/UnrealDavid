@@ -103,7 +103,7 @@ void APieceActor::ProcessTurn()
 	{
 		APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 		
-		if (PieceToAttack) 
+		if (PieceToAttack && PieceToAttack->GetOwnerPlayer() != DavidPlayerOwner) 
 		{
 			TArray<uint8> Payload;
 			Payload.Reserve(sizeof(int32));
