@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../Misc/Enums.h"
-#include "../Piece/PieceAction.h"
+#include "TurnAction.h"
 #include "BoardManager.generated.h"
 
 class ABoardSquare;
@@ -18,22 +18,16 @@ public:
 
 	void Tick(float DeltaSeconds) override;
 
+	void InitializeBoard();
+
 	void GenerateBoardSquares();
 
 	void PlayCardInSquare(struct FGameCardData& CardData, int32 SquareID, EDavidPlayer Player);
 
-	void CalculatePlayersScore(int32& OutPlayer1Score, int32& OutPlayer2Score);
+	void ProcessPlayerEndTurn(EDavidPlayer PlayerTurn);
 
-	void ProcessPlayerTurn(EDavidPlayer PlayerTurn);
-
-	void SendTurnActions();
-
-	void PlayTurnAction();
-
-	void OnActionComplete();
-
-	/* This is called during the turn process phase */
-	void OnPieceDeathInTurnProcess(class APieceActor* Piece);
+	/* This is called when a piece is defeated */
+	void OnPieceDeath(class APieceActor* Piece);
 
 	/* Must be called when a piece performs the last action in board before being destroyed */
 	void RemoveActivePiece(APieceActor* Piece);
@@ -42,13 +36,24 @@ public:
 
 	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
 
-	void InitializeBoard();
-
-	void RegisterTurnAction(const FPieceAction& PieceAction);
-
 	bool IsSquareOccupied(int32 TargetSquare) const;
 
 	void MovePieceToSquare(APieceActor* Piece, int32 TargetSquare);
+
+	/* ---------------- Game Actions --------------------- */
+
+	/* Registers an action that occurs in the processing phase of the turn */
+	void RegisterGameAction(const FTurnAction& PieceAction);
+
+	void PlayNextGameAction();
+
+	void OnGameActionComplete();
+
+	/* --------------------------------------------------- */
+
+	/* ---------------- Aux methods ---------------------- */
+
+	void CalculatePlayersScore(int32& OutPlayer1Score, int32& OutPlayer2Score);
 
 	APieceActor* GetPieceInSquare(int32 BoardSquare) const;
 
@@ -61,13 +66,18 @@ public:
 	FORCEINLINE int32 GetBoardHeight() const { return BoardHeight; }
 
 	FORCEINLINE int32 GetBoardWidth() const { return BoardWidth; }
+
+	/* --------------------------------------------------- */
+
 private:
+	void PlayPieceAction(const FTurnAction& TurnAction);
+
+	void PlayCardInSquareAction(const FTurnAction& TurnAction);
+
+	APieceActor* InstantiateAndRegisterPiece(const FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
 
 	UFUNCTION(NetMulticast, reliable)
-	void NetMulticast_DeployPieceInSquare(FGameCardData CardData, int32 SquareID, int32 PieceID, EDavidPlayer Player);
-
-	UFUNCTION(NetMulticast, reliable)
-	void NetMulticast_SendTurnActions(const TArray<FPieceAction>& TurnActions);
+	void NetMulticast_SendGameAction(FTurnAction TurnAction);
 
 	FORCEINLINE int32 GetBoardIndex(int32 Row, int32 Col) const { return Row * BoardHeight + Col; }
 
@@ -102,9 +112,10 @@ private:
 	UPROPERTY(Transient, SkipSerialization)
 	TMap<int32, APieceActor*> ActiveBoardPieces;
 
+	/* Actions to play while the player is playing his current turn */
 	UPROPERTY()
-	TArray<FPieceAction> TurnActionsQueue;
+	TArray<FTurnAction> ActionsQueue;
 
 	int32 PieceIdCounter;
-	bool bPlayNextAction;
+	bool bProcessingAction;
 };

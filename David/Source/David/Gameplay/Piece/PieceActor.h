@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PieceAction.h"
+#include "../Board/TurnAction.h"
 #include "../Misc/Enums.h"
 #include "PieceActor.generated.h"
 
@@ -33,13 +34,7 @@ public:
 
 	virtual void OnBeginTurn();
 
-	/* Called by the server when the piece is played in the board */
-	void DeployInSquare(int32 SquareIndex);
-
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_DeployPieceInSquare(int32 SquareIndex);
 
 	/* Returns true if this piece has been processed in this turn */
 	FORCEINLINE bool HasBeenProcessed() const { return bHasBeenProcessed; }
@@ -55,20 +50,24 @@ public:
 
 	FORCEINLINE int32 GetPieceID() const { return PieceID; }
 
+	/* Retrieves a PieceAction struct from the given Game Action */
+	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
+
+	/* Called when the piece has to be placed in the board */
+	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
+
 protected:
-	virtual void OnDeployPieceInSquare(int32 SquareIndex);
+	/* Registers a PieceAction in the board to later play it */
+	void RegisterPieceAction(int32 PieceAction) const;
 
 	/* Registers a PieceAction in the board to later play it */
-	void RegisterPieceAction(EPieceAction PieceAction) const;
-
-	/* Registers a PieceAction in the board to later play it */
-	void RegisterPieceAction(EPieceAction PieceAction, TArray<uint8>& Payload) const;
+	void RegisterPieceAction(int32 PieceAction, TArray<uint8>& Payload) const;
 
 	/* -------------------- Turn process methods ----------------------- */
 
-	void Process_MoveForward();
+	void Process_MoveForward(const int32& TargetSquareIndex);
 
-	void Process_AttackFrontPiece();
+	void Process_AttackFrontPiece(const int32& TargetSquareIndex);
 
 	/* -------------------- Turn actions methods ------------------------ */
 

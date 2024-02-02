@@ -37,3 +37,11 @@ enum EDavidSquareColor : int
 	PLAYER_2_COLOR,
 	NEUTRAL
 };
+
+UENUM()
+enum EDavidGameAction : int
+{
+	PLAY_CARD,
+	PIECE_ACTION,
+	END_TURN_ACTIONS_PLAYED
+};

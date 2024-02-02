@@ -70,7 +70,7 @@ private:
 	void OnTurnTimeUpdated() const;
 
 	/* Called when a player turn ends and turn must be processed */
-	void PlayPlayerTurn(EDavidPlayer Player);
+	void ProcessPlayerEndTurn(EDavidPlayer Player);
 
 	/* Called when a player turn starts */
 	void StartPlayerTurn(EDavidPlayer Player);

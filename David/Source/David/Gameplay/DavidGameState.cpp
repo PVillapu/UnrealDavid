@@ -163,7 +163,7 @@ void ADavidGameState::ChangeMatchState()
 		LastTurnPlayer = MatchState == EDavidMatchState::PLAYER_1_TURN ? EDavidPlayer::PLAYER_1 : EDavidPlayer::PLAYER_2;
 		MatchState = EDavidMatchState::PROCESSING_TURN;
 		OnMatchStateChange();
-		PlayPlayerTurn(LastTurnPlayer);
+		ProcessPlayerEndTurn(LastTurnPlayer);
 	}
 	else if (MatchState == EDavidMatchState::PROCESSING_TURN) 
 	{
@@ -216,19 +216,16 @@ void ADavidGameState::OnTurnTimeUpdated() const
 	OnPlayerTurnTimeUpdatedDelegate.Broadcast(CurrentTurnTimeLeft);
 }
 
-void ADavidGameState::PlayPlayerTurn(EDavidPlayer Player)
+void ADavidGameState::ProcessPlayerEndTurn(EDavidPlayer Player)
 {
 	// Reset the client actions processed count
 	ClientActionsProcessed = 0;
 
 	// Process the player turn
-	BoardManager->ProcessPlayerTurn(Player);
+	BoardManager->ProcessPlayerEndTurn(Player);
 	
 	// Calculate players end round score and send to clients
 	SendEndTurnScores();
-
-	// Send all generated actions to clients and wait both to finish
-	BoardManager->SendTurnActions();
 }
 
 void ADavidGameState::StartPlayerTurn(EDavidPlayer Player) 

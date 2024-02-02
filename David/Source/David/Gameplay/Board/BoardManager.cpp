@@ -14,12 +14,16 @@ ABoardManager::ABoardManager()
 	if(HasAuthority()) PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
+
+	bProcessingAction = false;
 }
 
 void ABoardManager::Tick(float DeltaSeconds)
 {
-	if (bPlayNextAction)
-		PlayTurnAction();
+	if (!ActionsQueue.IsEmpty() && !bProcessingAction) 
+	{
+		PlayNextGameAction();
+	}
 }
 
 void ABoardManager::InitializeBoard()
@@ -36,73 +40,9 @@ void ABoardManager::InitializeBoard()
 	}
 }
 
-void ABoardManager::RegisterTurnAction(const FPieceAction& PieceAction)
+void ABoardManager::RegisterGameAction(const FTurnAction& TurnAction)
 {
-	TurnActionsQueue.Add(PieceAction);
-}
-
-void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID, EDavidPlayer Player)
-{
-	// Create piece ID
-	int32 PieceID = PieceIdCounter++;
-
-	// Deploy piece in board
-	NetMulticast_DeployPieceInSquare(GameCardData, SquareID, PieceID, Player);
-}
-
-void ABoardManager::CalculatePlayersScore(int32& Player1Score, int32& Player2Score)
-{
-	Player1Score = Player2Score = 0;
-
-	for (ABoardSquare* Square : BoardSquares) 
-	{
-		EDavidSquareColor Color = Square->GetSquareColor();
-		if (Color == EDavidSquareColor::NEUTRAL) continue;
-		else if (Color == EDavidSquareColor::PLAYER_1_COLOR) ++Player1Score;
-		else ++Player2Score;
-	}
-}
-
-void ABoardManager::NetMulticast_DeployPieceInSquare_Implementation(FGameCardData GameCardData, int32 SquareID, int32 PieceID, EDavidPlayer Player)
-{
-	UWorld* World = GetWorld();
-	if (World == nullptr) return;
-
-	ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
-	if (PlayerController == nullptr) return;
-
-	// Get Card data
-	UDataTable* CardsDataTable = PlayerController->GetCardsDataTable();
-	FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
-
-	// Spawn the piece actor
-	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);
-
-	// Register piece
-	ActiveBoardPieces.Add(PieceID, PieceInstance);
-	ServerBoardPieces.Add(PieceID, PieceInstance);
-
-	// Setup piece
-	PieceInstance->SetupPiece(this, GameCardData, *CardData, PieceID, Player);
-
-	// Deploy the new piece in the square
-	PieceInstance->DeployInSquare(SquareID);
-
-	ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
-
-	if (GameState)
-	{
-		BoardSquares[SquareID]->Action_SetSquarePlayerColor(Player);
-	}
-
-	// Update board state in server
-	if (HasAuthority())
-	{
-		BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
-		PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
-
-		BoardSquares[SquareID]->Process_SetSquarePlayerColor(Player);
-	}
+	NetMulticast_SendGameAction(TurnAction);
 }
 
 FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
@@ -110,6 +50,19 @@ FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
 	if(SquareIndex < 0 || SquareIndex >= BoardHeight * BoardWidth) return FVector();
 
 	return BoardSquares[SquareIndex]->GetTransform().GetLocation(); 
+}
+
+void ABoardManager::CalculatePlayersScore(int32& Player1Score, int32& Player2Score)
+{
+	Player1Score = Player2Score = 0;
+
+	for (ABoardSquare* Square : BoardSquares)
+	{
+		EDavidSquareColor Color = Square->GetSquareColor();
+		if (Color == EDavidSquareColor::NEUTRAL) continue;
+		else if (Color == EDavidSquareColor::PLAYER_1_COLOR) ++Player1Score;
+		else ++Player2Score;
+	}
 }
 
 bool ABoardManager::CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID)
@@ -142,10 +95,9 @@ APieceActor* FindNextPieceToProcess(const TArray<ABoardSquare*>& BoardSquares, E
 	return nullptr;
 }
 
-void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
+void ABoardManager::ProcessPlayerEndTurn(EDavidPlayer PlayerTurn)
 {
 	// Clear the queue to start storing turn actions
-	TurnActionsQueue.Empty();
 	APieceActor* PieceToProcess = nullptr;
 
 	// Call OnBeginTurn of each piece to be processed
@@ -164,40 +116,39 @@ void ABoardManager::ProcessPlayerTurn(EDavidPlayer PlayerTurn)
 			PieceToProcess->ProcessTurn();
 		}
 	} while (PieceToProcess);
+
+	// All Actions played event
+	FTurnAction AllActionsPlayed;
+	AllActionsPlayed.ActionType = EDavidGameAction::END_TURN_ACTIONS_PLAYED;
+	RegisterGameAction(AllActionsPlayed);
 }
 
-void ABoardManager::SendTurnActions()
+void ABoardManager::NetMulticast_SendGameAction_Implementation(FTurnAction TurnAction)
 {
-	NetMulticast_SendTurnActions(TurnActionsQueue);
+	ActionsQueue.Add(TurnAction);
 }
 
-void ABoardManager::NetMulticast_SendTurnActions_Implementation(const TArray<FPieceAction>& Actions)
+void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID, EDavidPlayer Player)
 {
-	TurnActionsQueue = Actions;
+	// Create piece ID
+	int32 PieceID = PieceIdCounter++;
 
-	bPlayNextAction = true;
+	FTurnAction GameAction;
+	GameAction.ActionType = EDavidGameAction::PLAY_CARD;
+	GameAction.Payload.SetNum(sizeof(FGameCardData) + 2 * sizeof(int32) + sizeof(EDavidPlayer));
+	FMemory::Memcpy(GameAction.Payload.GetData(), &PieceID, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[8], &Player, sizeof(EDavidPlayer));
+	FMemory::Memcpy(&GameAction.Payload[8 + sizeof(EDavidPlayer)], &GameCardData, sizeof(FGameCardData));
 
-	PlayTurnAction();
+	RegisterGameAction(GameAction);
+
+	InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);
 }
 
-void ABoardManager::PlayTurnAction()
+void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
 {
-	bPlayNextAction = false;
-
-	// Once all actions has been processed, send a message to server and wait
-	if (TurnActionsQueue.IsEmpty()) 
-	{
-		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetWorld()->GetFirstPlayerController());
-
-		if(PlayerController)
-			PlayerController->OnTurnActionsCompleted();
-
-		return;
-	}
-
-	// Pop the next piece action to process
-	const FPieceAction PieceAction = TurnActionsQueue[0];
-	TurnActionsQueue.RemoveAt(0);
+	FPieceAction PieceAction = APieceActor::GetPieceAction(TurnAction);
 
 	// Find the piece that needs to process the action
 	if (ActiveBoardPieces.Contains(PieceAction.PieceID)) 
@@ -211,12 +162,116 @@ void ABoardManager::PlayTurnAction()
 	}
 }
 
-void ABoardManager::OnActionComplete()
+void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 {
-	bPlayNextAction = true;
+	int32 PieceID;
+	int32 SquareID;
+	EDavidPlayer Player;
+	FGameCardData GameCardData;
+
+	FMemory::Memcpy(&PieceID, GameAction.Payload.GetData(), sizeof(int32));
+	FMemory::Memcpy(&SquareID, &GameAction.Payload[4], sizeof(int32));
+	FMemory::Memcpy(&Player, &GameAction.Payload[8], sizeof(EDavidPlayer));
+
+	APieceActor* PieceInstance;
+
+	// Instantiate if im the client
+	if (!HasAuthority())
+	{
+		FMemory::Memcpy(&GameCardData, &GameAction.Payload[8 + sizeof(EDavidPlayer)], sizeof(FGameCardData));
+
+		PieceInstance = InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);
+	}
+	else
+	{
+		// Get piece reference
+		PieceInstance = *ActiveBoardPieces.Find(PieceID);
+	}
+
+	// Deploy the new piece in the square
+	if (PieceInstance) 
+	{
+		PieceInstance->OnDeployPieceInSquareAction(SquareID);
+		BoardSquares[SquareID]->Action_SetSquarePlayerColor(Player);
+	}
 }
 
-void ABoardManager::OnPieceDeathInTurnProcess(APieceActor* Piece)
+APieceActor* ABoardManager::InstantiateAndRegisterPiece(const FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return nullptr;
+
+	ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
+	if (PlayerController == nullptr) return nullptr;
+
+	// Get Card data
+	UDataTable* CardsDataTable = PlayerController->GetCardsDataTable();
+	FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
+
+	// Spawn the piece actor
+	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);
+
+	// Register piece
+	ActiveBoardPieces.Add(PieceID, PieceInstance);
+
+	// Setup piece
+	PieceInstance->SetupPiece(this, GameCardData, *CardData, PieceID, Player);
+
+	// Update board square reference
+	BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
+	PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
+
+	// Update board state in server
+	if (HasAuthority())
+	{
+		ServerBoardPieces.Add(PieceID, PieceInstance);
+
+		BoardSquares[SquareID]->Process_SetSquarePlayerColor(Player);
+	}
+
+	return PieceInstance;
+}
+
+void ABoardManager::PlayNextGameAction()
+{
+	if (ActionsQueue.IsEmpty())	return;
+	bProcessingAction = true;
+	
+	const FTurnAction TurnAction = ActionsQueue[0];
+	ActionsQueue.RemoveAt(0);
+
+	switch (TurnAction.ActionType)
+	{
+		case EDavidGameAction::PLAY_CARD:
+		{
+			PlayCardInSquareAction(TurnAction);
+			break;
+		}
+		case EDavidGameAction::PIECE_ACTION:
+		{
+			PlayPieceAction(TurnAction);
+			break;
+		}
+		case EDavidGameAction::END_TURN_ACTIONS_PLAYED:
+		{
+			ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(GetWorld()->GetFirstPlayerController());
+
+			if (PlayerController) PlayerController->OnTurnActionsCompleted();
+
+			OnGameActionComplete();
+
+			break;
+		}
+		default: break;
+	}
+}
+
+void ABoardManager::OnGameActionComplete()
+{
+	bProcessingAction = false;
+}
+
+void ABoardManager::OnPieceDeath(APieceActor* Piece)
 {
 	if (Piece == nullptr) return;
 

@@ -39,50 +39,68 @@ void APieceActor::OnBeginTurn()
 	bHasBeenProcessed = false;
 }
 
-void APieceActor::RegisterPieceAction(EPieceAction PieceAction) const
+void APieceActor::RegisterPieceAction(int32 PieceAction) const
 {
-	FPieceAction Action(PieceID, PieceAction);
+	FTurnAction GameAction;
+	GameAction.ActionType = EDavidGameAction::PIECE_ACTION;
+	GameAction.Payload.SetNum(2 * sizeof(int32));
+	FMemory::Memcpy(GameAction.Payload.GetData(), &PieceID, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[4], &PieceAction, sizeof(int32));
 
-	BoardManager->RegisterTurnAction(Action);
+	BoardManager->RegisterGameAction(GameAction);
 }
 
-void APieceActor::RegisterPieceAction(EPieceAction PieceAction, TArray<uint8>& Payload) const
+void APieceActor::RegisterPieceAction(int32 PieceAction, TArray<uint8>& Payload) const
 {
-	FPieceAction Action(PieceID, PieceAction, Payload);
+	FTurnAction GameAction;
+	GameAction.ActionType = EDavidGameAction::PIECE_ACTION;
+	GameAction.Payload.SetNum(2 * sizeof(int32) + Payload.Num());
+	FMemory::Memcpy(GameAction.Payload.GetData(), &PieceID, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[4], &PieceAction, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[8], Payload.GetData(), Payload.Num());
 
-	BoardManager->RegisterTurnAction(Action);
-}
-
-void APieceActor::DeployInSquare(int32 SquareIndex)
-{
-	Multicast_DeployPieceInSquare(SquareIndex);
+	BoardManager->RegisterGameAction(GameAction);
 }
 
 float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	TArray<uint8> Payload;
-	Payload.Reserve(sizeof(float));
+	Payload.SetNum(sizeof(float));
 	FMemory::Memcpy(Payload.GetData(), &DamageAmount, sizeof(float));
 	RegisterPieceAction(EPieceAction::TakePieceDamage, Payload);
 
 	if (CurrentHealth -= DamageAmount <= 0)
 	{
-		BoardManager->OnPieceDeathInTurnProcess(this);
+		BoardManager->OnPieceDeath(this);
 		RegisterPieceAction(EPieceAction::Die);
 	}
 
 	return DamageAmount;
 }
 
-void APieceActor::Multicast_DeployPieceInSquare_Implementation(int32 SquareIndex)
+FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 {
-	OnDeployPieceInSquare(SquareIndex);
+	int32 PieceID;
+	int32 ActionID;
+	TArray<uint8> Payload;
+	Payload.SetNum(GameAction.Payload.Num() - 2 * sizeof(int32));
+
+	FMemory::Memcpy(&PieceID, GameAction.Payload.GetData(), sizeof(int32));
+	FMemory::Memcpy(&ActionID, &GameAction.Payload[4], sizeof(int32));
+
+	// Retrieve payload only if there is one available
+	if(Payload.Num() != 0)
+		FMemory::Memcpy(Payload.GetData(), &GameAction.Payload[8], Payload.Num());
+
+	return FPieceAction(PieceID, ActionID, Payload);
 }
 
-void APieceActor::OnDeployPieceInSquare(int32 SquareIndex)
+void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	FVector DeployLocation = BoardManager->GetSquareLocation(SquareIndex);
 	SetActorLocation(DeployLocation);
+
+	BoardManager->OnGameActionComplete();
 }
 
 /* --------------- Process turn -------------------- */ 
@@ -101,40 +119,42 @@ void APieceActor::ProcessTurn()
 
 	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
 	{
-		APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
-		
-		if (PieceToAttack && PieceToAttack->GetOwnerPlayer() != DavidPlayerOwner) 
-		{
-			TArray<uint8> Payload;
-			Payload.Reserve(sizeof(int32));
-			FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
-			RegisterPieceAction(EPieceAction::FrontAttack, Payload);
-
-			UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
-		}
+		Process_AttackFrontPiece(TargetSquareIndex);
 	}
 	else // Move forward
 	{
-		TArray<uint8> Payload;
-		Payload.Reserve(sizeof(int32));
-		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
-
-		BoardManager->MovePieceToSquare(this, TargetSquareIndex);
-		
-		ABoardSquare* BoardSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
-		if(BoardSquare)
-			BoardSquare->Process_SetSquarePlayerColor(DavidPlayerOwner);
-
-		RegisterPieceAction(EPieceAction::MoveForward, Payload);
+		Process_MoveForward(TargetSquareIndex);
 	}
 }
 
-void APieceActor::Process_MoveForward()
+void APieceActor::Process_MoveForward(const int32& TargetSquareIndex)
 {
+	TArray<uint8> Payload;
+	Payload.SetNum(sizeof(int32));
+	FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
+
+	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
+
+	ABoardSquare* BoardSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+	if (BoardSquare)
+		BoardSquare->Process_SetSquarePlayerColor(DavidPlayerOwner);
+
+	RegisterPieceAction(EPieceAction::MoveForward, Payload);
 }
 
-void APieceActor::Process_AttackFrontPiece()
+void APieceActor::Process_AttackFrontPiece(const int32& TargetSquareIndex)
 {
+	APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
+
+	if (PieceToAttack && PieceToAttack->GetOwnerPlayer() != DavidPlayerOwner)
+	{
+		TArray<uint8> Payload;
+		Payload.SetNum(sizeof(int32));
+		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
+		RegisterPieceAction(EPieceAction::FrontAttack, Payload);
+
+		UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
+	}
 }
 
 /* -------------- Play actions ------------------------ */
@@ -165,7 +185,7 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 		}
 		default: 
 		{
-			BoardManager->OnActionComplete();
+			BoardManager->OnGameActionComplete();
 			break;
 		}
 	}
@@ -188,8 +208,7 @@ void APieceActor::Action_MoveForward(const TArray<uint8>& Payload)
 
 void APieceActor::Action_AttackFrontPiece()
 {
-	BoardManager->OnActionComplete();
-
+	BoardManager->OnGameActionComplete();
 }
 
 void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
@@ -199,7 +218,7 @@ void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 	TimerCallback.BindLambda([BM]
 	{
 		UE_LOG(LogDavid, Display, TEXT("Ouch!"));
-		BM->OnActionComplete();
+		BM->OnGameActionComplete();
 	});
 
 	FTimerHandle Handle;
@@ -215,7 +234,7 @@ void APieceActor::Action_Die()
 	{
 		BM->RemoveActivePiece(Piece);
 		Piece->Destroy();
-		BM->OnActionComplete();
+		BM->OnGameActionComplete();
 	});
 
 	FTimerHandle Handle;
@@ -232,7 +251,7 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 	if (MovementStatus >= 1.f) 
 	{
 		bIsMoving = false;
-		BoardManager->OnActionComplete();
+		BoardManager->OnGameActionComplete();
 		SetActorLocation(TargetLocation);
 
 		if (TargetSquare)
