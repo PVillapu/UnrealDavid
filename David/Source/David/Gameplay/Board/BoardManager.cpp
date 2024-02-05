@@ -328,13 +328,15 @@ void ABoardManager::GenerateBoardSquares()
 
 	BoardSquares.Empty();
 
+	FVector SquaresGlobalOffset = GetActorLocation();
+
 	for (int i = 0; i < BoardWidth * BoardHeight; ++i)
 	{
 		const int row = i / BoardHeight;
 		const int col = i % BoardHeight;
 
 		// Set the spawn location and rotation
-		const FVector SpawnLocation = FVector(col * SquaresOffset, row * SquaresOffset, 0.0f);
+		const FVector SpawnLocation = FVector(col * SquaresOffset, + row * SquaresOffset, 0.0f) + SquaresGlobalOffset;
 		const FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
 
 		// Spawn the actor
