@@ -27,7 +27,7 @@ public:
 	void ProcessPlayerEndTurn(EDavidPlayer PlayerTurn);
 
 	/* This is called when a piece is defeated */
-	void OnPieceDeath(class APieceActor* Piece);
+	void OnPieceDeath(class APieceActor* PieceDestroyed, APieceActor* InstigatorPiece);
 
 	/* Must be called when a piece performs the last action in board before being destroyed */
 	void RemoveActivePiece(APieceActor* Piece);
@@ -69,6 +69,14 @@ public:
 
 	/* --------------------------------------------------- */
 
+	/* ---------------- Events delegates ---------------------- */
+
+	/* Called when any piece in the board is destroyed */
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPlayerTurnChanged, APieceActor*, APieceActor*)
+	FOnPlayerTurnChanged OnPieceDestroyed;
+
+	/* --------------------------------------------------- */
+
 private:
 	void PlayPieceAction(const FTurnAction& TurnAction);
 
@@ -89,9 +97,6 @@ private:
 	int32 BoardWidth = 6;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	float SquaresOffset = 2.5f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<ABoardSquare> BoardSquareBP;
 
 	UPROPERTY(EditAnywhere, Category = "David")
@@ -100,8 +105,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "David")
 	AActor* Player2Camera;
 
-	// Just the board squares (provisional)
-	UPROPERTY(Transient, SkipSerialization)
+	// The instances of the board squares (must be sorted)
+	UPROPERTY(EditAnywhere, Category = "David")
 	TArray<ABoardSquare*> BoardSquares;
 
 	/* This is used by the server to process the turn */
@@ -113,7 +118,7 @@ private:
 	TMap<int32, APieceActor*> ActiveBoardPieces;
 
 	/* Actions to play while the player is playing his current turn */
-	UPROPERTY()
+	UPROPERTY(Transient, SkipSerialization)
 	TArray<FTurnAction> ActionsQueue;
 
 	int32 PieceIdCounter;

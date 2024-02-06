@@ -27,8 +27,6 @@ public:
 
 	FORCEINLINE APieceActor* GetPieceInSquare() const { return PieceInSquare; }
 
-	FORCEINLINE void SetSquareIndex(int32 Index) { SquareIndex = Index; }
-
 	FORCEINLINE int32 GetSquareIndex() const { return SquareIndex; }
 
 	FORCEINLINE EDavidSquareColor GetSquareColor() const { return ProcessSquareColor; }
@@ -37,6 +35,9 @@ private:
 	void ChangeSquareColor();
 
 private:
+	UPROPERTY(EditAnywhere, Category = "David")
+	int32 SquareIndex;
+
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	UStaticMeshComponent* SquareMesh;
 
@@ -58,6 +59,4 @@ private:
 	/* Used only by the server to process the turn */
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidSquareColor> ProcessSquareColor;
-
-	int32 SquareIndex;
 };

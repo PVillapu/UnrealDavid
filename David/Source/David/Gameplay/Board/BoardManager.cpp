@@ -7,6 +7,7 @@
 #include "../Cards/GameCardData.h"
 #include "../DavidGameState.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "Kismet/GameplayStatics.h"
 
 ABoardManager::ABoardManager()
 {
@@ -28,16 +29,37 @@ void ABoardManager::Tick(float DeltaSeconds)
 
 void ABoardManager::InitializeBoard()
 {
-	GenerateBoardSquares();
 	PieceIdCounter = 0;
 
-	if (UWorld* World = GetWorld())
-	{
-		ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
 
-		if (PlayerController)
-			PlayerController->InitializationPartDone(EDavidPreMatchInitialization::BOARD_INITIALIZED);
+	// Get all BoardSquares from the world
+	TArray<AActor*> LevelBoardSquares;
+	UGameplayStatics::GetAllActorsOfClass(World, ABoardSquare::StaticClass(), LevelBoardSquares);
+
+	// Add all BoardSquares to array
+	for(AActor* Square : LevelBoardSquares)
+	{
+		ABoardSquare* BoardSquare = Cast<ABoardSquare>(Square);
+		if (BoardSquare) 
+		{
+			BoardSquares.Add(BoardSquare);
+		}
 	}
+
+	// Sort the array by Square ID
+	BoardSquares.Sort(
+		[](const ABoardSquare& BoardSquare1, const ABoardSquare& BoardSquare2)
+		{ 
+			return BoardSquare1.GetSquareIndex() < BoardSquare2.GetSquareIndex(); 
+		}
+	);
+
+	// Notice player controller of completed initialization
+	ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
+	if (PlayerController)
+		PlayerController->InitializationPartDone(EDavidPreMatchInitialization::BOARD_INITIALIZED);
 }
 
 void ABoardManager::RegisterGameAction(const FTurnAction& TurnAction)
@@ -271,9 +293,9 @@ void ABoardManager::OnGameActionComplete()
 	bProcessingAction = false;
 }
 
-void ABoardManager::OnPieceDeath(APieceActor* Piece)
+void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiece)
 {
-	if (Piece == nullptr) return;
+	if (Piece == nullptr || InstigatorPiece == nullptr) return;
 
 	const ABoardSquare* BoardSquare = Piece->GetBoardSquare();
 	const int32 PieceLocation = BoardSquare->GetSquareIndex();
@@ -282,6 +304,10 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece)
 	Piece->SetBoardSquare(nullptr);
 	ServerBoardPieces.Remove(Piece->GetPieceID());
 	BoardSquares[PieceLocation]->SetPieceInSquare(nullptr);
+
+	Piece->OnPieceDestroyed(InstigatorPiece);
+
+	OnPieceDestroyed.Broadcast(Piece, InstigatorPiece);
 }
 
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)
@@ -315,39 +341,4 @@ ABoardSquare* ABoardManager::GetBoardSquare(int32 BoardIndex) const
 	if (BoardIndex < 0 || BoardIndex >= BoardHeight * BoardWidth) return nullptr;
 
 	return BoardSquares[BoardIndex];
-}
-
-void ABoardManager::GenerateBoardSquares()
-{
-	UWorld* World = GetWorld();
-	if (World == nullptr) return;
-
-	// Set the spawn parameters
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-
-	BoardSquares.Empty();
-
-	FVector SquaresGlobalOffset = GetActorLocation();
-
-	for (int i = 0; i < BoardWidth * BoardHeight; ++i)
-	{
-		const int row = i / BoardHeight;
-		const int col = i % BoardHeight;
-
-		// Set the spawn location and rotation
-		const FVector SpawnLocation = FVector(col * SquaresOffset, + row * SquaresOffset, 0.0f) + SquaresGlobalOffset;
-		const FRotator SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
-
-		// Spawn the actor
-		ABoardSquare* SpawnedSquare = World->SpawnActor<ABoardSquare>(BoardSquareBP, SpawnLocation, SpawnRotation, SpawnParams);
-		SpawnedSquare->SetBoardManager(this);
-		SpawnedSquare->SetSquareIndex(GetBoardIndex(row, col));
-
-		// Add to BoardSquares
-		if (SpawnedSquare)
-		{
-			BoardSquares.Add(SpawnedSquare);
-		}
-	}
 }

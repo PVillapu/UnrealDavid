@@ -16,16 +16,16 @@ class DAVID_API APieceActor : public AActor
 {
 	GENERATED_BODY()
 	
-private:
+protected:
 	enum EPieceAction : int32 { MoveForward = 0, FrontAttack, TakePieceDamage, Die};
 
 public:	
 	APieceActor();
 
-	void Tick(float DeltaSeconds) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
-	virtual void SetupPiece(class ABoardManager* BoardManager, const struct FGameCardData& GameCardData, const struct FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
+	virtual void SetupPiece(class ABoardManager* BoardManagerActor, const struct FGameCardData& GameCardData, const struct FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
 
 	/* Called by the server when the piece needs to be processed */
 	virtual void ProcessTurn();
@@ -35,6 +35,8 @@ public:
 	virtual void OnBeginTurn();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
 
 	/* Returns true if this piece has been processed in this turn */
 	FORCEINLINE bool HasBeenProcessed() const { return bHasBeenProcessed; }
@@ -65,13 +67,13 @@ protected:
 
 	/* -------------------- Turn process methods ----------------------- */
 
-	void Process_MoveForward(const int32& TargetSquareIndex);
+	void Process_MoveToSquare(const int32& TargetSquareIndex, int32 ActionID);
 
-	void Process_AttackFrontPiece(const int32& TargetSquareIndex);
+	void Process_AttackPieceInSquare(const int32& TargetSquareIndex, int32 ActionID);
 
 	/* -------------------- Turn actions methods ------------------------ */
 
-	virtual void Action_MoveForward(const TArray<uint8>& Payload);
+	virtual void Action_MoveToSquare(const TArray<uint8>& Payload);
 
 	virtual void Action_AttackFrontPiece();
 

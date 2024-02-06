@@ -69,13 +69,19 @@ float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 	FMemory::Memcpy(Payload.GetData(), &DamageAmount, sizeof(float));
 	RegisterPieceAction(EPieceAction::TakePieceDamage, Payload);
 
-	if (CurrentHealth -= DamageAmount <= 0)
+	CurrentHealth -= (int32)DamageAmount;
+	if (CurrentHealth <= 0)
 	{
-		BoardManager->OnPieceDeath(this);
 		RegisterPieceAction(EPieceAction::Die);
+		APieceActor* InstigatorPiece = Cast<APieceActor>(DamageCauser);
+		BoardManager->OnPieceDeath(this, InstigatorPiece);
 	}
 
 	return DamageAmount;
+}
+
+void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
+{
 }
 
 FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
@@ -119,15 +125,15 @@ void APieceActor::ProcessTurn()
 
 	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
 	{
-		Process_AttackFrontPiece(TargetSquareIndex);
+		Process_AttackPieceInSquare(TargetSquareIndex, EPieceAction::FrontAttack);
 	}
 	else // Move forward
 	{
-		Process_MoveForward(TargetSquareIndex);
+		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveForward);
 	}
 }
 
-void APieceActor::Process_MoveForward(const int32& TargetSquareIndex)
+void APieceActor::Process_MoveToSquare(const int32& TargetSquareIndex, int32 ActionID)
 {
 	TArray<uint8> Payload;
 	Payload.SetNum(sizeof(int32));
@@ -139,10 +145,10 @@ void APieceActor::Process_MoveForward(const int32& TargetSquareIndex)
 	if (BoardSquare)
 		BoardSquare->Process_SetSquarePlayerColor(DavidPlayerOwner);
 
-	RegisterPieceAction(EPieceAction::MoveForward, Payload);
+	RegisterPieceAction(ActionID, Payload);
 }
 
-void APieceActor::Process_AttackFrontPiece(const int32& TargetSquareIndex)
+void APieceActor::Process_AttackPieceInSquare(const int32& TargetSquareIndex, int32 ActionID)
 {
 	APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 
@@ -151,7 +157,7 @@ void APieceActor::Process_AttackFrontPiece(const int32& TargetSquareIndex)
 		TArray<uint8> Payload;
 		Payload.SetNum(sizeof(int32));
 		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
-		RegisterPieceAction(EPieceAction::FrontAttack, Payload);
+		RegisterPieceAction(ActionID, Payload);
 
 		UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
 	}
@@ -165,7 +171,7 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 	{
 		case EPieceAction::MoveForward: 
 		{
-			Action_MoveForward(Action.Payload);
+			Action_MoveToSquare(Action.Payload);
 			break;
 		}
 		case EPieceAction::FrontAttack: 
@@ -191,7 +197,7 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 	}
 }
 
-void APieceActor::Action_MoveForward(const TArray<uint8>& Payload)
+void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 {
 	// Get the target square from the payload
 	int32 TargetSquareIndex;
