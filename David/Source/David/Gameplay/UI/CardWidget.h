@@ -13,7 +13,7 @@ class DAVID_API UCardWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void SetupCard(const struct FCardData& CardData, int32 GameCardID);
+	void SetupCard(const struct FCardData& CardData, int32 GameCardID = 0);
 
 	void StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed);
 
@@ -61,7 +61,10 @@ protected:
 	class UImage* PieceImage;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	class UTextBlock* HealthText;
+	class UTextBlock* CardNameText;
+
+	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
+	UTextBlock* HealthText;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
 	UTextBlock* AttackText;

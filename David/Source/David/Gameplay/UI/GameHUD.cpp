@@ -7,6 +7,33 @@
 #include "../Player/DavidPlayerController.h"
 #include "../DavidPlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "../Piece/PieceActor.h"
+#include "../Cards/CardData.h"
+#include "CardWidget.h"
+
+void UGameHUD::OnCursorOverPiece(APieceActor* PieceSelected)
+{
+	FCardData CardData = PieceSelected->GetCardData();
+	
+	PieceInfoCard->SetupCard(CardData);
+	PieceInfoCard->SetVisibility(ESlateVisibility::HitTestInvisible);
+	
+	if (UWorld* World = GetWorld()) 
+	{
+		float MouseX = 0.f;
+		float MouseY = 0.f;
+		if (APlayerController* PlayerController = World->GetFirstPlayerController())
+			PlayerController->GetMousePosition(MouseX, MouseY);
+
+		FWidgetTransform TargetTransform(FVector2D(MouseX, MouseY), PieceInfoCard->GetRenderTransform().Scale, PieceInfoCard->GetRenderTransform().Shear, 0.f);
+		PieceInfoCard->SetRenderTransform(TargetTransform);
+	}
+}
+
+void UGameHUD::OnCursorLeftPiece()
+{
+	PieceInfoCard->SetVisibility(ESlateVisibility::Hidden);
+}
 
 void UGameHUD::NativeConstruct()
 {
@@ -64,6 +91,9 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 	// Mark HUD initialization as done
 	if(ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController()))
 		DavidPlayerController->InitializationPartDone(EDavidPreMatchInitialization::PLAYER_HUD_INITIALIZED);
+
+	// Hide the information card
+	PieceInfoCard->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UGameHUD::OnMatchStateChanged(EDavidMatchState PlayerTurn)

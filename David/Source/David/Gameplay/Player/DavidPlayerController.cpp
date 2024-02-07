@@ -54,6 +54,8 @@ void ADavidPlayerController::SetupPlayer()
 		}
 	}
 
+	bEnableMouseOverEvents = true;
+
 	InitializationPartDone(EDavidPreMatchInitialization::PLAYER_INITIALIZED);
 }
 
@@ -66,8 +68,8 @@ void ADavidPlayerController::CreatePlayerHUD()
 		PlayerHUD->AddToViewport();
 	}
 
-	// Set input mode to only UI
-	FInputModeUIOnly InputMode;
+	// Set input mode to game and UI
+	FInputModeGameAndUI InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 	bShowMouseCursor = true;

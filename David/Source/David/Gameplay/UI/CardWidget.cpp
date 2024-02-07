@@ -12,6 +12,7 @@
 void UCardWidget::SetupCard(const FCardData& Data, int32 GameCardID)
 {
 	PieceImage->SetBrushFromTexture(Data.CardImage);
+	CardNameText->SetText(Data.CardName);
 	HealthText->SetText(FText::AsNumber(Data.PieceHealth));
 	AttackText->SetText(FText::AsNumber(Data.PieceAttack));
 	CardDescriptionText->SetText(Data.CardDescription);

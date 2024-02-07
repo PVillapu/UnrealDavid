@@ -5,6 +5,7 @@
 #include "PieceAction.h"
 #include "../Board/TurnAction.h"
 #include "../Misc/Enums.h"
+#include "../Cards/CardData.h"
 #include "PieceActor.generated.h"
 
 /* 
@@ -25,7 +26,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
-	virtual void SetupPiece(class ABoardManager* BoardManagerActor, const struct FGameCardData& GameCardData, const struct FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
+	virtual void SetupPiece(class ABoardManager* BoardManagerActor, const struct FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
 
 	/* Called by the server when the piece needs to be processed */
 	virtual void ProcessTurn();
@@ -52,6 +53,8 @@ public:
 
 	FORCEINLINE int32 GetPieceID() const { return PieceID; }
 
+	FORCEINLINE FCardData GetCardData() const { return CardData; }
+
 	/* Retrieves a PieceAction struct from the given Game Action */
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
 
@@ -59,6 +62,12 @@ public:
 	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
 
 protected:
+	UFUNCTION()
+	virtual void OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent);
+
+	UFUNCTION()
+	virtual void OnEndCursorOverEvent(UPrimitiveComponent* TouchedComponent);
+
 	/* Registers a PieceAction in the board to later play it */
 	void RegisterPieceAction(int32 PieceAction) const;
 
@@ -105,10 +114,16 @@ protected:
 	UPROPERTY(Transient, SkipSerialization)
 	bool bHasBeenProcessed = false;
 
-	EDavidPlayer DavidPlayerOwner;
-
 	UPROPERTY(Transient, SkipSerialization)
 	ABoardSquare* Square;
+
+	UPROPERTY(Transient, SkipSerialization)
+	class UGameHUD* GameHUD;
+
+	UPROPERTY(Transient, SkipSerialization)
+	FCardData CardData;
+
+	EDavidPlayer DavidPlayerOwner;
 	
 	int32 PieceID;
 

@@ -14,6 +14,10 @@ class DAVID_API UGameHUD : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	void OnCursorOverPiece(class APieceActor* PieceSelected);
+
+	void OnCursorLeftPiece();
+
 	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManager; }
 
 private:
@@ -77,6 +81,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UTextBlock* EndgameText;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	class UCardWidget* PieceInfoCard;
 
 	UPROPERTY(Transient, SkipSerialization)
 	ADavidGameState* DavidGameState;

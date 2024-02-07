@@ -10,6 +10,9 @@ struct FCardData : public FTableRowBase
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
+    FText CardName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     TSubclassOf<class APieceActor> CardPieceActor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")

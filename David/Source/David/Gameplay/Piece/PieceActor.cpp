@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "../Board/BoardSquare.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "../Player/DavidPlayerController.h"
+#include "../UI/GameHUD.h"
 
 APieceActor::APieceActor()
 {
@@ -12,7 +14,11 @@ APieceActor::APieceActor()
 	bReplicates = false;
 
 	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
+	SkeletalMeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
+
+	SkeletalMeshComponent->OnBeginCursorOver.AddDynamic(this, &APieceActor::OnBeginCursorOverEvent);
+	SkeletalMeshComponent->OnEndCursorOver.AddDynamic(this, &APieceActor::OnEndCursorOverEvent);
 }
 
 void APieceActor::Tick(float DeltaSeconds)
@@ -23,7 +29,7 @@ void APieceActor::Tick(float DeltaSeconds)
 	}
 }
 
-void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, const FCardData& CardData, int32 ID, EDavidPlayer PieceOwner)
+void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
 {
 	BoardManager = BoardManagerActor;
 
@@ -32,6 +38,15 @@ void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardDa
 
 	PieceID = ID;
 	DavidPlayerOwner = PieceOwner;
+
+	CardData = _CardData;
+
+	// Get game HUD reference
+	if (UWorld* World = GetWorld())
+	{
+		if (ADavidPlayerController* DavidPlayerController = World->GetFirstPlayerController<ADavidPlayerController>())
+			GameHUD = DavidPlayerController->GetPlayerGameHUD();
+	}
 }
 
 void APieceActor::OnBeginTurn()
@@ -82,6 +97,7 @@ float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 
 void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
 {
+	SkeletalMeshComponent->OnBeginCursorOver.RemoveAll(this);
 }
 
 FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
@@ -107,6 +123,16 @@ void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 	SetActorLocation(DeployLocation);
 
 	BoardManager->OnGameActionComplete();
+}
+
+void APieceActor::OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent)
+{
+	GameHUD->OnCursorOverPiece(this);
+}
+
+void APieceActor::OnEndCursorOverEvent(UPrimitiveComponent* TouchedComponent)
+{
+	GameHUD->OnCursorLeftPiece();
 }
 
 /* --------------- Process turn -------------------- */ 
