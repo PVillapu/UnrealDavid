@@ -72,6 +72,7 @@ void ADavidPlayerController::CreatePlayerHUD()
 	FInputModeGameAndUI InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
+	UGameplayStatics::SetViewportMouseCaptureMode(GetWorld(), EMouseCaptureMode::NoCapture);
 	bShowMouseCursor = true;
 }
 
