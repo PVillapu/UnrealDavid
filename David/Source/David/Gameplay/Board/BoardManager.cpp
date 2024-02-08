@@ -231,7 +231,7 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(const FGameCardData& Gam
 	FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
 
 	// Spawn the piece actor
-	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);
+	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);	// Crash in client
 
 	// Register piece
 	ActiveBoardPieces.Add(PieceID, PieceInstance);

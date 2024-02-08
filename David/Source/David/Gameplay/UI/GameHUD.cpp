@@ -10,29 +10,27 @@
 #include "../Piece/PieceActor.h"
 #include "../Cards/CardData.h"
 #include "CardWidget.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 void UGameHUD::OnCursorOverPiece(APieceActor* PieceSelected)
 {
-	FCardData CardData = PieceSelected->GetCardData();
-	
-	PieceInfoCard->SetupCard(CardData);
-	PieceInfoCard->SetVisibility(ESlateVisibility::HitTestInvisible);
-	
-	if (UWorld* World = GetWorld()) 
-	{
-		float MouseX = 0.f;
-		float MouseY = 0.f;
-		if (APlayerController* PlayerController = World->GetFirstPlayerController())
-			PlayerController->GetMousePosition(MouseX, MouseY);
-
-		FWidgetTransform TargetTransform(FVector2D(MouseX, MouseY), PieceInfoCard->GetRenderTransform().Scale, PieceInfoCard->GetRenderTransform().Shear, 0.f);
-		PieceInfoCard->SetRenderTransform(TargetTransform);
-	}
+	CurrentInspectedPiece = PieceSelected;
 }
 
 void UGameHUD::OnCursorLeftPiece()
 {
+	CurrentInspectedPiece = nullptr;
 	PieceInfoCard->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UGameHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	if (CurrentInspectedPiece) 
+	{
+		PlaceInfoCardInViewport();
+	}
 }
 
 void UGameHUD::NativeConstruct()
@@ -94,6 +92,11 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 
 	// Hide the information card
 	PieceInfoCard->SetVisibility(ESlateVisibility::Hidden);
+
+	// Place the info card at 0,0 in the UI
+	UCanvasPanelSlot* CardPanelSlot = Cast<UCanvasPanelSlot>(PieceInfoCard->Slot);
+	if(CardPanelSlot)
+		CardPanelSlot->SetPosition(FVector2D::ZeroVector);
 }
 
 void UGameHUD::OnMatchStateChanged(EDavidMatchState PlayerTurn)
@@ -204,6 +207,26 @@ void UGameHUD::CheckForAvailablePlayerState()
 				SetupGameHUD(DavidGameState, DavidPlayerState);
 				return;
 			}
+		}
+	}
+}
+
+void UGameHUD::PlaceInfoCardInViewport()
+{
+	FCardData CardData = CurrentInspectedPiece->GetCardData();
+
+	PieceInfoCard->SetupCard(CardData);
+	PieceInfoCard->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+	if (UWorld* World = GetWorld())
+	{
+		FVector2D ViewportPosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
+
+		if (UCanvasPanelSlot* CardCanvasSlot = Cast<UCanvasPanelSlot>(PieceInfoCard->Slot))
+		{
+			ViewportPosition += FVector2D(PieceInfoCardHorizontalOffset, -CardCanvasSlot->GetSize().Y * 0.5f);
+			FWidgetTransform TargetTransform(ViewportPosition, PieceInfoCard->GetRenderTransform().Scale, PieceInfoCard->GetRenderTransform().Shear, 0.f);
+			PieceInfoCard->SetRenderTransform(TargetTransform);
 		}
 	}
 }
