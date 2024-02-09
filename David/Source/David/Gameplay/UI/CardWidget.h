@@ -19,6 +19,8 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+	FORCEINLINE void SetIsBeingGrabbed(bool isBeingGrabbed) { bIsBeingGrabbed = isBeingGrabbed; }
+
 	FORCEINLINE int32 GetGameCardID() { return CardID; }
 
 protected:
@@ -84,5 +86,6 @@ private:
 	
 	float InterpolationSpeed;
 	bool bIsInterpolating;
+	bool bIsBeingGrabbed;
 	int32 CardID;
 };

@@ -13,6 +13,8 @@ class DAVID_API UHandManager : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	void InitializeHandManager();
+
 	void AddCardToHand(const struct FGameCardData& Card);
 
 	void OnPlayCardResponse(int32 CardID, bool Response);
@@ -53,7 +55,7 @@ private:
 
 	float GetHoveredXDisplacement(int CardIndex) const;
 
-	FVector2D CalculateCardDragPosition(const FVector2D ViewportPosition, const FVector2D& ViewportSize) const;
+	FVector2D CalculateCardDragPosition(const FVector2D& ViewportPosition, const UWidget* DraggedCard) const;
 
 	UCardWidget* GetAvailableCardWidget();
 
@@ -104,4 +106,7 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TArray<class UCardWidget*> HandCards;
+
+	UPROPERTY(Transient, SkipSerialization)
+	FVector2D HandsSlotOffset;
 };

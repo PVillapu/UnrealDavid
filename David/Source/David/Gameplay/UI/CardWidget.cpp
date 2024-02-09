@@ -32,8 +32,9 @@ void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (bIsInterpolating) 
+	if (bIsInterpolating && !bIsBeingGrabbed)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("bIsInterpolating %d"), FMath::RandRange(0, 100));
 		if (HasReachedDestination() && HasCardSizeBeenStablished()) 
 		{
 			bIsInterpolating = false;

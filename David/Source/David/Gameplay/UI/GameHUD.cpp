@@ -11,8 +11,8 @@
 #include "../Cards/CardData.h"
 #include "CardWidget.h"
 #include "Components/CanvasPanelSlot.h"
-#include "Blueprint/SlateBlueprintLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "HandManager.h"
 
 void UGameHUD::OnCursorOverPiece(APieceActor* PieceSelected)
 {
@@ -85,6 +85,9 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 	// Bind PlayerGold updates
 	if(PlayerState)
 		PlayerState->OnPlayerGoldChanged.AddUObject(this, &UGameHUD::OnPlayerGoldUpdates);
+
+	// Init player hand manager
+	HandManager->InitializeHandManager();
 
 	// Mark HUD initialization as done
 	if(ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController()))

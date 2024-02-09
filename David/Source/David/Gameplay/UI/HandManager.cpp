@@ -10,6 +10,15 @@
 #include "CardDragDropOperation.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "../Player/PlayerCards.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/CanvasPanel.h"
+
+void UHandManager::InitializeHandManager()
+{
+	FGeometry ParentGeometry = Slot->Parent->GetCachedGeometry();
+	HandsSlotOffset = ParentGeometry.AbsoluteToLocal(GetCachedGeometry().GetAbsolutePosition());
+}
 
 void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 {
@@ -74,10 +83,13 @@ void UHandManager::OnCardGrabbed(UCardWidget& Card, UCardDragDropOperation& Card
 	HoveredCardIndex = -1;
 	Card.SetVisibility(ESlateVisibility::HitTestInvisible);
 	Card.SetRenderOpacity(0.3f);
+	Card.SetIsBeingGrabbed(true);
 }
 
 void UHandManager::OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDropOp)
 {
+	Card.SetIsBeingGrabbed(false);
+
 	UCardDragDropOperation* CardDragDrop = Cast<UCardDragDropOperation>(&CardDragDropOp);
 	if (CardDragDrop) 
 	{
@@ -121,9 +133,11 @@ void UHandManager::CardDrag(UDragDropOperation* Operation, const FPointerEvent& 
 	{
 		UCardWidget* DraggedCard = CardDragDropOp->DraggedCard;
 		
+		FVector2D CardPosition = CalculateCardDragPosition(ViewportPosition, DraggedCard);
+
 		FWidgetTransform WidgetTargetTransform(DraggedCard->GetRenderTransform());
-		WidgetTargetTransform.Translation = CalculateCardDragPosition(ViewportPosition, ViewportSize);
-		DraggedCard->StartRepositioning(WidgetTargetTransform, 0.98f);
+		WidgetTargetTransform.Translation = CardPosition;
+		DraggedCard->SetRenderTransform(WidgetTargetTransform);
 	}
 
 	// Deproject viewport position to World in order to cast a line trace
@@ -247,13 +261,9 @@ float UHandManager::GetHoveredXDisplacement(int CardIndex) const
 	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? HoveredCardXDisplacement : 0.f;
 }
 
-FVector2D UHandManager::CalculateCardDragPosition(const FVector2D ViewportPosition, const FVector2D& ViewportSize) const
-{
-	FVector2D HandWidgetSize = GetDesiredSize();
-	FVector2D Result = ViewportPosition;
-	Result.Y -= (ViewportSize.Y - HandWidgetSize.Y);
-	
-	return Result;
+FVector2D UHandManager::CalculateCardDragPosition(const FVector2D& ViewportPosition, const UWidget* DraggedCard) const
+{	
+	return ViewportPosition - HandsSlotOffset;
 }
 
 UCardWidget* UHandManager::GetAvailableCardWidget()
