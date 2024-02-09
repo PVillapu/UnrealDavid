@@ -1,3 +1,2 @@
-- ajustar cartas al raton en drag UI
 - Fixear crash en build
 - UI in game de atributos de las piezas

@@ -133,10 +133,12 @@ void UHandManager::CardDrag(UDragDropOperation* Operation, const FPointerEvent& 
 	{
 		UCardWidget* DraggedCard = CardDragDropOp->DraggedCard;
 		
+		// Calculate the card position in viewport
 		FVector2D CardPosition = CalculateCardDragPosition(ViewportPosition, DraggedCard);
 
 		FWidgetTransform WidgetTargetTransform(DraggedCard->GetRenderTransform());
 		WidgetTargetTransform.Translation = CardPosition;
+		WidgetTargetTransform.Angle = 0.f;
 		DraggedCard->SetRenderTransform(WidgetTargetTransform);
 	}
 
@@ -263,7 +265,7 @@ float UHandManager::GetHoveredXDisplacement(int CardIndex) const
 
 FVector2D UHandManager::CalculateCardDragPosition(const FVector2D& ViewportPosition, const UWidget* DraggedCard) const
 {	
-	return ViewportPosition - HandsSlotOffset;
+	return ViewportPosition - HandsSlotOffset - DraggedCard->GetCachedGeometry().GetLocalSize() * 0.5f;
 }
 
 UCardWidget* UHandManager::GetAvailableCardWidget()
