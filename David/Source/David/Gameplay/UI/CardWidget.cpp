@@ -45,6 +45,16 @@ void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 }
 
+void UCardWidget::SetCardAttack(int32 Attack)
+{
+	AttackText->SetText(FText::AsNumber(Attack));
+}
+
+void UCardWidget::SetCardHealth(int32 Health)
+{
+	HealthText->SetText(FText::AsNumber(Health));
+}
+
 void UCardWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);

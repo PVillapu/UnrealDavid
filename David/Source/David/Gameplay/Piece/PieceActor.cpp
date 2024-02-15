@@ -7,6 +7,7 @@
 #include "../Misc/CustomDavidLogs.h"
 #include "../Player/DavidPlayerController.h"
 #include "../UI/GameHUD.h"
+#include "Components/WidgetComponent.h"
 
 APieceActor::APieceActor()
 {
@@ -17,6 +18,9 @@ APieceActor::APieceActor()
 	SkeletalMeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
+
+	/*StatsWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatsWidget"));
+	StatsWidgetComponent->SetupAttachment(SkeletalMeshComponent);*/
 
 	SkeletalMeshComponent->OnBeginCursorOver.AddDynamic(this, &APieceActor::OnBeginCursorOverEvent);
 	SkeletalMeshComponent->OnEndCursorOver.AddDynamic(this, &APieceActor::OnEndCursorOverEvent);
@@ -32,10 +36,11 @@ void APieceActor::Tick(float DeltaSeconds)
 
 void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
 {
+	// Setup initial data
 	BoardManager = BoardManagerActor;
 
-	CurrentHealth = BaseHealth = GameCardData.PieceHealth;
-	CurrentAttack = BaseAttack = GameCardData.PieceAttack;
+	CurrentHealth = BaseHealth = ProcessHealth = GameCardData.PieceHealth;
+	CurrentAttack = BaseAttack = ProcessAttack = GameCardData.PieceAttack;
 
 	PieceID = ID;
 	DavidPlayerOwner = PieceOwner;
@@ -48,6 +53,11 @@ void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardDa
 		if (ADavidPlayerController* DavidPlayerController = World->GetFirstPlayerController<ADavidPlayerController>())
 			GameHUD = DavidPlayerController->GetPlayerGameHUD();
 	}
+
+	// Hide the stats UI
+	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
+	if(StatsWidget)
+		StatsWidget->SetVisibility(ESlateVisibility::Hidden);*/
 }
 
 void APieceActor::OnBeginTurn()
@@ -80,13 +90,14 @@ void APieceActor::RegisterPieceAction(int32 PieceAction, TArray<uint8>& Payload)
 
 float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	ProcessHealth -= (int32)DamageAmount;
+
 	TArray<uint8> Payload;
 	Payload.SetNum(sizeof(float));
-	FMemory::Memcpy(Payload.GetData(), &DamageAmount, sizeof(float));
+	FMemory::Memcpy(Payload.GetData(), &ProcessHealth, sizeof(int32));
 	RegisterPieceAction(EPieceAction::TakePieceDamage, Payload);
 
-	CurrentHealth -= (int32)DamageAmount;
-	if (CurrentHealth <= 0)
+	if (ProcessHealth <= 0)
 	{
 		RegisterPieceAction(EPieceAction::Die);
 		APieceActor* InstigatorPiece = Cast<APieceActor>(DamageCauser);
@@ -128,12 +139,24 @@ void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 
 void APieceActor::OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent)
 {
+	if(GameHUD)
 	GameHUD->OnCursorOverPiece(this);
+
+	// Show piece stats UI
+	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
+	if (StatsWidget)
+		StatsWidget->SetVisibility(ESlateVisibility::HitTestInvisible);*/
 }
 
 void APieceActor::OnEndCursorOverEvent(UPrimitiveComponent* TouchedComponent)
 {
-	GameHUD->OnCursorLeftPiece();
+	if(GameHUD)
+		GameHUD->OnCursorLeftPiece();
+
+	// Hide piece stats UI
+	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
+	if (StatsWidget)
+		StatsWidget->SetVisibility(ESlateVisibility::Hidden);*/
 }
 
 /* --------------- Process turn -------------------- */ 
@@ -186,7 +209,7 @@ void APieceActor::Process_AttackPieceInSquare(const int32& TargetSquareIndex, in
 		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 		RegisterPieceAction(ActionID, Payload);
 
-		UGameplayStatics::ApplyDamage(PieceToAttack, CurrentAttack, nullptr, this, nullptr);
+		UGameplayStatics::ApplyDamage(PieceToAttack, ProcessAttack, nullptr, this, nullptr);
 	}
 }
 
@@ -246,11 +269,15 @@ void APieceActor::Action_AttackFrontPiece()
 
 void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 {
+	int32 IncomingHealth;
+	FMemory::Memcpy(&IncomingHealth, Payload.GetData(), sizeof(int32));
+
 	ABoardManager* BM = BoardManager;
 	FTimerDelegate TimerCallback;
-	TimerCallback.BindLambda([BM]
+	TimerCallback.BindLambda([BM, IncomingHealth, this]
 	{
 		UE_LOG(LogDavid, Display, TEXT("Ouch!"));
+		CurrentHealth = IncomingHealth;
 		BM->OnGameActionComplete();
 	});
 

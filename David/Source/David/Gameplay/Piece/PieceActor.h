@@ -39,6 +39,9 @@ public:
 
 	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
 
+	/* Called when the piece has to be placed in the board */
+	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
+
 	/* Returns true if this piece has been processed in this turn */
 	FORCEINLINE bool HasBeenProcessed() const { return bHasBeenProcessed; }
 
@@ -55,11 +58,12 @@ public:
 
 	FORCEINLINE FCardData GetCardData() const { return CardData; }
 
+	FORCEINLINE int32 GetPieceAttack() const { return CurrentAttack; }
+
+	FORCEINLINE int32 GetPieceHealth() const { return CurrentHealth; }
+
 	/* Retrieves a PieceAction struct from the given Game Action */
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
-
-	/* Called when the piece has to be placed in the board */
-	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
 
 protected:
 	UFUNCTION()
@@ -95,6 +99,9 @@ protected:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	USkeletalMeshComponent* SkeletalMeshComponent;
+
+	/*UPROPERTY(EditDefaultsOnly, Category = "David")
+	class UWidgetComponent* StatsWidgetComponent;*/
 	
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
@@ -104,6 +111,12 @@ protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	int32 BaseAttack;
+
+	UPROPERTY(Transient, SkipSerialization)
+	int32 ProcessHealth;
+
+	UPROPERTY(Transient, SkipSerialization)
+	int32 ProcessAttack;
 
 	UPROPERTY(Transient, SkipSerialization)
 	int32 CurrentHealth;

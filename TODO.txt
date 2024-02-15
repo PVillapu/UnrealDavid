@@ -1,2 +1,3 @@
-- Fixear crash en build
 - UI in game de atributos de las piezas
+- Crear nuevas piezas
+- Fixear crash en build

@@ -19,6 +19,10 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+	void SetCardAttack(int32 Attack);
+
+	void SetCardHealth(int32 Health);
+
 	FORCEINLINE void SetIsBeingGrabbed(bool isBeingGrabbed) { bIsBeingGrabbed = isBeingGrabbed; }
 
 	FORCEINLINE int32 GetGameCardID() { return CardID; }
