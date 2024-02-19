@@ -69,7 +69,7 @@ void ABoardManager::RegisterGameAction(const FTurnAction& TurnAction)
 
 FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
 {
-	if(SquareIndex < 0 || SquareIndex >= BoardHeight * BoardWidth) return FVector();
+	if(SquareIndex < 0 || SquareIndex >= BoardSquares.Num()) return FVector();
 
 	return BoardSquares[SquareIndex]->GetTransform().GetLocation(); 
 }

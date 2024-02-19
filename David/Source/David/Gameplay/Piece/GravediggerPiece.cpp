@@ -33,6 +33,6 @@ void AGraveDiggerPiece::OnAnyBoardPieceDestroyed(APieceActor* DestroyedPiece, AP
 
 	if (!BoardManager->IsSquareOccupied(TargetSquareIndex)) // Move forward
 	{
-		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveForward);
+		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
 	}
 }

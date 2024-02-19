@@ -18,7 +18,7 @@ class DAVID_API APieceActor : public AActor
 	GENERATED_BODY()
 	
 protected:
-	enum EPieceAction : int32 { MoveForward = 0, FrontAttack, TakePieceDamage, Die};
+	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die};
 
 public:	
 	APieceActor();
@@ -66,6 +66,15 @@ public:
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
 
 protected:
+	/* ----------------------- Piece delegates ------------------------- */
+
+	DECLARE_MULTICAST_DELEGATE(FOnThisPieceDestroyedOther)
+	FOnThisPieceDestroyedOther OnThisPieceDestroyedOtherDelegate;
+
+	FORCEINLINE void OnThisPieceDestroyedOther() { OnThisPieceDestroyedOtherDelegate.Broadcast(); }
+
+	/*------------------------------------------------------------------ */
+
 	UFUNCTION()
 	virtual void OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent);
 

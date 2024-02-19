@@ -102,6 +102,8 @@ float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		RegisterPieceAction(EPieceAction::Die);
 		APieceActor* InstigatorPiece = Cast<APieceActor>(DamageCauser);
 		BoardManager->OnPieceDeath(this, InstigatorPiece);
+
+		InstigatorPiece->OnThisPieceDestroyedOther();
 	}
 
 	return DamageAmount;
@@ -179,7 +181,7 @@ void APieceActor::ProcessTurn()
 	}
 	else // Move forward
 	{
-		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveForward);
+		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
 	}
 }
 
@@ -219,7 +221,7 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 {
 	switch (Action.ActionID)
 	{
-		case EPieceAction::MoveForward: 
+		case EPieceAction::MoveToSquare: 
 		{
 			Action_MoveToSquare(Action.Payload);
 			break;
