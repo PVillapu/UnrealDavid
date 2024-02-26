@@ -23,6 +23,8 @@ public:
 
 	void SetCardHealth(int32 Health);
 
+	FVector2D GetCardSize() const;
+
 	FORCEINLINE void SetIsBeingGrabbed(bool isBeingGrabbed) { bIsBeingGrabbed = isBeingGrabbed; }
 
 	FORCEINLINE int32 GetGameCardID() { return CardID; }
@@ -63,6 +65,9 @@ public:
 	FOnLeftCard OnLeftCardDelegate;
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
+	class USizeBox* CardSizeBox;
+
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
 	class UImage* PieceImage;
 

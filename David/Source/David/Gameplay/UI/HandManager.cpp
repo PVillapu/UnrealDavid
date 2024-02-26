@@ -1,7 +1,7 @@
 #include "HandManager.h"
 #include "../Cards/CardData.h"
 #include "../UI/CardWidget.h"
-#include "Components/Overlay.h"
+#include "Components/CanvasPanel.h"
 #include "../Player/DavidPlayerController.h"
 #include "../Board/BoardSquare.h"
 #include "../Board/BoardManager.h"
@@ -47,7 +47,7 @@ float UHandManager::GetCardAngle(int CardIndex) const
 
 FVector2D UHandManager::GetCardPosition(int CardIndex) const
 {
-	return FVector2D((CardIndex - HandCards.Num() / 2.f) * CardSpacing + HandCardsHorizontalOffset + GetHoveredXDisplacement(CardIndex), HandCardsVerticalOffset + GetHoveredCardYDisplacement(CardIndex));
+	return FVector2D((CardIndex - HandCards.Num() / 2.f) * CardSpacing + GetHoveredXDisplacement(CardIndex), GetHoveredCardYDisplacement(CardIndex));
 }
 
 void UHandManager::CalculateCardsPositions() const
@@ -229,38 +229,33 @@ void UHandManager::OnPlayCardResponse(int32 CardID, bool Response)
 
 FWidgetTransform UHandManager::CalculateCardPosition(int CardIndex) const
 {
-	return FWidgetTransform(GetCenterPosition() + GetCardPosition(CardIndex) + GetCardHandHeight(CardIndex),
+	return FWidgetTransform(GetCardPosition(CardIndex),
 		FVector2D::One(),
 		FVector2D::Zero(),
 		GetCardAngle(CardIndex));
 }
 
-FVector2D UHandManager::GetCenterPosition() const
-{
-	return FVector2D(GetCachedGeometry().GetLocalSize().X / 2.0, 0.0);
-}
-
 int UHandManager::GetCardIndexFromCenter(int CardIndex) const
 {
 	float RawIndex = CardIndex - HandCards.Num() / 2.f;
-	int res = FMath::RoundHalfFromZero(RawIndex + 0.5f);
 
-	return res;
-}
-
-FVector2D UHandManager::GetCardHandHeight(int CardIndex) const
-{
-	return FVector2D(0.0, FMath::Abs(GetCardIndexFromCenter(CardIndex)) * CardHeight);
+	return (int)FMath::RoundHalfFromZero(RawIndex + 0.5f);
 }
 
 float UHandManager::GetHoveredCardYDisplacement(int CardIndex) const
 {
-	return CardIndex == HoveredCardIndex ? HoveredCardYDisplacement : 0.f;
+	if (HandCards.Num() <= 0) return 0.f;
+	
+	const FVector2D CardSize = HandCards[0]->GetCardSize();
+	
+	if(HoveredCardIndex == -1 || CardIndex != HoveredCardIndex) return -CardSize.Y / 2.f;
+
+	return -CardSize.Y;
 }
 
 float UHandManager::GetHoveredXDisplacement(int CardIndex) const
 {
-	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? HoveredCardXDisplacement : 0.f;
+	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? /* HoveredCardXDisplacement */ 10 : 0.f;
 }
 
 FVector2D UHandManager::CalculateCardDragPosition(const FVector2D& ViewportPosition, const UWidget* DraggedCard) const
@@ -282,11 +277,17 @@ UCardWidget* UHandManager::GetAvailableCardWidget()
 	{
 		// Create Card widget
 		CardWidget = CreateWidget<UCardWidget>(GetOwningPlayer(), CardWidgetClass);
-		CardOverlay->AddChild(CardWidget);
+		CardCanvasPanel->AddChild(CardWidget);
+
+		UCanvasPanelSlot* WidgetAsPanelSlot = Cast<UCanvasPanelSlot>(CardWidget->Slot);
+		if (WidgetAsPanelSlot) 
+		{
+			WidgetAsPanelSlot->SetAnchors(FAnchors(0.5f, 1.0f, 0.5f, 1.0f));
+		}
 	}
 
 	if (CardWidget == nullptr) return nullptr;
-
+	
 	// Enable widget
 	CardWidget->SetRenderOpacity(1);
 	CardWidget->SetVisibility(ESlateVisibility::Visible);

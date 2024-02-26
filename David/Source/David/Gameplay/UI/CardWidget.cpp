@@ -1,6 +1,7 @@
 #include "CardWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Components/SizeBox.h"
 #include "Input/Reply.h"
 #include "DragWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
@@ -8,6 +9,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Overlay.h"
 #include "../Cards/CardData.h"
+#include "Components/CanvasPanelSlot.h"
 
 void UCardWidget::SetupCard(const FCardData& Data, int32 GameCardID)
 {
@@ -26,6 +28,13 @@ void UCardWidget::StartRepositioning(const FWidgetTransform& TargetTransform, fl
 	InterpolationSpeed = InterpSpeed;
 
 	bIsInterpolating = true;
+
+	// Reajust incoming position to the card center
+	if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Slot))
+	{
+		TargetWidgetTransform.Translation.X -= CanvasSlot->GetSize().X / 2.f;
+		TargetWidgetTransform.Translation.Y -= CanvasSlot->GetSize().Y / 2.f;
+	}
 }
 
 void UCardWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -53,6 +62,12 @@ void UCardWidget::SetCardAttack(int32 Attack)
 void UCardWidget::SetCardHealth(int32 Health)
 {
 	HealthText->SetText(FText::AsNumber(Health));
+}
+
+FVector2D UCardWidget::GetCardSize() const
+{
+	Slot->Parent->ForceLayoutPrepass();
+	return CardSizeBox->GetDesiredSize();
 }
 
 void UCardWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

@@ -45,11 +45,7 @@ private:
 
 	FVector2D GetCardPosition(int CardIndex) const;
 
-	FVector2D GetCenterPosition() const;
-
 	int GetCardIndexFromCenter(int CardIndex) const;
-
-	FVector2D GetCardHandHeight(int CardIndex) const;
 
 	float GetHoveredCardYDisplacement(int CardIndex) const;
 
@@ -69,7 +65,7 @@ protected:
 	TSubclassOf<class UUserWidget> CardWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	class UOverlay* CardOverlay;
+	class UCanvasPanel* CardCanvasPanel;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	float CardAngle = 10.f;
@@ -78,26 +74,9 @@ protected:
 	float CardInterpSpeed = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	float CardHeight = 10.f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	float CardSpacing = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	float HandCardsHorizontalOffset = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	float HandCardsVerticalOffset = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	float HoveredCardYDisplacement = -100.f;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	float HoveredCardXDisplacement = 100.f;
+	float CardSpacing = 10.f;
 
 private:
-	int HoveredCardIndex = -1;
-
 	UPROPERTY(Transient, SkipSerialization)
 	AActor* LastMouseDragActor;
 
@@ -109,4 +88,6 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	FVector2D HandsSlotOffset;
+
+	int HoveredCardIndex = -1;
 };
