@@ -87,7 +87,7 @@ void UGameHUD::SetupGameHUD(ADavidGameState* GameState, ADavidPlayerState* Playe
 		PlayerState->OnPlayerGoldChanged.AddUObject(this, &UGameHUD::OnPlayerGoldUpdates);
 
 	// Init player hand manager
-	HandManager->InitializeHandManager();
+	HandManagerWidget->InitializeHandManager();
 
 	// Mark HUD initialization as done
 	if(ADavidPlayerController* DavidPlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController()))

@@ -18,7 +18,7 @@ public:
 
 	void OnCursorLeftPiece();
 
-	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManager; }
+	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManagerWidget; }
 
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
@@ -61,7 +61,7 @@ protected:
 	class UCanvasPanel* CanvasPanel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-	class UHandManager* HandManager;
+	class UHandManager* HandManagerWidget;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UTextBlock* TurnTimeRemainingText;

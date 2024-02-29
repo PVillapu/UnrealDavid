@@ -68,13 +68,19 @@ protected:
 	class UCanvasPanel* CardCanvasPanel;
 
 	UPROPERTY(EditAnywhere, Category = "David")
-	float CardAngle = 10.f;
+	float CardAnglePercentage = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category = "David")
+	float MaxCardAngle = 75.f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	float CardInterpSpeed = 0.3f;
 
 	UPROPERTY(EditAnywhere, Category = "David")
 	float CardSpacing = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "David")
+	float CardHeightPercentage = 0.1f;
 
 private:
 	UPROPERTY(Transient, SkipSerialization)
@@ -85,9 +91,6 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	TArray<class UCardWidget*> HandCards;
-
-	UPROPERTY(Transient, SkipSerialization)
-	FVector2D HandsSlotOffset;
 
 	int HoveredCardIndex = -1;
 };

@@ -66,7 +66,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	class USizeBox* CardSizeBox;
+	class UOverlay* CardOverlay;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
 	class UImage* PieceImage;

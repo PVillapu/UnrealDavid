@@ -16,8 +16,7 @@
 
 void UHandManager::InitializeHandManager()
 {
-	FGeometry ParentGeometry = Slot->Parent->GetCachedGeometry();
-	HandsSlotOffset = ParentGeometry.AbsoluteToLocal(GetCachedGeometry().GetAbsolutePosition());
+	
 }
 
 void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
@@ -42,7 +41,7 @@ void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 
 float UHandManager::GetCardAngle(int CardIndex) const
 {
-	return GetCardIndexFromCenter(CardIndex) * CardAngle;
+	return CardIndex == HoveredCardIndex ? 0.f : GetCardIndexFromCenter(CardIndex) * MaxCardAngle * CardAnglePercentage;
 }
 
 FVector2D UHandManager::GetCardPosition(int CardIndex) const
@@ -247,20 +246,20 @@ float UHandManager::GetHoveredCardYDisplacement(int CardIndex) const
 	if (HandCards.Num() <= 0) return 0.f;
 	
 	const FVector2D CardSize = HandCards[0]->GetCardSize();
-	
-	if(HoveredCardIndex == -1 || CardIndex != HoveredCardIndex) return -CardSize.Y / 2.f;
+
+	if(HoveredCardIndex == -1 || CardIndex != HoveredCardIndex) return (-CardSize.Y / 2.f);
 
 	return -CardSize.Y;
 }
 
 float UHandManager::GetHoveredXDisplacement(int CardIndex) const
 {
-	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? /* HoveredCardXDisplacement */ 10 : 0.f;
+	return HoveredCardIndex >= 0 && CardIndex > HoveredCardIndex ? 10 : 0.f;
 }
 
 FVector2D UHandManager::CalculateCardDragPosition(const FVector2D& ViewportPosition, const UWidget* DraggedCard) const
 {	
-	return ViewportPosition - HandsSlotOffset - DraggedCard->GetCachedGeometry().GetLocalSize() * 0.5f;
+	return ViewportPosition - DraggedCard->GetCachedGeometry().GetLocalSize() * 0.5f;
 }
 
 UCardWidget* UHandManager::GetAvailableCardWidget()
@@ -277,12 +276,16 @@ UCardWidget* UHandManager::GetAvailableCardWidget()
 	{
 		// Create Card widget
 		CardWidget = CreateWidget<UCardWidget>(GetOwningPlayer(), CardWidgetClass);
+		if (CardWidget == nullptr) return CardWidget;
+
 		CardCanvasPanel->AddChild(CardWidget);
 
 		UCanvasPanelSlot* WidgetAsPanelSlot = Cast<UCanvasPanelSlot>(CardWidget->Slot);
 		if (WidgetAsPanelSlot) 
 		{
 			WidgetAsPanelSlot->SetAnchors(FAnchors(0.5f, 1.0f, 0.5f, 1.0f));
+			WidgetAsPanelSlot->SetSize(CardWidget->GetCardSize());
+			WidgetAsPanelSlot->bAutoSize = true;
 		}
 	}
 

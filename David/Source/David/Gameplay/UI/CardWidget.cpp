@@ -1,15 +1,14 @@
 #include "CardWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Components/SizeBox.h"
+#include "Components/Overlay.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Input/Reply.h"
 #include "DragWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "CardDragDropOperation.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "Components/Overlay.h"
 #include "../Cards/CardData.h"
-#include "Components/CanvasPanelSlot.h"
 
 void UCardWidget::SetupCard(const FCardData& Data, int32 GameCardID)
 {
@@ -67,7 +66,7 @@ void UCardWidget::SetCardHealth(int32 Health)
 FVector2D UCardWidget::GetCardSize() const
 {
 	Slot->Parent->ForceLayoutPrepass();
-	return CardSizeBox->GetDesiredSize();
+	return CardOverlay->GetDesiredSize();
 }
 
 void UCardWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
