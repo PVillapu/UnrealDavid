@@ -54,6 +54,11 @@ void UHandManager::CalculateCardsPositions() const
 	for (int i = 0; i < HandCards.Num(); ++i)
 	{
 		HandCards[i]->StartRepositioning(CalculateCardPosition(i), CardInterpSpeed);
+
+		if (UCanvasPanelSlot* CardAsPanelSlot = Cast<UCanvasPanelSlot>(HandCards[i]->Slot)) 
+		{
+			CardAsPanelSlot->SetZOrder(HoveredCardIndex == i ? HandCards.Num() : i);
+		}
 	}
 }
 
@@ -83,6 +88,11 @@ void UHandManager::OnCardGrabbed(UCardWidget& Card, UCardDragDropOperation& Card
 	Card.SetVisibility(ESlateVisibility::HitTestInvisible);
 	Card.SetRenderOpacity(0.3f);
 	Card.SetIsBeingGrabbed(true);
+
+	if (UCanvasPanelSlot* WidgetAsPanelSlot = Cast<UCanvasPanelSlot>(Card.Slot))
+	{
+		WidgetAsPanelSlot->SetAnchors(FAnchors(0.f, 0.f));
+	}
 }
 
 void UHandManager::OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDropOp)
@@ -93,6 +103,11 @@ void UHandManager::OnCardLeft(UCardWidget& Card, UDragDropOperation& CardDragDro
 	if (CardDragDrop) 
 	{
 		CardDragDrop->OnCardDrag.RemoveDynamic(this, &UHandManager::CardDrag);
+	}
+
+	if (UCanvasPanelSlot* WidgetAsPanelSlot = Cast<UCanvasPanelSlot>(Card.Slot))
+	{
+		WidgetAsPanelSlot->SetAnchors(FAnchors(0.5f, 1.0f, 0.5f, 1.0f));
 	}
 
 	TryCastCardInBoard(Card);
@@ -247,9 +262,9 @@ float UHandManager::GetHoveredCardYDisplacement(int CardIndex) const
 	
 	const FVector2D CardSize = HandCards[0]->GetCardSize();
 
-	if(HoveredCardIndex == -1 || CardIndex != HoveredCardIndex) return (-CardSize.Y / 2.f);
+	if(HoveredCardIndex == -1 || CardIndex != HoveredCardIndex) return 0.f;
 
-	return -CardSize.Y;
+	return -CardSize.Y / 2.f;
 }
 
 float UHandManager::GetHoveredXDisplacement(int CardIndex) const

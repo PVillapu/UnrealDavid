@@ -17,20 +17,14 @@
 void UGameHUD::OnCursorOverPiece(APieceActor* PieceSelected)
 {
 	CurrentInspectedPiece = PieceSelected;
+
+	PlaceInfoCardInViewport();
 }
 
 void UGameHUD::OnCursorLeftPiece()
 {
 	CurrentInspectedPiece = nullptr;
 	PieceInfoCard->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void UGameHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
-{
-	if (CurrentInspectedPiece) 
-	{
-		PlaceInfoCardInViewport();
-	}
 }
 
 void UGameHUD::NativeConstruct()
@@ -225,11 +219,21 @@ void UGameHUD::PlaceInfoCardInViewport()
 
 	if (UWorld* World = GetWorld())
 	{
-		FVector2D ViewportPosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
+		FVector2D ViewportPosition = FVector2D::ZeroVector;
+
+		APlayerController* PlayerController = World->GetFirstPlayerController();
+		if (PlayerController) 
+		{
+			// Get actor location
+			FVector ActorLocation = CurrentInspectedPiece->GetActorLocation();
+
+			// Project actor location to screen space
+			PlayerController->ProjectWorldLocationToScreen(ActorLocation, ViewportPosition);
+		}
 
 		if (UCanvasPanelSlot* CardCanvasSlot = Cast<UCanvasPanelSlot>(PieceInfoCard->Slot))
 		{
-			ViewportPosition += FVector2D(PieceInfoCardHorizontalOffset, -CardCanvasSlot->GetSize().Y * 0.5f);
+			//ViewportPosition += FVector2D(CardCanvasSlot->GetSize().X, -CardCanvasSlot->GetSize().Y * 0.5f);
 			FWidgetTransform TargetTransform(ViewportPosition, PieceInfoCard->GetRenderTransform().Scale, PieceInfoCard->GetRenderTransform().Shear, 0.f);
 			PieceInfoCard->SetRenderTransform(TargetTransform);
 		}

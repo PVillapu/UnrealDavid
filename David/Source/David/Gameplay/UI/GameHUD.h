@@ -20,9 +20,6 @@ public:
 
 	FORCEINLINE class UHandManager* GetPlayerHandManager() { return HandManagerWidget; }
 
-protected:
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-
 private:
 	void NativeConstruct() override;
 
@@ -89,9 +86,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	class UCardWidget* PieceInfoCard;
-
-	UPROPERTY(EditAnywhere, Category = "David")
-	int32 PieceInfoCardHorizontalOffset = 100;
 
 	UPROPERTY(Transient, SkipSerialization)
 	ADavidGameState* DavidGameState;
