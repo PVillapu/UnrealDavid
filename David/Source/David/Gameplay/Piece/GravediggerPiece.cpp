@@ -2,9 +2,9 @@
 #include "../Board/BoardManager.h"
 #include "../Board/BoardSquare.h"
 
-void AGraveDiggerPiece::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
+void AGraveDiggerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
 {
-	Super::SetupPiece(BoardManagerActor, GameCardData, _CardData, ID, PieceOwner);
+	Super::SetupPiece(BoardManagerActor, _GameCardData, _CardData, ID, PieceOwner);
 
 	OnAnyBoardPieceDestroyedHandler = BoardManager->OnPieceDestroyed.AddUObject(this, &AGraveDiggerPiece::OnAnyBoardPieceDestroyed);
 }

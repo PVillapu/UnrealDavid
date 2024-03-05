@@ -6,6 +6,7 @@
 #include "../Board/TurnAction.h"
 #include "../Misc/Enums.h"
 #include "../Cards/CardData.h"
+#include "../Cards/GameCardData.h"
 #include "PieceActor.generated.h"
 
 /* 
@@ -26,7 +27,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
-	virtual void SetupPiece(class ABoardManager* BoardManagerActor, const struct FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
+	virtual void SetupPiece(class ABoardManager* BoardManagerActor, FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
 
 	/* Called by the server when the piece needs to be processed */
 	virtual void ProcessTurn();
@@ -41,6 +42,8 @@ public:
 
 	/* Called when the piece has to be placed in the board */
 	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
+
+	virtual FGameCardData GetDeathCard() const;
 
 	/* Returns true if this piece has been processed in this turn */
 	FORCEINLINE bool HasBeenProcessed() const { return bHasBeenProcessed; }
@@ -144,6 +147,9 @@ protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	FCardData CardData;
+
+	UPROPERTY(Transient, SkipSerialization)
+	FGameCardData GameCardData;
 
 	EDavidPlayer DavidPlayerOwner;
 	

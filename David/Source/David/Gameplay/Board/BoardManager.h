@@ -82,7 +82,7 @@ private:
 
 	void PlayCardInSquareAction(const FTurnAction& TurnAction);
 
-	APieceActor* InstantiateAndRegisterPiece(const FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
+	APieceActor* InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
 
 	UFUNCTION(NetMulticast, reliable)
 	void NetMulticast_SendGameAction(FTurnAction TurnAction);

@@ -36,6 +36,9 @@ public:
 	/* Called by the client when all actions has been played */
 	void OnTurnActionsProcessed();
 
+	/* Returns the player controller of the current player turn */
+	class ADavidPlayerController* GetPlayerController(EDavidPlayer Player);
+
 	UFUNCTION(NetMulticast, reliable)
 	void NetMulticast_SetFinalTurnScore(int32 Player1Score, int32 Player2Score);
 
@@ -74,9 +77,6 @@ private:
 
 	/* Called when a player turn starts */
 	void StartPlayerTurn(EDavidPlayer Player);
-
-	/* Returns the player controller of the current player turn */
-	class ADavidPlayerController* GetPlayerController(EDavidPlayer Player);
 
 	void OnGameFinished();
 

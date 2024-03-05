@@ -19,6 +19,8 @@ public:
 
 	void PlayerDrawCards(int32 CardAmmount);
 
+	void PutCardOnDeck(const FGameCardData& Card);
+
 	UFUNCTION(Client, reliable)
 	void Client_DrawCard(FGameCardData GameCardData);
 

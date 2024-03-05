@@ -238,8 +238,16 @@ void ADavidGameState::StartPlayerTurn(EDavidPlayer Player)
 	{
 		if (DavidPlayerController->GetDavidPlayer() == Player) 
 		{
+			// Increase the player gold
 			ADavidPlayerState* PlayerGameState = DavidPlayerController->GetPlayerState<ADavidPlayerState>();
 			PlayerGameState->IncreasePlayerGold(BaseGoldEarnedAtTurnBegin);
+			
+			// Draw 1 card
+			APlayerCards* PlayerCards = DavidPlayerController->GetPlayerCards();
+			if (PlayerCards) 
+			{
+				PlayerCards->PlayerDrawCards(1);
+			}
 			return;
 		}
 	}

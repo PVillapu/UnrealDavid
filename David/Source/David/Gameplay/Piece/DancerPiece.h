@@ -10,7 +10,7 @@ class DAVID_API ADancerPiece : public APieceActor
 	GENERATED_BODY()
 
 public:	
-	void SetupPiece(class ABoardManager* BoardManagerActor, const struct FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner) override;
+	void SetupPiece(class ABoardManager* BoardManagerActor, struct FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner) override;
 	
 	/* Called by the server when the piece needs to be processed */
 	void ProcessTurn() override;

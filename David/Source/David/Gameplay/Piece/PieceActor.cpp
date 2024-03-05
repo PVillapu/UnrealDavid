@@ -34,18 +34,19 @@ void APieceActor::Tick(float DeltaSeconds)
 	}
 }
 
-void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, const FGameCardData& GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
+void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
 {
 	// Setup initial data
 	BoardManager = BoardManagerActor;
 
-	CurrentHealth = BaseHealth = ProcessHealth = GameCardData.PieceHealth;
-	CurrentAttack = BaseAttack = ProcessAttack = GameCardData.PieceAttack;
+	CurrentHealth = BaseHealth = ProcessHealth = _GameCardData.PieceHealth;
+	CurrentAttack = BaseAttack = ProcessAttack = _GameCardData.PieceAttack;
 
 	PieceID = ID;
 	DavidPlayerOwner = PieceOwner;
 
 	CardData = _CardData;
+	GameCardData = _GameCardData;
 
 	// Get game HUD reference
 	if (UWorld* World = GetWorld())
@@ -137,6 +138,11 @@ void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 	SetActorLocation(DeployLocation);
 
 	BoardManager->OnGameActionComplete();
+}
+
+FGameCardData APieceActor::GetDeathCard() const
+{
+	return GameCardData;
 }
 
 void APieceActor::OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent)

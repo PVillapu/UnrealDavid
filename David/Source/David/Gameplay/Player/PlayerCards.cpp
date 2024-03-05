@@ -51,14 +51,14 @@ void APlayerCards::SetPlayerDeck(const TArray<FName>& PlayerCards)
 	{
 		// Get card
 		FCardData* CardData = DataTable->FindRow<FCardData>(CardName, "");
-		if (CardData == nullptr) return;
+		if (CardData == nullptr) continue;
 
 		FGameCardData GameCardData;
 		GameCardData.CardID = CardIdCount++;
 		GameCardData.CardName = CardName;
 		GameCardData.PieceAttack = CardData->PieceAttack;
 		GameCardData.PieceHealth = CardData->PieceHealth;
-		PlayerDeckCards.Add(GameCardData);
+		PutCardOnDeck(GameCardData);
 	}
 }
 
@@ -74,6 +74,11 @@ void APlayerCards::PlayerDrawCards(int32 CardAmmount)
 
 		Client_DrawCard(DrawCard);
 	}
+}
+
+void APlayerCards::PutCardOnDeck(const FGameCardData& Card)
+{
+	PlayerDeckCards.Add(Card);
 }
 
 void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)

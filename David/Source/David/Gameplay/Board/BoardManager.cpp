@@ -7,6 +7,7 @@
 #include "../Cards/GameCardData.h"
 #include "../DavidGameState.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "../Player/PlayerCards.h"
 #include "Kismet/GameplayStatics.h"
 
 ABoardManager::ABoardManager()
@@ -218,7 +219,7 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	}
 }
 
-APieceActor* ABoardManager::InstantiateAndRegisterPiece(const FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
+APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
 {
 	UWorld* World = GetWorld();
 	if (World == nullptr) return nullptr;
@@ -308,6 +309,14 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 	Piece->OnPieceDestroyed(InstigatorPiece);
 
 	OnPieceDestroyed.Broadcast(Piece, InstigatorPiece);
+
+	if (ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>())
+	{
+		if (ADavidPlayerController* PlayerController = GameState->GetPlayerController(Piece->GetOwnerPlayer()))
+		{			
+			PlayerController->GetPlayerCards()->PutCardOnDeck(Piece->GetDeathCard());
+		}
+	}
 }
 
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)
