@@ -9,7 +9,7 @@ struct FGameCardData
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY()
-    FName CardName;
+    int32 CardDTIndex;
 
     UPROPERTY()
     int32 CardID;

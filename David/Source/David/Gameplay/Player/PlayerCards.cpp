@@ -41,21 +41,29 @@ void APlayerCards::OnRep_Owner()
 	SetupPlayerCards();
 }
 
-void APlayerCards::SetPlayerDeck(const TArray<FName>& PlayerCards)
+void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 {
 	UDataTable* DataTable = PlayerController->GetCardsDataTable();
 	if (DataTable == nullptr) return;
 
 	int32 CardIdCount = 0;
-	for(FName CardName : PlayerCards) 
+	TArray<FCardData*> CardsArray;
+	DataTable->GetAllRows("", CardsArray);
+	for(int32 CardIndex : PlayerCards) 
 	{
+		if (CardIndex < 0 || CardIndex > CardsArray.Num())
+		{
+			UE_LOG(LogDavid, Warning, TEXT("Invalid card index of the player deck"));
+			continue;
+		}
+
 		// Get card
-		FCardData* CardData = DataTable->FindRow<FCardData>(CardName, "");
+		FCardData* CardData = CardsArray[CardIndex];
 		if (CardData == nullptr) continue;
 
 		FGameCardData GameCardData;
 		GameCardData.CardID = CardIdCount++;
-		GameCardData.CardName = CardName;
+		GameCardData.CardDTIndex = CardIndex;
 		GameCardData.PieceAttack = CardData->PieceAttack;
 		GameCardData.PieceHealth = CardData->PieceHealth;
 		PutCardOnDeck(GameCardData);

@@ -15,7 +15,7 @@ public:
 
 	void SetupPlayerCards();
 
-	void SetPlayerDeck(const TArray<FName>& PlayerCards);
+	void SetPlayerDeck(const TArray<int32>& PlayerCards);
 
 	void PlayerDrawCards(int32 CardAmmount);
 

@@ -1,4 +1,2 @@
-- UI in game de atributos de las piezas
+- Diseño general de la UI
 - Crear nuevas piezas
-- Fixear crash en build
-- Meter de vuelta la carta al deck cuando muere una pieza

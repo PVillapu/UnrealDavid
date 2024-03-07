@@ -229,7 +229,17 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 
 	// Get Card data
 	UDataTable* CardsDataTable = PlayerController->GetCardsDataTable();
-	FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
+	TArray<FCardData*> CardsArray;
+	CardsDataTable->GetAllRows("", CardsArray);
+	
+	// Check for valid index
+	if (GameCardData.CardDTIndex < 0 || GameCardData.CardDTIndex > CardsArray.Num())
+	{
+		UE_LOG(LogDavid, Warning, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
+		return nullptr;
+	}
+
+	FCardData* CardData = CardsArray[GameCardData.CardDTIndex];
 
 	// Spawn the piece actor
 	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);	// Crash in client

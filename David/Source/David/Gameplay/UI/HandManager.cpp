@@ -13,6 +13,7 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/CanvasPanel.h"
+#include "../Misc/CustomDavidLogs.h"
 
 void UHandManager::InitializeHandManager()
 {
@@ -22,7 +23,16 @@ void UHandManager::InitializeHandManager()
 void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 {
 	// Get CardData associated with the GameCard
-	const FCardData* CardData = CardsDataTable->FindRow<FCardData>(GameCardData.CardName, "");
+	TArray<FCardData*> CardsArray;
+	CardsDataTable->GetAllRows("", CardsArray);
+
+	if (GameCardData.CardDTIndex < 0 && GameCardData.CardDTIndex < 0) 
+	{
+		UE_LOG(LogDavid, Warning, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
+		return;
+	}
+
+	FCardData* CardData = CardsArray[GameCardData.CardDTIndex];
 	if (CardData == nullptr) return;
 
 	// Create Card widget
@@ -300,7 +310,7 @@ UCardWidget* UHandManager::GetAvailableCardWidget()
 		{
 			WidgetAsPanelSlot->SetAnchors(FAnchors(0.5f, 1.0f, 0.5f, 1.0f));
 			WidgetAsPanelSlot->SetSize(CardWidget->GetCardSize());
-			WidgetAsPanelSlot->bAutoSize = true;
+			WidgetAsPanelSlot->SetAutoSize(true);
 		}
 	}
 
