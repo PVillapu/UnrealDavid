@@ -32,9 +32,6 @@ public:
 	/* Returns this player APlayerCards */
 	FORCEINLINE APlayerCards* GetPlayerCards() { return PlayerCards; }
 
-	/* Returns the cards datatable */
-	FORCEINLINE class UDataTable* GetCardsDataTable() { return CardsDataTable; }
-
 	/* Returns the player game HUD */
 	FORCEINLINE class UGameHUD* GetPlayerGameHUD() { return PlayerHUD; }
 
@@ -65,9 +62,6 @@ private:
 	void CreatePlayerHUD();
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	UDataTable* CardsDataTable;
-
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 

@@ -20,8 +20,6 @@ public:
 
 	void InitializeBoard();
 
-	void GenerateBoardSquares();
-
 	void PlayCardInSquare(struct FGameCardData& CardData, int32 SquareID, EDavidPlayer Player);
 
 	void ProcessPlayerEndTurn(EDavidPlayer PlayerTurn);

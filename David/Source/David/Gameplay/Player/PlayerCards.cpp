@@ -6,6 +6,7 @@
 #include "../Misc/CustomDavidLogs.h"
 #include "../Board/BoardManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "../DavidGameState.h"
 
 APlayerCards::APlayerCards()
 {
@@ -43,7 +44,10 @@ void APlayerCards::OnRep_Owner()
 
 void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 {
-	UDataTable* DataTable = PlayerController->GetCardsDataTable();
+	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if (GameState == nullptr) return;
+
+	UDataTable* DataTable = GameState->GetCardsDataTable();
 	if (DataTable == nullptr) return;
 
 	int32 CardIdCount = 0;

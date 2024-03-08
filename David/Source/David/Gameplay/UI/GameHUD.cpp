@@ -210,7 +210,19 @@ void UGameHUD::CheckForAvailablePlayerState()
 
 void UGameHUD::PlaceInfoCardInViewport()
 {
-	FCardData CardData = CurrentInspectedPiece->GetCardData();
+	int32 CardDataIndex = CurrentInspectedPiece->GetCardDataIndex();
+
+	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if (GameState == nullptr) return;
+
+	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
+	if (CardsDataTable == nullptr) return;
+
+	TArray<FCardData*> CardsArray;
+	CardsDataTable->GetAllRows("", CardsArray);
+	if (CardDataIndex < 0 && CardDataIndex >= CardsArray.Num()) return;
+
+	FCardData& CardData = *CardsArray[CardDataIndex];
 
 	PieceInfoCard->SetupCard(CardData);
 	PieceInfoCard->SetCardAttack(CurrentInspectedPiece->GetPieceAttack());

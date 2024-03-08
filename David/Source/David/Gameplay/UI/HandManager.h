@@ -59,9 +59,6 @@ private:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "David")
-	class UDataTable* CardsDataTable;
-
-	UPROPERTY(EditAnywhere, Category = "David")
 	TSubclassOf<class UUserWidget> CardWidgetClass;
 
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))

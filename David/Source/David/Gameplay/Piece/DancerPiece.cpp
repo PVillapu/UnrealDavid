@@ -2,9 +2,9 @@
 #include "../Board/BoardSquare.h"
 #include "../Board/BoardManager.h"
 
-void ADancerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, FCardData& InCardData, int32 ID, EDavidPlayer PieceOwner)
+void ADancerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, int32 ID, EDavidPlayer PieceOwner)
 {
-	Super::SetupPiece(BoardManagerActor, _GameCardData, InCardData, ID, PieceOwner);
+	Super::SetupPiece(BoardManagerActor, _GameCardData, ID, PieceOwner);
 
 	OnPieceDestroyedOtherHandle = OnThisPieceDestroyedOtherDelegate.AddUObject(this, &ADancerPiece::Process_MoveHorizontal);
 }

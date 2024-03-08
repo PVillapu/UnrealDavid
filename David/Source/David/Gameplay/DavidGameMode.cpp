@@ -103,10 +103,11 @@ void ADavidGameMode::OnPlayerReady(EDavidPlayer Player)
 
 	// WIP for the moment we just take all existing cards in the CardsDataTable
 	ADavidPlayerController* DavidPlayerController = Player == EDavidPlayer::PLAYER_1 ? Player1 : Player2;
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(GameState);
 	TArray<int32> PlayerStartingDeck;
-
+	
 	// WIP for testing we include all cards existing
-	for (int i = 0; i < DavidPlayerController->GetCardsDataTable()->GetRowNames().Num(); ++i) PlayerStartingDeck.Add(i);
+	for (int i = 0; i < DavidGameState->GetCardsDataTable()->GetRowNames().Num(); ++i) PlayerStartingDeck.Add(i);
 
 	DavidPlayerController->GetPlayerCards()->SetPlayerDeck(PlayerStartingDeck);
 

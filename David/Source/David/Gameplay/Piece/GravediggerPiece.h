@@ -15,7 +15,7 @@ public:
 	//virtual void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
-	void SetupPiece(class ABoardManager* BoardManagerActor, struct FGameCardData& GameCardData, struct FCardData& CardData, int32 ID, EDavidPlayer PieceOwner) override;
+	void SetupPiece(class ABoardManager* BoardManagerActor, struct FGameCardData& GameCardData, int32 ID, EDavidPlayer PieceOwner) override;
 
 	void ProcessAction(const FPieceAction& Action) override;
 

@@ -5,7 +5,6 @@
 #include "PieceAction.h"
 #include "../Board/TurnAction.h"
 #include "../Misc/Enums.h"
-#include "../Cards/CardData.h"
 #include "../Cards/GameCardData.h"
 #include "PieceActor.generated.h"
 
@@ -27,7 +26,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	/* Called when the piece is created by the BoardManager */
-	virtual void SetupPiece(class ABoardManager* BoardManagerActor, FGameCardData& GameCardData, FCardData& CardData, int32 ID, EDavidPlayer PieceOwner);
+	virtual void SetupPiece(class ABoardManager* BoardManagerActor, FGameCardData& GameCardData, int32 ID, EDavidPlayer PieceOwner);
 
 	/* Called by the server when the piece needs to be processed */
 	virtual void ProcessTurn();
@@ -59,7 +58,7 @@ public:
 
 	FORCEINLINE int32 GetPieceID() const { return PieceID; }
 
-	FORCEINLINE FCardData GetCardData() const { return CardData; }
+	FORCEINLINE int32 GetCardDataIndex() const { return GameCardData.CardDTIndex; }
 
 	FORCEINLINE int32 GetPieceAttack() const { return CurrentAttack; }
 
@@ -92,9 +91,9 @@ protected:
 
 	/* -------------------- Turn process methods ----------------------- */
 
-	void Process_MoveToSquare(const int32& TargetSquareIndex, int32 ActionID);
+	void Process_MoveToSquare(const int32 TargetSquareIndex, const int32 ActionID);
 
-	void Process_AttackPieceInSquare(const int32& TargetSquareIndex, int32 ActionID);
+	void Process_AttackPieceInSquare(const int32 TargetSquareIndex, const int32 ActionID);
 
 	/* -------------------- Turn actions methods ------------------------ */
 
@@ -146,9 +145,6 @@ protected:
 	class UGameHUD* GameHUD;
 
 	UPROPERTY(Transient, SkipSerialization)
-	FCardData CardData;
-
-	UPROPERTY(Transient, SkipSerialization)
 	FGameCardData GameCardData;
 
 	EDavidPlayer DavidPlayerOwner;
@@ -164,7 +160,7 @@ protected:
 	FVector OriginLocation;
 
 	UPROPERTY(Transient, SkipSerialization)
-	ABoardSquare* TargetSquare;
+	ABoardSquare* MovementTargetSquare;
 
 	/* Time that takes the movement to reach the destination */
 	float MovementTime = 0.7f;
@@ -173,4 +169,7 @@ protected:
 	float MovementDelta = 0.f;
 
 	bool bIsMoving = false;
+
+	// Map that holds custom stats of the piece (general use)
+	TMap<FName, int32> StatsMap;
 };

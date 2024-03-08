@@ -50,6 +50,8 @@ public:
 	
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
 
+	FORCEINLINE class UDataTable* GetCardsDataTable() const { return CardsDataTable; }	// TODO: Maybe move to GameInstance?
+
 private:
 	/* Called on Server to update the turns time left */
 	void UpdateTurnCountdownTime();
@@ -124,6 +126,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	int32 InitialCardsDrawAmmount = 3;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	UDataTable* CardsDataTable;
 
 	/* Timer handle for turn time */
 	UPROPERTY(Transient, SkipSerialization)

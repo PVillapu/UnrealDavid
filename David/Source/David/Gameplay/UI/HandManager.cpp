@@ -14,6 +14,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/CanvasPanel.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "../DavidGameState.h"
 
 void UHandManager::InitializeHandManager()
 {
@@ -24,6 +25,13 @@ void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 {
 	// Get CardData associated with the GameCard
 	TArray<FCardData*> CardsArray;
+	
+	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if (GameState == nullptr) return;
+
+	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
+	if (CardsDataTable == nullptr) return;
+
 	CardsDataTable->GetAllRows("", CardsArray);
 
 	if (GameCardData.CardDTIndex < 0 && GameCardData.CardDTIndex < 0) 

@@ -224,11 +224,11 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 	UWorld* World = GetWorld();
 	if (World == nullptr) return nullptr;
 
-	ADavidPlayerController* PlayerController = Cast<ADavidPlayerController>(World->GetFirstPlayerController());
-	if (PlayerController == nullptr) return nullptr;
+	ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
+	if (GameState == nullptr) return nullptr;
 
 	// Get Card data
-	UDataTable* CardsDataTable = PlayerController->GetCardsDataTable();
+	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
 	TArray<FCardData*> CardsArray;
 	CardsDataTable->GetAllRows("", CardsArray);
 	
@@ -248,7 +248,7 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 	ActiveBoardPieces.Add(PieceID, PieceInstance);
 
 	// Setup piece
-	PieceInstance->SetupPiece(this, GameCardData, *CardData, PieceID, Player);
+	PieceInstance->SetupPiece(this, GameCardData, PieceID, Player);
 
 	// Update board square reference
 	BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);

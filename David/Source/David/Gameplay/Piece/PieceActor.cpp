@@ -34,7 +34,7 @@ void APieceActor::Tick(float DeltaSeconds)
 	}
 }
 
-void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, FCardData& _CardData, int32 ID, EDavidPlayer PieceOwner)
+void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, int32 ID, EDavidPlayer PieceOwner)
 {
 	// Setup initial data
 	BoardManager = BoardManagerActor;
@@ -45,7 +45,6 @@ void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _G
 	PieceID = ID;
 	DavidPlayerOwner = PieceOwner;
 
-	CardData = _CardData;
 	GameCardData = _GameCardData;
 
 	// Get game HUD reference
@@ -191,7 +190,7 @@ void APieceActor::ProcessTurn()
 	}
 }
 
-void APieceActor::Process_MoveToSquare(const int32& TargetSquareIndex, int32 ActionID)
+void APieceActor::Process_MoveToSquare(const int32 TargetSquareIndex, const int32 ActionID)
 {
 	TArray<uint8> Payload;
 	Payload.SetNum(sizeof(int32));
@@ -206,7 +205,7 @@ void APieceActor::Process_MoveToSquare(const int32& TargetSquareIndex, int32 Act
 	RegisterPieceAction(ActionID, Payload);
 }
 
-void APieceActor::Process_AttackPieceInSquare(const int32& TargetSquareIndex, int32 ActionID)
+void APieceActor::Process_AttackPieceInSquare(const int32 TargetSquareIndex, const int32 ActionID)
 {
 	APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 
@@ -267,7 +266,7 @@ void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 
 	TargetLocation = BoardManager->GetSquareLocation(TargetSquareIndex);
 
-	TargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+	MovementTargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
 }
 
 void APieceActor::Action_AttackFrontPiece()
@@ -322,8 +321,8 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 		BoardManager->OnGameActionComplete();
 		SetActorLocation(TargetLocation);
 
-		if (TargetSquare)
-			TargetSquare->Action_SetSquarePlayerColor(DavidPlayerOwner);
+		if (MovementTargetSquare)
+			MovementTargetSquare->Action_SetSquarePlayerColor(DavidPlayerOwner);
 
 		return;
 	}
