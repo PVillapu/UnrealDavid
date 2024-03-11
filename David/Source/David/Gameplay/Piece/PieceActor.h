@@ -169,7 +169,4 @@ protected:
 	float MovementDelta = 0.f;
 
 	bool bIsMoving = false;
-
-	// Map that holds custom stats of the piece (general use)
-	TMap<FName, int32> StatsMap;
 };
