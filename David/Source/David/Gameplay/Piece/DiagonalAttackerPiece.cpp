@@ -14,7 +14,12 @@ void ADiagonalAttackerPiece::ProcessTurn()
 		const int32 FowardIndex = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? 1 : -1;
 		const int32 TargetSquareIndex = Square->GetSquareIndex() + BoardManager->GetBoardWidth() * FowardIndex;
 
-		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
+		if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
+
+		if (!BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
+		{
+			Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
+		}
 	}
 }
 

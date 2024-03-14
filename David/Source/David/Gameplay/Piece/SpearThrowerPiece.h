@@ -16,12 +16,25 @@ class DAVID_API ASpearThrowerPiece : public APieceActor
 {
 	GENERATED_BODY()
 
+protected:
+	enum ESpearPieceAction : int32 { ThrowSpear = 4 };
+
 public:	
+	void SetupPiece(class ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, int32 ID, EDavidPlayer PieceOwner) override;
+
 	/* Called by the server when the piece needs to be processed */
-	virtual void ProcessTurn() override;
+	void ProcessTurn() override;
 
-	virtual void ProcessAction(const FPieceAction& Action) override;
+	void ProcessAction(const FPieceAction& Action) override;
 
-	/* Called when the piece has to be placed in the board */
-	virtual void OnDeployPieceInSquareAction(int32 SquareIndex) override;
+private:
+	bool AttackEnemyInRange();
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	int32 SpearDamage = 2;
+
+private:
+
+	bool bHasSpear = true;
 };

@@ -247,12 +247,12 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 	// Register piece
 	ActiveBoardPieces.Add(PieceID, PieceInstance);
 
-	// Setup piece
-	PieceInstance->SetupPiece(this, GameCardData, PieceID, Player);
-
 	// Update board square reference
 	BoardSquares[SquareID]->SetPieceInSquare(PieceInstance);
 	PieceInstance->SetBoardSquare(BoardSquares[SquareID]);
+
+	// Setup piece
+	PieceInstance->SetupPiece(this, GameCardData, PieceID, Player);
 
 	// Update board state in server
 	if (HasAuthority())
