@@ -113,6 +113,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	class UWidgetComponent* StatsWidgetComponent;
+
+	/* Vector curve used to move the piece to target square
+	 * NOTE: The Y axis of the curve is clamped between 0 and 1 to represent the start and end position of the movement,
+	 * rest of axis are absolute offset values
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	class UCurveVector* PieceMovementCurve;
 	
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;

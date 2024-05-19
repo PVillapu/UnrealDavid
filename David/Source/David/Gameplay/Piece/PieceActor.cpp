@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "../UI/PlayerHUD.h"
 #include "../UI/PieceStats.h"
+#include "Curves/CurveVector.h"
 
 APieceActor::APieceActor()
 {
@@ -324,7 +325,15 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 		return;
 	}
 
+	if (!PieceMovementCurve) return;
+
+	// Evaluate movement curve
+	FVector MovementEvaluation = PieceMovementCurve->GetVectorValue(MovementStatus);
+
 	// Calculate this frame movement position and apply to actor
-	const FVector MovementPosition = FMath::Lerp(OriginLocation, TargetLocation, MovementStatus);
-	SetActorLocation(MovementPosition);
+	FVector MovementPosition = (TargetLocation - OriginLocation) * MovementEvaluation.Y;
+	MovementPosition.X += MovementEvaluation.X;
+	MovementPosition.Z += MovementEvaluation.Z;
+
+	SetActorLocation(OriginLocation + MovementPosition);
 }
