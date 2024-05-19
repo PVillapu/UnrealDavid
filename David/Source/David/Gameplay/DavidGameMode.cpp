@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "Player/PlayerCards.h"
 #include "Misc/CustomDavidLogs.h"
+#include "UI/PlayerHUD.h"
 
 ADavidGameMode::ADavidGameMode()
 {
@@ -16,6 +17,7 @@ ADavidGameMode::ADavidGameMode()
 	PlayerControllerClass = ADavidPlayerController::StaticClass();
 	GameStateClass = ADavidGameState::StaticClass();
 	PlayerStateClass = ADavidPlayerState::StaticClass();
+	HUDClass = APlayerHUD::StaticClass();
 }
 
 void ADavidGameMode::BeginPlay()

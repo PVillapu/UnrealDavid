@@ -3,7 +3,6 @@
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Components/Overlay.h"
-#include "../DavidGameState.h"
 #include "../Player/DavidPlayerController.h"
 #include "../DavidPlayerState.h"
 #include "Kismet/GameplayStatics.h"

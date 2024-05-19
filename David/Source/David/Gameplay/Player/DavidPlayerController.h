@@ -32,9 +32,6 @@ public:
 	/* Returns this player APlayerCards */
 	FORCEINLINE APlayerCards* GetPlayerCards() { return PlayerCards; }
 
-	/* Returns the player game HUD */
-	FORCEINLINE class UGameHUD* GetPlayerGameHUD() { return PlayerHUD; }
-
 	/* Returns if its this player controller turn */
 	bool IsPlayerTurn();
 
@@ -63,9 +60,6 @@ private:
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
-	TSubclassOf<UUserWidget> PlayerHUDClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TEnumAsByte<ECollisionChannel> ActionsTraceChannel = ECC_Pawn;
 
 	UPROPERTY(EditDefaultsOnly, Category = "David")
@@ -76,9 +70,6 @@ private:
 
 	UPROPERTY(SkipSerialization, Transient)
 	class UCameraComponent* PlayerCamera;
-
-	UPROPERTY(SkipSerialization, Transient)
-	class UGameHUD* PlayerHUD;
 
 	UPROPERTY(ReplicatedUsing=OnRep_PlayerIndex)
 	TEnumAsByte<EDavidPlayer> PlayerIndex;

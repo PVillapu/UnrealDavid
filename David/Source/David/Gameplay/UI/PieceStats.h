@@ -10,18 +10,14 @@ class DAVID_API UPieceStats : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void ShowPieceStats();
+	void SetHealthValue(int32 Health);
+
+	void SetAttackValue(int32 Attack);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	class UTextBlock* PieceCurrentHealthText;
+	class UTextBlock* AttackText;
 	
 	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	UTextBlock* PieceCurrentAttackText;
-
-	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	class UImage* HealthBackgroundImage;
-
-	UPROPERTY(EditAnywhere, Category = "David", meta = (BindWidget))
-	UImage* AttackBackgroundImage;
+	UTextBlock* HealthText;
 };

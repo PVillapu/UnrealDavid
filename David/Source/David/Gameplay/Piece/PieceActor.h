@@ -111,8 +111,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	USkeletalMeshComponent* SkeletalMeshComponent;
 
-	/*UPROPERTY(EditDefaultsOnly, Category = "David")
-	class UWidgetComponent* StatsWidgetComponent;*/
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	class UWidgetComponent* StatsWidgetComponent;
 	
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
@@ -146,6 +146,9 @@ protected:
 
 	UPROPERTY(Transient, SkipSerialization)
 	FGameCardData GameCardData;
+
+	UPROPERTY(Transient, SkipSerialization)
+	class UPieceStats* StatsWidget;
 
 	EDavidPlayer DavidPlayerOwner;
 	

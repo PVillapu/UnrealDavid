@@ -8,6 +8,8 @@
 #include "../Player/DavidPlayerController.h"
 #include "../UI/GameHUD.h"
 #include "Components/WidgetComponent.h"
+#include "../UI/PlayerHUD.h"
+#include "../UI/PieceStats.h"
 
 APieceActor::APieceActor()
 {
@@ -19,8 +21,8 @@ APieceActor::APieceActor()
 	SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
 
-	/*StatsWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatsWidget"));
-	StatsWidgetComponent->SetupAttachment(SkeletalMeshComponent);*/
+	StatsWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatsWidget"));
+	StatsWidgetComponent->SetupAttachment(SkeletalMeshComponent);
 
 	SkeletalMeshComponent->OnBeginCursorOver.AddDynamic(this, &APieceActor::OnBeginCursorOverEvent);
 	SkeletalMeshComponent->OnEndCursorOver.AddDynamic(this, &APieceActor::OnEndCursorOverEvent);
@@ -47,17 +49,22 @@ void APieceActor::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _G
 
 	GameCardData = _GameCardData;
 
+	StatsWidget = Cast<UPieceStats>(StatsWidgetComponent->GetWidget());
+	if (StatsWidget) 
+	{
+		StatsWidget->SetAttackValue(CurrentAttack);
+		StatsWidget->SetHealthValue(CurrentHealth);
+	}
+
 	// Get game HUD reference
 	if (UWorld* World = GetWorld())
 	{
-		if (ADavidPlayerController* DavidPlayerController = World->GetFirstPlayerController<ADavidPlayerController>())
-			GameHUD = DavidPlayerController->GetPlayerGameHUD();
+		if (ADavidPlayerController* DavidPlayerController = World->GetFirstPlayerController<ADavidPlayerController>()) 
+		{
+			if(APlayerHUD* PlayerHUD = DavidPlayerController->GetHUD<APlayerHUD>())
+				GameHUD = PlayerHUD->GetGameHUDWidget();
+		}
 	}
-
-	// Hide the stats UI
-	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
-	if(StatsWidget)
-		StatsWidget->SetVisibility(ESlateVisibility::Hidden);*/
 }
 
 void APieceActor::OnBeginTurn()
@@ -148,22 +155,12 @@ void APieceActor::OnBeginCursorOverEvent(UPrimitiveComponent* TouchedComponent)
 {
 	if(GameHUD)
 	GameHUD->OnCursorOverPiece(this);
-
-	// Show piece stats UI
-	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
-	if (StatsWidget)
-		StatsWidget->SetVisibility(ESlateVisibility::HitTestInvisible);*/
 }
 
 void APieceActor::OnEndCursorOverEvent(UPrimitiveComponent* TouchedComponent)
 {
 	if(GameHUD)
 		GameHUD->OnCursorLeftPiece();
-
-	// Hide piece stats UI
-	/*UWidget* StatsWidget = StatsWidgetComponent->GetWidget();
-	if (StatsWidget)
-		StatsWidget->SetVisibility(ESlateVisibility::Hidden);*/
 }
 
 /* --------------- Process turn -------------------- */ 
@@ -276,20 +273,20 @@ void APieceActor::Action_AttackFrontPiece()
 
 void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 {
+	// Get actor health from the action
 	int32 IncomingHealth;
 	FMemory::Memcpy(&IncomingHealth, Payload.GetData(), sizeof(int32));
 
-	ABoardManager* BM = BoardManager;
-	FTimerDelegate TimerCallback;
-	TimerCallback.BindLambda([BM, IncomingHealth, this]
-	{
-		UE_LOG(LogDavid, Display, TEXT("Ouch!"));
-		CurrentHealth = IncomingHealth;
-		BM->OnGameActionComplete();
-	});
+	UE_LOG(LogDavid, Display, TEXT("Attack received. %d health left"), IncomingHealth);
 
-	FTimerHandle Handle;
-	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 0.5f, false);
+	// Set current health
+	CurrentHealth = IncomingHealth;
+
+	// Change the displayed health in the stats widget
+	if(StatsWidget)
+		StatsWidget->SetHealthValue(IncomingHealth);
+
+	BoardManager->OnGameActionComplete();
 }
 
 void APieceActor::Action_Die()

@@ -7,7 +7,6 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Net/UnrealNetwork.h"
 #include "../DavidGameState.h"
-#include "../UI/GameHUD.h"
 #include "../Player/PlayerCards.h"
 #include "../UI/HandManager.h"
 #include "Engine/DataTable.h"
@@ -15,6 +14,7 @@
 #include "../DavidGameMode.h"
 #include "../Misc/CustomDavidLogs.h"
 #include "../DavidPlayerState.h"
+#include "../UI/PlayerHUD.h"
 
 void ADavidPlayerController::SetupPlayer()
 {
@@ -61,11 +61,9 @@ void ADavidPlayerController::SetupPlayer()
 
 void ADavidPlayerController::CreatePlayerHUD()
 {
-	// Create gameplay HUD and attach to viewport
-	PlayerHUD = CreateWidget<UGameHUD>(this, PlayerHUDClass);
-	if (PlayerHUD != nullptr)
+	if (APlayerHUD* PlayerHUD = Cast<APlayerHUD>(GetHUD()))
 	{
-		PlayerHUD->AddToViewport();
+		PlayerHUD->SetupHUD(*this);
 	}
 
 	// Set input mode to game and UI

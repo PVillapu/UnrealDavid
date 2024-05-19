@@ -7,6 +7,7 @@
 #include "../Board/BoardManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "../DavidGameState.h"
+#include "../UI/PlayerHUD.h"
 
 APlayerCards::APlayerCards()
 {
@@ -100,8 +101,11 @@ void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)
 	// Catch the PlayerHandManager
 	if (PlayerHandManager == nullptr) 
 	{
-		if(UGameHUD* PlayerHUD = PlayerController->GetPlayerGameHUD())
-			PlayerHandManager = PlayerHUD->GetPlayerHandManager();
+		if (APlayerHUD* PlayerHUD = PlayerController->GetHUD<APlayerHUD>())
+		{
+			if(UGameHUD* GameHUD = PlayerHUD->GetGameHUDWidget())
+				PlayerHandManager = GameHUD->GetPlayerHandManager();
+		}
 	}
 
 	// Add card
