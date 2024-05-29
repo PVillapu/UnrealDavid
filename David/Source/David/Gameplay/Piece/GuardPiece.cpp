@@ -24,7 +24,7 @@ bool AGuardPiece::SearchAndAttackEnemies(const int32 FrontSquare)
 {
 	bool HasAttacked = false;
 	const int32 AttackRow = FrontSquare / BoardManager->GetBoardWidth();
-
+	
 	if (BoardManager->IsValidSquare(FrontSquare) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{

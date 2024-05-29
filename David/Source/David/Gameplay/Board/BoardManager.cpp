@@ -226,7 +226,7 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 
 	ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
 	if (GameState == nullptr) return nullptr;
-
+	
 	// Get Card data
 	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
 	TArray<FCardData*> CardsArray;

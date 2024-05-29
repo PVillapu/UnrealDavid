@@ -21,6 +21,8 @@ void ABoardSquare::Process_SetSquarePlayerColor(EDavidPlayer Player)
 
 void ABoardSquare::Action_SetSquarePlayerColor(EDavidPlayer Player)
 {
+	if (bIsLocked) return;
+
 	// If the square was neutral, increase player score
 	if (SquareColor == EDavidSquareColor::NEUTRAL)
 	{

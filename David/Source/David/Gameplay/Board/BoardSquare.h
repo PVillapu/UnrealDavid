@@ -31,6 +31,10 @@ public:
 
 	FORCEINLINE EDavidSquareColor GetSquareColor() const { return ProcessSquareColor; }
 
+	FORCEINLINE void SetIsLocked(bool IsLocked) { IsLocked = true; }
+
+	FORCEINLINE bool IsLocked() const { return bIsLocked; }
+
 private:
 	void ChangeSquareColor();
 
@@ -59,4 +63,6 @@ private:
 	/* Used only by the server to process the turn */
 	UPROPERTY(Transient, SkipSerialization)
 	TEnumAsByte<EDavidSquareColor> ProcessSquareColor;
+
+	bool bIsLocked = false;
 };

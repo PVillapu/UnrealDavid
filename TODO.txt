@@ -1,7 +1,0 @@
-- Diseño general de la UI in game
-- Menú principal
-- Diseño del menú para crear mazo
-- Crear nuevas piezas
-- Check possible jumper bug
-- Diagonal attacker deffinetly bugged
-- Logica para cuando una pieza llega al final de tablero
