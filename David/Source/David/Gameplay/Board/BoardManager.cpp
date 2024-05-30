@@ -332,6 +332,7 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)
 {
 	ActiveBoardPieces.Remove(Piece->GetPieceID());
+	Piece->Destroy();
 }
 
 bool ABoardManager::IsSquareOccupied(int32 Square) const
@@ -348,6 +349,61 @@ void ABoardManager::MovePieceToSquare(APieceActor* Piece, int32 TargetSquare)
 	// Update board and piece
 	BoardSquares[TargetSquare]->SetPieceInSquare(Piece);
 	Piece->SetBoardSquare(BoardSquares[TargetSquare]);
+
+	// Paint the square
+	if (ABoardSquare* BoardSquare = GetBoardSquare(TargetSquare))
+		BoardSquare->Process_SetSquarePlayerColor(Piece->GetOwnerPlayer());
+
+	// Check endline piece
+	CheckIfAnyPieceFinished();
+}
+
+void ABoardManager::CheckIfAnyPieceFinished()
+{
+	// Check player 1 pieces
+	for (int i = 0; i < BoardWidth; ++i) 
+	{
+		APieceActor* PieceInSquare = BoardSquares[(BoardHeight - 1) * BoardWidth + i - 1]->GetPieceInSquare();
+		if (PieceInSquare && PieceInSquare->GetOwnerPlayer() == EDavidPlayer::PLAYER_1) 
+		{
+			OnPieceReachedEndline(PieceInSquare);
+		}
+	}
+
+	// Check player 2 pieces
+	for (int i = 0; i < BoardWidth; ++i)
+	{
+		APieceActor* PieceInSquare = BoardSquares[(BoardHeight - 1) * BoardWidth + i - 1]->GetPieceInSquare();
+		if (PieceInSquare && PieceInSquare->GetOwnerPlayer() == EDavidPlayer::PLAYER_1)
+		{
+			OnPieceReachedEndline(PieceInSquare);
+		}
+	}
+}
+
+void ABoardManager::OnPieceReachedEndline(APieceActor* Piece)
+{
+	// Get column and operations data
+	const EDavidPlayer ScorePlayer = Piece->GetOwnerPlayer();
+	const int32 SquareIndex = Piece->GetBoardSquare()->GetSquareIndex();
+	const int32 SquareColumn = SquareIndex % BoardWidth;
+	const int32 MultiplyFactor = ScorePlayer == EDavidPlayer::PLAYER_1 ? 1 : -1;
+
+	int32 StartIndex = SquareColumn;
+	if (ScorePlayer == EDavidPlayer::PLAYER_2) 
+	{
+		StartIndex = BoardHeight * BoardWidth - SquareColumn - 1;
+	}
+
+	// Paint and lock all squares in the column
+	for (int i = 0; i < BoardHeight; ++i)
+	{
+		int32 SquareToPaint = StartIndex + BoardWidth * i;
+		BoardSquares[SquareToPaint]->Action_SetSquarePlayerColor(ScorePlayer);
+		BoardSquares[SquareToPaint]->SetIsLocked(true);
+	}
+
+	RemoveActivePiece(Piece);
 }
 
 APieceActor* ABoardManager::GetPieceInSquare(int32 BoardSquare) const

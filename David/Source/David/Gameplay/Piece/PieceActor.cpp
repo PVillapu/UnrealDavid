@@ -194,13 +194,9 @@ void APieceActor::Process_MoveToSquare(const int32 TargetSquareIndex, const int3
 	Payload.SetNum(sizeof(int32));
 	FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 
-	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
-
-	ABoardSquare* BoardSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
-	if (BoardSquare)
-		BoardSquare->Process_SetSquarePlayerColor(DavidPlayerOwner);
-
 	RegisterPieceAction(ActionID, Payload);
+
+	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
 }
 
 void APieceActor::Process_AttackPieceInSquare(const int32 TargetSquareIndex, const int32 ActionID)
@@ -298,7 +294,6 @@ void APieceActor::Action_Die()
 	TimerCallback.BindLambda([BM, Piece]
 	{
 		BM->RemoveActivePiece(Piece);
-		Piece->Destroy();
 		BM->OnGameActionComplete();
 	});
 

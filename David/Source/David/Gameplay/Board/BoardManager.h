@@ -38,6 +38,10 @@ public:
 
 	void MovePieceToSquare(APieceActor* Piece, int32 TargetSquare);
 
+	void CheckIfAnyPieceFinished();
+
+	void OnPieceReachedEndline(APieceActor* Piece);
+
 	/* ---------------- Game Actions --------------------- */
 
 	/* Registers an action that occurs in the processing phase of the turn */
