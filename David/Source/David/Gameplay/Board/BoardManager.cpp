@@ -9,6 +9,7 @@
 #include "../Misc/CustomDavidLogs.h"
 #include "../Player/PlayerCards.h"
 #include "Kismet/GameplayStatics.h"
+#include "SquareAction.h"
 
 ABoardManager::ABoardManager()
 {
@@ -65,6 +66,13 @@ void ABoardManager::InitializeBoard()
 
 void ABoardManager::RegisterGameAction(const FTurnAction& TurnAction)
 {
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->HasAuthority()) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Trying to register an action without being the server! *This should never happen*"));
+		return;
+	}
+
 	NetMulticast_SendGameAction(TurnAction);
 }
 
@@ -171,7 +179,7 @@ void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID
 
 void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
 {
-	FPieceAction PieceAction = APieceActor::GetPieceAction(TurnAction);
+	const FPieceAction PieceAction = APieceActor::GetPieceAction(TurnAction);
 
 	// Find the piece that needs to process the action
 	if (ActiveBoardPieces.Contains(PieceAction.PieceID)) 
@@ -182,6 +190,16 @@ void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
 			// Process the action
 			PieceActor->ProcessAction(PieceAction);
 		}
+	}
+}
+
+void ABoardManager::PlaySquareAction(const FTurnAction TurnAction)
+{
+	const FSquareAction SquareAction = ABoardSquare::GetSquareAction(TurnAction);
+
+	if (SquareAction.SquareIndex > 0 && SquareAction.SquareIndex < BoardSquares.Num())
+	{
+		BoardSquares[SquareAction.SquareIndex]->ProcessAction(SquareAction);
 	}
 }
 
@@ -215,7 +233,7 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	if (PieceInstance) 
 	{
 		PieceInstance->OnDeployPieceInSquareAction(SquareID);
-		BoardSquares[SquareID]->Action_SetSquarePlayerColor(Player);
+		BoardSquares[SquareID]->Process_SetSquarePlayerColor(Player);
 	}
 }
 
@@ -295,6 +313,11 @@ void ABoardManager::PlayNextGameAction()
 
 			break;
 		}
+		case EDavidGameAction::SQUARE_ACTION:
+		{
+			PlaySquareAction(TurnAction);
+			break;
+		}
 		default: break;
 	}
 }
@@ -360,24 +383,29 @@ void ABoardManager::MovePieceToSquare(APieceActor* Piece, int32 TargetSquare)
 
 void ABoardManager::CheckIfAnyPieceFinished()
 {
-	// Check player 1 pieces
-	for (int i = 0; i < BoardWidth; ++i) 
+	TArray<APieceActor*> PiecesToRemove = TArray<APieceActor*>();
+
+	// Check for any endline piece
+	for (const TPair<int32, APieceActor*>& pair : ServerBoardPieces)
 	{
-		APieceActor* PieceInSquare = BoardSquares[(BoardHeight - 1) * BoardWidth + i - 1]->GetPieceInSquare();
-		if (PieceInSquare && PieceInSquare->GetOwnerPlayer() == EDavidPlayer::PLAYER_1) 
+		APieceActor* Piece = pair.Value;
+
+		if (!Piece) continue;
+
+		const int32 SquareIndex = Piece->GetBoardSquare()->GetSquareIndex();
+
+		if ((Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_1 && SquareIndex >= (BoardHeight - 1) * BoardWidth)	/* Player 1 */
+			|| (Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_2 && SquareIndex < BoardWidth))						/* Player 2 */
 		{
-			OnPieceReachedEndline(PieceInSquare);
+			PiecesToRemove.Add(Piece);
+			OnPieceReachedEndline(Piece);
 		}
 	}
 
-	// Check player 2 pieces
-	for (int i = 0; i < BoardWidth; ++i)
+	// Remove pieces once iterated the ServerBoardPieces Map
+	for (APieceActor* Piece : PiecesToRemove) 
 	{
-		APieceActor* PieceInSquare = BoardSquares[(BoardHeight - 1) * BoardWidth + i - 1]->GetPieceInSquare();
-		if (PieceInSquare && PieceInSquare->GetOwnerPlayer() == EDavidPlayer::PLAYER_1)
-		{
-			OnPieceReachedEndline(PieceInSquare);
-		}
+		ServerBoardPieces.Remove(Piece->GetPieceID());
 	}
 }
 
@@ -392,18 +420,16 @@ void ABoardManager::OnPieceReachedEndline(APieceActor* Piece)
 	int32 StartIndex = SquareColumn;
 	if (ScorePlayer == EDavidPlayer::PLAYER_2) 
 	{
-		StartIndex = BoardHeight * BoardWidth - SquareColumn - 1;
+		StartIndex = BoardHeight * BoardWidth - (BoardWidth - SquareColumn) - 1;
 	}
 
 	// Paint and lock all squares in the column
 	for (int i = 0; i < BoardHeight; ++i)
 	{
-		int32 SquareToPaint = StartIndex + BoardWidth * i;
-		BoardSquares[SquareToPaint]->Action_SetSquarePlayerColor(ScorePlayer);
-		BoardSquares[SquareToPaint]->SetIsLocked(true);
+		int32 SquareToPaint = StartIndex + BoardWidth * i * MultiplyFactor;
+		BoardSquares[SquareToPaint]->Process_SetSquarePlayerColor(ScorePlayer);
+		BoardSquares[SquareToPaint]->Process_LockSquare();
 	}
-
-	RemoveActivePiece(Piece);
 }
 
 APieceActor* ABoardManager::GetPieceInSquare(int32 BoardSquare) const

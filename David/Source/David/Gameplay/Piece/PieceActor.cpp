@@ -84,7 +84,7 @@ void APieceActor::RegisterPieceAction(int32 PieceAction) const
 	BoardManager->RegisterGameAction(GameAction);
 }
 
-void APieceActor::RegisterPieceAction(int32 PieceAction, TArray<uint8>& Payload) const
+void APieceActor::RegisterPieceAction(int32 PieceAction, const TArray<uint8>& Payload) const
 {
 	FTurnAction GameAction;
 	GameAction.ActionType = EDavidGameAction::PIECE_ACTION;
@@ -313,9 +313,6 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 		bIsMoving = false;
 		BoardManager->OnGameActionComplete();
 		SetActorLocation(TargetLocation);
-
-		if (MovementTargetSquare)
-			MovementTargetSquare->Action_SetSquarePlayerColor(DavidPlayerOwner);
 
 		return;
 	}

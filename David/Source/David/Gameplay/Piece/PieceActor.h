@@ -87,7 +87,7 @@ protected:
 	void RegisterPieceAction(int32 PieceAction) const;
 
 	/* Registers a PieceAction in the board to later play it */
-	void RegisterPieceAction(int32 PieceAction, TArray<uint8>& Payload) const;
+	void RegisterPieceAction(int32 PieceAction, const TArray<uint8>& Payload) const;
 
 	/* -------------------- Turn process methods ----------------------- */
 

@@ -82,6 +82,8 @@ public:
 private:
 	void PlayPieceAction(const FTurnAction& TurnAction);
 
+	void PlaySquareAction(const FTurnAction TurnAction);
+
 	void PlayCardInSquareAction(const FTurnAction& TurnAction);
 
 	APieceActor* InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
