@@ -46,6 +46,7 @@ void ABoardManager::InitializeBoard()
 		ABoardSquare* BoardSquare = Cast<ABoardSquare>(Square);
 		if (BoardSquare) 
 		{
+			BoardSquare->SetBoardManager(this);
 			BoardSquares.Add(BoardSquare);
 		}
 	}
@@ -66,12 +67,16 @@ void ABoardManager::InitializeBoard()
 
 void ABoardManager::RegisterGameAction(const FTurnAction& TurnAction)
 {
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC && PC->HasAuthority()) 
+	if (UWorld* World = GetWorld())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Trying to register an action without being the server! *This should never happen*"));
-		return;
+		APlayerController* PC = World->GetFirstPlayerController();
+		if (PC && !PC->HasAuthority())
+		{
+			UE_LOG(LogTemp, Error, TEXT("Trying to register an action without being the server! *This should never happen*"));
+			return;
+		}
 	}
+	else return;
 
 	NetMulticast_SendGameAction(TurnAction);
 }
