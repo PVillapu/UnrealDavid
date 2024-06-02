@@ -17,7 +17,7 @@ class DAVID_API ASpearThrowerPiece : public APieceActor
 	GENERATED_BODY()
 
 protected:
-	enum ESpearPieceAction : int32 { ThrowSpear = 4 };
+	enum ESpearPieceAction : int32 { ThrowSpear = EPieceAction::MAX_VALUE };
 
 public:	
 	void SetupPiece(class ABoardManager* BoardManagerActor, FGameCardData& _GameCardData, int32 ID, EDavidPlayer PieceOwner) override;

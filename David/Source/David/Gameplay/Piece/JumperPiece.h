@@ -1,8 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "PieceAction.h"
 #include "../Misc/Enums.h"
 #include "PieceActor.h"
 #include "JumperPiece.generated.h"

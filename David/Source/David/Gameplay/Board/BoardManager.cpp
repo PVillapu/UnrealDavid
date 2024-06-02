@@ -202,7 +202,7 @@ void ABoardManager::PlaySquareAction(const FTurnAction TurnAction)
 {
 	const FSquareAction SquareAction = ABoardSquare::GetSquareAction(TurnAction);
 
-	if (SquareAction.SquareIndex > 0 && SquareAction.SquareIndex < BoardSquares.Num())
+	if (SquareAction.SquareIndex >= 0 && SquareAction.SquareIndex < BoardSquares.Num())
 	{
 		BoardSquares[SquareAction.SquareIndex]->ProcessAction(SquareAction);
 	}
@@ -238,7 +238,6 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	if (PieceInstance) 
 	{
 		PieceInstance->OnDeployPieceInSquareAction(SquareID);
-		BoardSquares[SquareID]->Process_SetSquarePlayerColor(Player);
 	}
 }
 
