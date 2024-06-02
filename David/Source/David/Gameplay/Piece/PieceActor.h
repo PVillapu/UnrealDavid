@@ -18,7 +18,7 @@ class DAVID_API APieceActor : public AActor
 	GENERATED_BODY()
 	
 protected:
-	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die, ReachedEndSquare};
+	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die, ReachedEndSquare, MAX_VALUE};
 
 public:	
 	APieceActor();
@@ -39,7 +39,7 @@ public:
 
 	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
 
-	virtual void OnPieceReahedEndLine();
+	virtual void OnPieceReachedEndLine();
 
 	/* Called when the piece has to be placed in the board */
 	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);

@@ -15,17 +15,10 @@ UCLASS()
 class DAVID_API AJumperPiece : public APieceActor
 {
 	GENERATED_BODY()
-	
-private:
-	enum EJumperPieceAction : int32 { JumpForward = 0, FrontAttack, TakePieceDamage, Die};
 
 public:	
-	//void Tick(float DeltaSeconds) override;
-
 	/* Called by the server when the piece needs to be processed */
 	virtual void ProcessTurn() override;
-
-	virtual void ProcessAction(const FPieceAction& Action) override;
 
 private:
 	bool bHasJumped = false;

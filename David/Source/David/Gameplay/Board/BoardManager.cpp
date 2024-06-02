@@ -407,7 +407,7 @@ void ABoardManager::CheckIfAnyPieceFinished()
 		if ((Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_1 && SquareIndex >= (BoardHeight - 1) * BoardWidth)	/* Player 1 */
 			|| (Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_2 && SquareIndex < BoardWidth))						/* Player 2 */
 		{
-			Piece->OnPieceReahedEndLine();
+			Piece->OnPieceReachedEndLine();
 			OnPieceReachedEndline(Piece);
 		}
 	}

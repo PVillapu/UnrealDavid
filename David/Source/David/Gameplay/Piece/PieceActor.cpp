@@ -122,7 +122,7 @@ void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
 	SkeletalMeshComponent->OnBeginCursorOver.RemoveAll(this);
 }
 
-void APieceActor::OnPieceReahedEndLine()
+void APieceActor::OnPieceReachedEndLine()
 {
 	BoardManager->Process_RemovePieceFromLogicBoard(this);
 	RegisterPieceAction(EPieceAction::ReachedEndSquare);

@@ -19,7 +19,7 @@ void AJumperPiece::ProcessTurn()
 		// Jump square not occupied
 		if (!BoardManager->IsSquareOccupied(JumpSquareTarget)) 
 		{
-			Process_MoveToSquare(JumpSquareTarget, EJumperPieceAction::JumpForward);
+			Process_MoveToSquare(JumpSquareTarget, EPieceAction::MoveToSquare);
 			bHasJumped = true;
 			return;
 		}
@@ -30,7 +30,7 @@ void AJumperPiece::ProcessTurn()
 	{
 		if (!BoardManager->IsSquareOccupied(FrontSquare))
 		{
-			Process_MoveToSquare(FrontSquare, EJumperPieceAction::JumpForward);
+			Process_MoveToSquare(FrontSquare, EPieceAction::MoveToSquare);
 			return;
 		}
 	}
@@ -39,38 +39,6 @@ void AJumperPiece::ProcessTurn()
 	// Attack the front piece
 	if (BoardManager->IsSquareOccupied(FrontSquare)) // Attack
 	{
-		Process_AttackPieceInSquare(FrontSquare, EJumperPieceAction::FrontAttack);
-	}
-}
-
-void AJumperPiece::ProcessAction(const FPieceAction& Action)
-{
-	switch (Action.ActionID)
-	{
-		case EJumperPieceAction::JumpForward:
-		{
-			Action_MoveToSquare(Action.Payload);
-			break;
-		}
-		case EJumperPieceAction::FrontAttack:
-		{
-			Action_AttackFrontPiece();
-			break;
-		}
-		case EJumperPieceAction::TakePieceDamage:
-		{
-			Action_TakeDamage(Action.Payload);
-			break;
-		}
-		case EJumperPieceAction::Die:
-		{
-			Action_Die();
-			break;
-		}
-		default:
-		{
-			BoardManager->OnGameActionComplete();
-			break;
-		}
+		Process_AttackPieceInSquare(FrontSquare, EPieceAction::FrontAttack);
 	}
 }
