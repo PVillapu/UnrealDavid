@@ -336,13 +336,8 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 {
 	if (Piece == nullptr || InstigatorPiece == nullptr) return;
 
-	const ABoardSquare* BoardSquare = Piece->GetBoardSquare();
-	const int32 PieceLocation = BoardSquare->GetSquareIndex();
-
 	// Remove the piece from board
-	Piece->SetBoardSquare(nullptr);
-	ServerBoardPieces.Remove(Piece->GetPieceID());
-	BoardSquares[PieceLocation]->SetPieceInSquare(nullptr);
+	Process_RemovePieceFromLogicBoard(Piece);
 
 	Piece->OnPieceDestroyed(InstigatorPiece);
 
@@ -355,6 +350,15 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 			PlayerController->GetPlayerCards()->PutCardOnDeck(Piece->GetDeathCard());
 		}
 	}
+}
+
+void ABoardManager::Process_RemovePieceFromLogicBoard(APieceActor* PieceToRemove)
+{
+	const ABoardSquare* BoardSquare = PieceToRemove->GetBoardSquare();
+	const int32 PieceLocation = BoardSquare->GetSquareIndex();
+
+	BoardSquares[PieceLocation]->SetPieceInSquare(nullptr);
+	ServerBoardPieces.Remove(PieceToRemove->GetPieceID());
 }
 
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)
@@ -388,10 +392,11 @@ void ABoardManager::MovePieceToSquare(APieceActor* Piece, int32 TargetSquare)
 
 void ABoardManager::CheckIfAnyPieceFinished()
 {
-	TArray<APieceActor*> PiecesToRemove = TArray<APieceActor*>();
+	// Iterate over a copy map to avoid delete during the iteration
+	TMap<int32, APieceActor*> BoardPiecesCopy = TMap<int32, APieceActor*>(ServerBoardPieces);
 
 	// Check for any endline piece
-	for (const TPair<int32, APieceActor*>& pair : ServerBoardPieces)
+	for (const TPair<int32, APieceActor*>& pair : BoardPiecesCopy)
 	{
 		APieceActor* Piece = pair.Value;
 
@@ -402,15 +407,9 @@ void ABoardManager::CheckIfAnyPieceFinished()
 		if ((Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_1 && SquareIndex >= (BoardHeight - 1) * BoardWidth)	/* Player 1 */
 			|| (Piece->GetOwnerPlayer() == EDavidPlayer::PLAYER_2 && SquareIndex < BoardWidth))						/* Player 2 */
 		{
-			PiecesToRemove.Add(Piece);
+			Piece->OnPieceReahedEndLine();
 			OnPieceReachedEndline(Piece);
 		}
-	}
-
-	// Remove pieces once iterated the ServerBoardPieces Map
-	for (APieceActor* Piece : PiecesToRemove) 
-	{
-		ServerBoardPieces.Remove(Piece->GetPieceID());
 	}
 }
 
@@ -419,19 +418,12 @@ void ABoardManager::OnPieceReachedEndline(APieceActor* Piece)
 	// Get column and operations data
 	const EDavidPlayer ScorePlayer = Piece->GetOwnerPlayer();
 	const int32 SquareIndex = Piece->GetBoardSquare()->GetSquareIndex();
-	const int32 SquareColumn = SquareIndex % BoardWidth;
-	const int32 MultiplyFactor = ScorePlayer == EDavidPlayer::PLAYER_1 ? 1 : -1;
-
-	int32 StartIndex = SquareColumn;
-	if (ScorePlayer == EDavidPlayer::PLAYER_2) 
-	{
-		StartIndex = BoardHeight * BoardWidth - (BoardWidth - SquareColumn) - 1;
-	}
+	const int32 MultiplyFactor = ScorePlayer == EDavidPlayer::PLAYER_1 ? -1 : 1;
 
 	// Paint and lock all squares in the column
 	for (int i = 0; i < BoardHeight; ++i)
 	{
-		int32 SquareToPaint = StartIndex + BoardWidth * i * MultiplyFactor;
+		int32 SquareToPaint = SquareIndex + BoardWidth * i * MultiplyFactor;
 		BoardSquares[SquareToPaint]->Process_SetSquarePlayerColor(ScorePlayer);
 		BoardSquares[SquareToPaint]->Process_LockSquare();
 	}

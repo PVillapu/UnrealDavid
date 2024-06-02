@@ -52,6 +52,8 @@ public:
 	static FSquareAction GetSquareAction(const struct FTurnAction& GameAction);
 
 protected:
+	void RegisterSquareAction(int32 SquareAction);
+
 	void RegisterSquareAction(int32 SquareAction, const TArray<uint8>& Payload);
 
 private:

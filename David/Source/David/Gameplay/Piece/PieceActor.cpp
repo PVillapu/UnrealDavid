@@ -122,6 +122,12 @@ void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
 	SkeletalMeshComponent->OnBeginCursorOver.RemoveAll(this);
 }
 
+void APieceActor::OnPieceReahedEndLine()
+{
+	BoardManager->Process_RemovePieceFromLogicBoard(this);
+	RegisterPieceAction(EPieceAction::ReachedEndSquare);
+}
+
 FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 {
 	int32 PieceID;
@@ -240,6 +246,11 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 			Action_Die();
 			break;
 		}
+		case EPieceAction::ReachedEndSquare:
+		{
+			Action_ReachedEndLine();
+			break;
+		}
 		default: 
 		{
 			BoardManager->OnGameActionComplete();
@@ -299,6 +310,12 @@ void APieceActor::Action_Die()
 
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.f, false);
+}
+
+void APieceActor::Action_ReachedEndLine()
+{
+	BoardManager->RemoveActivePiece(this);
+	BoardManager->OnGameActionComplete();
 }
 
 void APieceActor::HandlePieceMovement(float DeltaSeconds)

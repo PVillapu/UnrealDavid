@@ -10,7 +10,7 @@
 
 /* 
 Piece actor, all methods that correspond to the turn processing must have Process_ prefix,
-and all methods used to play actions nust have Action_ prefix
+and all methods used to play actions must have Action_ prefix
 */
 UCLASS()
 class DAVID_API APieceActor : public AActor
@@ -18,7 +18,7 @@ class DAVID_API APieceActor : public AActor
 	GENERATED_BODY()
 	
 protected:
-	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die};
+	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die, ReachedEndSquare};
 
 public:	
 	APieceActor();
@@ -38,6 +38,8 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
+
+	virtual void OnPieceReahedEndLine();
 
 	/* Called when the piece has to be placed in the board */
 	virtual void OnDeployPieceInSquareAction(int32 SquareIndex);
@@ -104,6 +106,8 @@ protected:
 	virtual void Action_TakeDamage(const TArray<uint8>& Payload);
 
 	virtual void Action_Die();
+
+	virtual void Action_ReachedEndLine();
 
 	void HandlePieceMovement(float DeltaSeconds);
 

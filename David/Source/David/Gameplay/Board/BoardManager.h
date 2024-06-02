@@ -27,6 +27,9 @@ public:
 	/* This is called when a piece is defeated */
 	void OnPieceDeath(class APieceActor* PieceDestroyed, APieceActor* InstigatorPiece);
 
+	/* Called during Process_ phase. Removes a piece from the ServerBoardPieces */
+	void Process_RemovePieceFromLogicBoard(APieceActor* PieceToRemove);
+
 	/* Must be called when a piece performs the last action in board before being destroyed */
 	void RemoveActivePiece(APieceActor* Piece);
 

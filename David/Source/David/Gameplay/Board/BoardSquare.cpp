@@ -53,7 +53,8 @@ void ABoardSquare::Process_LockSquare()
 	if (bIsLocked) return;
 
 	bIsLocked = true;
-	RegisterSquareAction(EDavidSquareAction::LOCK_SQUARE, TArray<uint8>());
+
+	RegisterSquareAction(EDavidSquareAction::LOCK_SQUARE);
 }
 
 void ABoardSquare::Action_SetSquarePlayerColor(const FSquareAction& Action)
@@ -120,6 +121,17 @@ FSquareAction ABoardSquare::GetSquareAction(const FTurnAction& GameAction)
 		FMemory::Memcpy(Payload.GetData(), &GameAction.Payload[8], Payload.Num());
 
 	return FSquareAction(SquareIndex, ActionID, Payload);
+}
+
+void ABoardSquare::RegisterSquareAction(int32 SquareAction)
+{
+	FTurnAction GameAction;
+	GameAction.ActionType = EDavidGameAction::SQUARE_ACTION;
+	GameAction.Payload.SetNum(2 * sizeof(int32));
+	FMemory::Memcpy(GameAction.Payload.GetData(), &SquareIndex, sizeof(int32));
+	FMemory::Memcpy(&GameAction.Payload[4], &SquareAction, sizeof(int32));
+
+	BoardManager->RegisterGameAction(GameAction);
 }
 
 void ABoardSquare::RegisterSquareAction(int32 SquareAction, const TArray<uint8>& Payload)
