@@ -15,7 +15,7 @@ jobs:
       run: |
         # Set up environment variables for Unreal Engine
         $Env:UE4Path = "C:\Program Files\Epic Games\UE_5.0"
-        $Env:ProjectPath = "${{ github.workspace }}\YourProject\YourProject.uproject"
+        $Env:ProjectPath = "${{ github.workspace }}\David\David.uproject"
 
     - name: Build Project
       run: ././CICD/build.ps1
@@ -25,4 +25,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: build-artifacts
-        path: ${{ github.workspace }}\YourProject\Binaries\Win64
+        path: ${{ github.workspace }}\David\Binaries\Win64
