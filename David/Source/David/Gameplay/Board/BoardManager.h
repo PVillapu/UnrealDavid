@@ -35,6 +35,8 @@ public:
 
 	FVector GetSquareLocation(int32 SquareIndex);
 
+	FVector GetSquarePieceLocation(int32 SquareIndex);
+
 	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
 
 	bool IsSquareOccupied(int32 TargetSquare) const;

@@ -88,6 +88,13 @@ FVector ABoardManager::GetSquareLocation(int32 SquareIndex)
 	return BoardSquares[SquareIndex]->GetTransform().GetLocation(); 
 }
 
+FVector ABoardManager::GetSquarePieceLocation(int32 SquareIndex)
+{
+	if (SquareIndex < 0 || SquareIndex >= BoardSquares.Num()) return FVector();
+
+	return BoardSquares[SquareIndex]->GetSquarePieceLocation();
+}
+
 void ABoardManager::CalculatePlayersScore(int32& Player1Score, int32& Player2Score)
 {
 	Player1Score = Player2Score = 0;

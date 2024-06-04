@@ -12,7 +12,11 @@ ABoardSquare::ABoardSquare()
 	SquareIndex = -1;
 
 	SquareMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Square mesh"));
-	SquareMesh->SetupAttachment(RootComponent);
+	SetRootComponent(SquareMesh);
+
+	PieceBaseLocation = CreateDefaultSubobject<USceneComponent>(TEXT("Piece base position"));
+	PieceBaseLocation->SetRelativeLocation(FVector(0.f, 0.f, 20.f));
+	PieceBaseLocation->SetupAttachment(RootComponent);
 
 	SquareColor = ProcessSquareColor = EDavidSquareColor::NEUTRAL;
 }

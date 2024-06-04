@@ -17,6 +17,9 @@ APieceActor::APieceActor()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = false;
 
+	PieceRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Piece root"));
+	SetRootComponent(PieceRoot);
+
 	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
 	SkeletalMeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -34,6 +37,14 @@ void APieceActor::Tick(float DeltaSeconds)
 	if (bIsMoving) 
 	{
 		HandlePieceMovement(DeltaSeconds);
+	}
+	else if (bIsAttacking) 
+	{
+		HandlePieceAttack(DeltaSeconds);
+	}
+	else if (bIsReceivingDamage) 
+	{
+		HandlePieceReceiveDamage(DeltaSeconds);
 	}
 }
 
@@ -147,8 +158,7 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 
 void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
-	FVector DeployLocation = BoardManager->GetSquareLocation(SquareIndex);
-	SetActorLocation(DeployLocation);
+	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
 
 	BoardManager->OnGameActionComplete();
 }
@@ -265,36 +275,45 @@ void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 	int32 TargetSquareIndex;
 	FMemory::Memcpy(&TargetSquareIndex, Payload.GetData(), sizeof(int32));
 
-	bIsMoving = true;
-	MovementDelta = 0.f;
-	OriginLocation = GetActorLocation();
+	if (Square && PieceMovementCurve) 
+	{
+		bIsMoving = true;
+		MovementDelta = 0.f;
+		OriginLocation = GetActorLocation();
 
-	TargetLocation = BoardManager->GetSquareLocation(TargetSquareIndex);
-
-	MovementTargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+		TargetLocation = BoardManager->GetSquarePieceLocation(TargetSquareIndex);
+		MovementTargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+	}
+	else 
+	{
+		BoardManager->OnGameActionComplete();
+	}
 }
 
 void APieceActor::Action_AttackFrontPiece()
 {
-	BoardManager->OnGameActionComplete();
+	if (Square && PieceAttackCurve) 
+	{
+		bIsAttacking = true;
+		AttackDelta = 0.f;
+	}
+	else
+	{
+		BoardManager->OnGameActionComplete();
+	}
 }
 
 void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 {
-	// Get actor health from the action
-	int32 IncomingHealth;
-	FMemory::Memcpy(&IncomingHealth, Payload.GetData(), sizeof(int32));
-
-	UE_LOG(LogDavid, Display, TEXT("Attack received. %d health left"), IncomingHealth);
-
-	// Set current health
-	CurrentHealth = IncomingHealth;
-
-	// Change the displayed health in the stats widget
-	if(StatsWidget)
-		StatsWidget->SetHealthValue(IncomingHealth);
-
-	BoardManager->OnGameActionComplete();
+	if (Square && PieceReceiveDamageCurvePosition && PieceReceiveDamageCurveRotation)
+	{
+		bIsReceivingDamage = true;
+		ReceiveDamageDelta = 0.f;
+	}
+	else
+	{
+		BoardManager->OnGameActionComplete();
+	}
 }
 
 void APieceActor::Action_Die()
@@ -328,13 +347,11 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 	if (MovementStatus >= 1.f) 
 	{
 		bIsMoving = false;
-		BoardManager->OnGameActionComplete();
 		SetActorLocation(TargetLocation);
+		BoardManager->OnGameActionComplete();
 
 		return;
 	}
-
-	if (!PieceMovementCurve) return;
 
 	// Evaluate movement curve
 	FVector MovementEvaluation = PieceMovementCurve->GetVectorValue(MovementStatus);
@@ -345,4 +362,61 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 	MovementPosition.Z += MovementEvaluation.Z;
 
 	SetActorLocation(OriginLocation + MovementPosition);
+}
+
+void APieceActor::HandlePieceAttack(float DeltaSeconds)
+{
+	// Add the delta time to the counter and calculate the movement status
+	AttackDelta += DeltaSeconds;
+	const float AttackStatus = FMath::Clamp(AttackDelta / AttackTime, 0.f, 1.f);
+
+	// Finished movement
+	if (AttackStatus >= 1.f)
+	{
+		bIsAttacking = false;
+		SetActorLocation(Square->GetSquarePieceLocation());
+		BoardManager->OnGameActionComplete();
+
+		return;
+	}
+
+	// Evaluate movement curve
+	const FVector AttackEvaluation = PieceMovementCurve->GetVectorValue(AttackStatus);
+
+	// Calculate this frame movement position and apply to actor
+	const FVector SquarePosition = Square->GetSquarePieceLocation();
+
+	SetActorLocation(SquarePosition + AttackEvaluation);
+}
+
+void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
+{
+	// Add the delta time to the counter and calculate the movement status
+	ReceiveDamageDelta += DeltaSeconds;
+	const float ActionStatus = FMath::Clamp(ReceiveDamageDelta / ReceiveDamageTime, 0.f, 1.f);
+
+	// Finished movement
+	if (ActionStatus >= 1.f)
+	{
+		bIsReceivingDamage = false;
+		SetActorLocation(Square->GetSquarePieceLocation());
+
+		// Change the displayed health in the stats widget
+		if (StatsWidget)
+			StatsWidget->SetHealthValue(CurrentHealth);
+
+		BoardManager->OnGameActionComplete();
+
+		return;
+	}
+
+	// Evaluate movement curve
+	const FVector ActionPositionEvaluation = PieceReceiveDamageCurvePosition->GetVectorValue(ActionStatus);
+	const FVector PieceRotation = PieceReceiveDamageCurveRotation->GetVectorValue(ActionStatus);
+
+	// Calculate this frame movement position and apply to actor
+	const FVector SquarePosition = Square->GetSquarePieceLocation();
+
+	SetActorLocation(SquarePosition + ActionPositionEvaluation);
+	SetActorRotation(PieceRotation.ToOrientationQuat());
 }

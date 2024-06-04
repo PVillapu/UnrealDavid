@@ -111,6 +111,10 @@ protected:
 
 	void HandlePieceMovement(float DeltaSeconds);
 
+	void HandlePieceAttack(float DeltaSeconds);
+
+	void HandlePieceReceiveDamage(float DeltaSeconds);
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	USkeletalMeshComponent* SkeletalMeshComponent;
@@ -118,13 +122,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	class UWidgetComponent* StatsWidgetComponent;
 
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	class USceneComponent* PieceRoot;
+
 	/* Vector curve used to move the piece to target square
 	 * NOTE: The Y axis of the curve is clamped between 0 and 1 to represent the start and end position of the movement,
 	 * rest of axis are absolute offset values
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "David")
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|Movement")
 	class UCurveVector* PieceMovementCurve;
 	
+	/* Vector curve used to set the piece offset while is attacking */
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|Attacking")
+	class UCurveVector* PieceAttackCurve;
+
+	/* Vector curve used to set the piece offset when receives an attack */
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|RecivingDamage")
+	class UCurveVector* PieceReceiveDamageCurvePosition;
+
+	/* Vector curve used to set the piece offset when receives an attack */
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|RecivingDamage")
+	class UCurveVector* PieceReceiveDamageCurveRotation;
+
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
 
@@ -165,7 +184,9 @@ protected:
 	
 	int32 PieceID;
 
-	/* ---------- Movement variables  ---------------- */
+	/* -------------- Movement variables  ------------------- */
+
+	bool bIsMoving = false;
 
 	UPROPERTY(Transient, SkipSerialization)
 	FVector TargetLocation;
@@ -177,10 +198,27 @@ protected:
 	ABoardSquare* MovementTargetSquare;
 
 	/* Time that takes the movement to reach the destination */
-	float MovementTime = 0.7f;
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|Movement")
+	float MovementTime = 0.8f;
 
 	/* Stores the time since movement started */
 	float MovementDelta = 0.f;
 
-	bool bIsMoving = false;
+	/* -------------- Attacking variables ------------------ */
+
+	bool bIsAttacking = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|Attacking")
+	float AttackTime = 0.8f;
+
+	float AttackDelta = 0.f;
+
+	/* -------------- Reciving damage variables ------------- */
+
+	bool bIsReceivingDamage = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|RecivingDamage")
+	float ReceiveDamageTime = 0.8f;
+
+	float ReceiveDamageDelta = 0.f;
 };

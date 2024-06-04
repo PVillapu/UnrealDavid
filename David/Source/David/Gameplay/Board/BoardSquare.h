@@ -48,6 +48,8 @@ public:
 
 	FORCEINLINE bool IsLocked() const { return bIsLocked; }
 
+	FORCEINLINE FVector GetSquarePieceLocation() const { return PieceBaseLocation->GetComponentLocation(); }
+
 	/* Retrieves a SquareAction struct from the given Game Action */
 	static FSquareAction GetSquareAction(const struct FTurnAction& GameAction);
 
@@ -68,6 +70,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	UMaterial* Player2SquareMaterial;
+
+	UPROPERTY(EditDefaultsOnly, Category = "David")
+	USceneComponent* PieceBaseLocation;
 	
 	UPROPERTY(Transient, SkipSerialization)
 	ABoardManager* BoardManager;
