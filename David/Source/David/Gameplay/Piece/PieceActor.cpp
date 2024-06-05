@@ -160,6 +160,8 @@ void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
 
+	Square = BoardManager->GetBoardSquare(TargetSquareIndex);
+
 	BoardManager->OnGameActionComplete();
 }
 
@@ -283,6 +285,7 @@ void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 
 		TargetLocation = BoardManager->GetSquarePieceLocation(TargetSquareIndex);
 		MovementTargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+		Square = MovementTargetSquare;
 	}
 	else 
 	{
