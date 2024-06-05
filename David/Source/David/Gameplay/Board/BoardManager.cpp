@@ -246,6 +246,10 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	{
 		PieceInstance->OnDeployPieceInSquareAction(SquareID);
 	}
+	else 
+	{
+		OnGameActionComplete();
+	}
 }
 
 APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)

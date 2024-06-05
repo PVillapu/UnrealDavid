@@ -159,8 +159,10 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
+	//const FQuat FacingDirection = DavidPlayerOwner == EDavidPlayer::
+	SetActorRotation(FacingDirection);
 
-	Square = BoardManager->GetBoardSquare(TargetSquareIndex);
+	Square = BoardManager->GetBoardSquare(SquareIndex);
 
 	BoardManager->OnGameActionComplete();
 }
