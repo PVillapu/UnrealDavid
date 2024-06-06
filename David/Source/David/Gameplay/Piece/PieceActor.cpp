@@ -159,7 +159,7 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
-	const FRotator FacingDirection = DavidPlayerOwner == EDavidPlayer::Player1 ? FVector::ForwardVector.ToOrientationRotator() : FVector::BackwardVector.ToOrientationRotator();
+	const FRotator FacingDirection = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? FVector::ForwardVector.ToOrientationRotator() : FVector::BackwardVector.ToOrientationRotator();
 	SetActorRotation(FacingDirection);
 
 	Square = BoardManager->GetBoardSquare(SquareIndex);
@@ -314,6 +314,17 @@ void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 	{
 		bIsReceivingDamage = true;
 		ReceiveDamageDelta = 0.f;
+
+		// Get actor health from the action
+		int32 IncomingHealth;
+		FMemory::Memcpy(&IncomingHealth, Payload.GetData(), sizeof(int32));
+
+		// Set current health
+		CurrentHealth = IncomingHealth;
+
+		// Change the displayed health in the stats widget
+		if (StatsWidget)
+			StatsWidget->SetHealthValue(CurrentHealth);
 	}
 	else
 	{
@@ -404,11 +415,10 @@ void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
 	if (ActionStatus >= 1.f)
 	{
 		bIsReceivingDamage = false;
-		SetActorLocation(Square->GetSquarePieceLocation());
 
-		// Change the displayed health in the stats widget
-		if (StatsWidget)
-			StatsWidget->SetHealthValue(CurrentHealth);
+		SetActorLocation(Square->GetSquarePieceLocation());
+		const FRotator FacingDirection = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? FVector::ForwardVector.ToOrientationRotator() : FVector::BackwardVector.ToOrientationRotator();
+		SetActorRotation(FacingDirection);
 
 		BoardManager->OnGameActionComplete();
 
