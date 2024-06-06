@@ -159,7 +159,7 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
-	//const FQuat FacingDirection = DavidPlayerOwner == EDavidPlayer::
+	const FRotator FacingDirection = DavidPlayerOwner == EDavidPlayer::Player1 ? FVector::ForwardVector.ToOrientationRotator() : FVector::BackwardVector.ToOrientationRotator();
 	SetActorRotation(FacingDirection);
 
 	Square = BoardManager->GetBoardSquare(SquareIndex);
@@ -423,5 +423,5 @@ void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
 	const FVector SquarePosition = Square->GetSquarePieceLocation();
 
 	SetActorLocation(SquarePosition + ActionPositionEvaluation);
-	SetActorRotation(PieceRotation.ToOrientationQuat());
+	SetActorRotation(PieceRotation.ToOrientationRotator());
 }
