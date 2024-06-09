@@ -28,7 +28,7 @@ public:
 	void OnPieceDeath(class APieceActor* PieceDestroyed, APieceActor* InstigatorPiece);
 
 	/* Called during Process_ phase. Removes a piece from the ServerBoardPieces */
-	void Process_RemovePieceFromLogicBoard(APieceActor* PieceToRemove);
+	void Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemove);
 
 	/* Must be called when a piece performs the last action in board before being destroyed */
 	void RemoveActivePiece(APieceActor* Piece);

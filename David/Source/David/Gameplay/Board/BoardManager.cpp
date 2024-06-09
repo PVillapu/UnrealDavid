@@ -347,7 +347,7 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 	if (Piece == nullptr || InstigatorPiece == nullptr) return;
 
 	// Remove the piece from board
-	Process_RemovePieceFromLogicBoard(Piece);
+	Process_RemovePieceFromProcessBoard(Piece);
 
 	Piece->OnPieceDestroyed(InstigatorPiece);
 
@@ -362,7 +362,7 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 	}
 }
 
-void ABoardManager::Process_RemovePieceFromLogicBoard(APieceActor* PieceToRemove)
+void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemove)
 {
 	const ABoardSquare* BoardSquare = PieceToRemove->GetBoardSquare();
 	const int32 PieceLocation = BoardSquare->GetSquareIndex();

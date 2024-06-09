@@ -135,7 +135,7 @@ void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
 
 void APieceActor::OnPieceReachedEndLine()
 {
-	BoardManager->Process_RemovePieceFromLogicBoard(this);
+	BoardManager->Process_RemovePieceFromProcessBoard(this);
 	RegisterPieceAction(EPieceAction::ReachedEndSquare);
 }
 
