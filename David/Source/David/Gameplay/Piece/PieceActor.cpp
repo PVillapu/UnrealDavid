@@ -283,11 +283,11 @@ void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 	{
 		bIsMoving = true;
 		MovementDelta = 0.f;
-		OriginLocation = GetActorLocation();
+		Action_OriginLocation = GetActorLocation();
 
-		TargetLocation = BoardManager->GetSquarePieceLocation(TargetSquareIndex);
-		MovementTargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
-		Square = MovementTargetSquare;
+		Action_TargetLocation = BoardManager->GetSquarePieceLocation(TargetSquareIndex);
+		Action_TargetSquare = BoardManager->GetBoardSquare(TargetSquareIndex);
+		Square = Action_TargetSquare;
 	}
 	else 
 	{
@@ -301,6 +301,8 @@ void APieceActor::Action_AttackFrontPiece()
 	{
 		bIsAttacking = true;
 		AttackDelta = 0.f;
+
+		Action_OriginLocation = GetActorLocation();
 	}
 	else
 	{
@@ -314,6 +316,8 @@ void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 	{
 		bIsReceivingDamage = true;
 		ReceiveDamageDelta = 0.f;
+
+		Action_OriginLocation = GetActorLocation();
 
 		// Get actor health from the action
 		int32 IncomingHealth;
@@ -363,7 +367,7 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 	if (MovementStatus >= 1.f) 
 	{
 		bIsMoving = false;
-		SetActorLocation(TargetLocation);
+		SetActorLocation(Action_TargetLocation);
 		BoardManager->OnGameActionComplete();
 
 		return;
@@ -373,11 +377,11 @@ void APieceActor::HandlePieceMovement(float DeltaSeconds)
 	FVector MovementEvaluation = PieceMovementCurve->GetVectorValue(MovementStatus);
 
 	// Calculate this frame movement position and apply to actor
-	FVector MovementPosition = (TargetLocation - OriginLocation) * MovementEvaluation.Y;
+	FVector MovementPosition = (Action_TargetLocation - Action_OriginLocation) * MovementEvaluation.Y;
 	MovementPosition.X += MovementEvaluation.X;
 	MovementPosition.Z += MovementEvaluation.Z;
 
-	SetActorLocation(OriginLocation + MovementPosition);
+	SetActorLocation(Action_OriginLocation + MovementPosition);
 }
 
 void APieceActor::HandlePieceAttack(float DeltaSeconds)
@@ -390,7 +394,7 @@ void APieceActor::HandlePieceAttack(float DeltaSeconds)
 	if (AttackStatus >= 1.f)
 	{
 		bIsAttacking = false;
-		SetActorLocation(Square->GetSquarePieceLocation());
+		SetActorLocation(Action_OriginLocation);
 		BoardManager->OnGameActionComplete();
 
 		return;
@@ -400,9 +404,7 @@ void APieceActor::HandlePieceAttack(float DeltaSeconds)
 	const FVector AttackEvaluation = PieceMovementCurve->GetVectorValue(AttackStatus);
 
 	// Calculate this frame movement position and apply to actor
-	const FVector SquarePosition = Square->GetSquarePieceLocation();
-
-	SetActorLocation(SquarePosition + AttackEvaluation);
+	SetActorLocation(Action_OriginLocation + AttackEvaluation);
 }
 
 void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
@@ -416,7 +418,7 @@ void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
 	{
 		bIsReceivingDamage = false;
 
-		SetActorLocation(Square->GetSquarePieceLocation());
+		SetActorLocation(Action_OriginLocation);
 		const FRotator FacingDirection = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? FVector::ForwardVector.ToOrientationRotator() : FVector::BackwardVector.ToOrientationRotator();
 		SetActorRotation(FacingDirection);
 
@@ -427,11 +429,16 @@ void APieceActor::HandlePieceReceiveDamage(float DeltaSeconds)
 
 	// Evaluate movement curve
 	const FVector ActionPositionEvaluation = PieceReceiveDamageCurvePosition->GetVectorValue(ActionStatus);
+
 	const FVector PieceRotation = PieceReceiveDamageCurveRotation->GetVectorValue(ActionStatus);
+	FRotator Rot;
+	Rot.Pitch = PieceRotation.X;
+	Rot.Yaw = PieceRotation.Y;
+	Rot.Roll = PieceRotation.Z;
 
 	// Calculate this frame movement position and apply to actor
-	const FVector SquarePosition = Square->GetSquarePieceLocation();
+	const FVector SquarePosition = Action_OriginLocation;
 
 	SetActorLocation(SquarePosition + ActionPositionEvaluation);
-	SetActorRotation(PieceRotation.ToOrientationRotator());
+	SetActorRotation(Rot);
 }

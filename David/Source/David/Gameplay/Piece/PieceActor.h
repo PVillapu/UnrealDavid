@@ -189,13 +189,13 @@ protected:
 	bool bIsMoving = false;
 
 	UPROPERTY(Transient, SkipSerialization)
-	FVector TargetLocation;
+	FVector Action_TargetLocation;
 
 	UPROPERTY(Transient, SkipSerialization)
-	FVector OriginLocation;
+	FVector Action_OriginLocation;
 
 	UPROPERTY(Transient, SkipSerialization)
-	ABoardSquare* MovementTargetSquare;
+	ABoardSquare* Action_TargetSquare;
 
 	/* Time that takes the movement to reach the destination */
 	UPROPERTY(EditDefaultsOnly, Category = "David|Configuration|Movement")

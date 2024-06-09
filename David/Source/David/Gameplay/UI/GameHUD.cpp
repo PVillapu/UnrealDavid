@@ -224,8 +224,6 @@ void UGameHUD::PlaceInfoCardInViewport()
 	FCardData& CardData = *CardsArray[CardDataIndex];
 
 	PieceInfoCard->SetupCard(CardData);
-	PieceInfoCard->SetCardAttack(CurrentInspectedPiece->GetPieceAttack());
-	PieceInfoCard->SetCardHealth(CurrentInspectedPiece->GetPieceHealth());
 	PieceInfoCard->SetVisibility(ESlateVisibility::HitTestInvisible);
 
 	if (UWorld* World = GetWorld())
