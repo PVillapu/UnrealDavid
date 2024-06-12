@@ -84,6 +84,17 @@ void APieceActor::OnBeginTurn()
 	bHasBeenProcessed = false;
 }
 
+void APieceActor::Process_TakeDamage(int32 DamageAmount)
+{
+	ProcessHealth -= DamageAmount;
+
+	if (ProcessHealth <= 0)
+	{
+		// Remove the piece from board
+		BoardManager->Process_RemovePieceFromProcessBoard(this);
+	}
+}
+
 void APieceActor::RegisterPieceAction(int32 PieceAction) const
 {
 	FTurnAction GameAction;
@@ -107,10 +118,9 @@ void APieceActor::RegisterPieceAction(int32 PieceAction, const TArray<uint8>& Pa
 	BoardManager->RegisterGameAction(GameAction);
 }
 
-float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+void APieceActor::Process_HoldDamage(AActor *DamageCauser)
 {
-	ProcessHealth -= (int32)DamageAmount;
-
+	// Register action
 	TArray<uint8> Payload;
 	Payload.SetNum(sizeof(float));
 	FMemory::Memcpy(Payload.GetData(), &ProcessHealth, sizeof(int32));
@@ -121,11 +131,8 @@ float APieceActor::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		RegisterPieceAction(EPieceAction::Die);
 		APieceActor* InstigatorPiece = Cast<APieceActor>(DamageCauser);
 		BoardManager->OnPieceDeath(this, InstigatorPiece);
-
 		InstigatorPiece->OnThisPieceDestroyedOther();
 	}
-
-	return DamageAmount;
 }
 
 void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
@@ -230,7 +237,7 @@ void APieceActor::Process_AttackPieceInSquare(const int32 TargetSquareIndex, con
 		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 		RegisterPieceAction(ActionID, Payload);
 
-		UGameplayStatics::ApplyDamage(PieceToAttack, ProcessAttack, nullptr, this, nullptr);
+		BoardManager->Process_AttackPieceInSquare(PieceToAttack, this, ProcessAttack);
 	}
 }
 

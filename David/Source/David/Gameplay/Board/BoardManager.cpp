@@ -346,9 +346,6 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 {
 	if (Piece == nullptr || InstigatorPiece == nullptr) return;
 
-	// Remove the piece from board
-	Process_RemovePieceFromProcessBoard(Piece);
-
 	Piece->OnPieceDestroyed(InstigatorPiece);
 
 	OnPieceDestroyed.Broadcast(Piece, InstigatorPiece);
@@ -369,6 +366,12 @@ void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemo
 
 	BoardSquares[PieceLocation]->SetPieceInSquare(nullptr);
 	ServerBoardPieces.Remove(PieceToRemove->GetPieceID());
+}
+
+void ABoardManager::Process_AttackPieceInSquare(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount)
+{
+	PieceToAttack->Process_TakeDamage(AttackAmmount);
+	PieceToAttack->Process_HoldDamage(DamageCauser);
 }
 
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)

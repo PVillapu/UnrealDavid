@@ -35,7 +35,9 @@ public:
 
 	virtual void OnBeginTurn();
 
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void Process_TakeDamage(int32 DamageAmmount);
+
+	virtual void Process_HoldDamage(AActor* DamageCauser);
 
 	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
 
