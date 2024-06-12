@@ -33,7 +33,10 @@ public:
 	/* Called during Process_ phase. Attacks a piece placed in a square.
 	 * ONLY FOR SINGLE TARGET ATTACKS
 	 */
-	void Process_AttackPieceInSquare(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount);
+	void Process_AttackPiece(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount);
+
+	/* Called during Process_ phase. Attacks a group of pieces */
+	void Process_AttackMultiplePieces(TArray<APieceActor*>& PiecesToAttack, APieceActor* DamageCauser, int32 AttackAmmount);
 
 	/* Must be called when a piece performs the last action in board before being destroyed */
 	void RemoveActivePiece(APieceActor* Piece);

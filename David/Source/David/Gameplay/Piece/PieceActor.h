@@ -95,9 +95,11 @@ protected:
 
 	/* -------------------- Turn process methods ----------------------- */
 
-	void Process_MoveToSquare(const int32 TargetSquareIndex, const int32 ActionID);
+	void Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID);
 
-	void Process_AttackPieceInSquare(const int32 TargetSquareIndex, const int32 ActionID);
+	void Process_AttackPieceInSquare(int32 TargetSquareIndex);
+
+	void Process_AttackPiecesInSquares(const TArray<int32>& TargetSquaresIndex);
 
 	/* -------------------- Turn actions methods ------------------------ */
 

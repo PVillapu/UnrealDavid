@@ -207,7 +207,7 @@ void APieceActor::ProcessTurn()
 
 	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
 	{
-		Process_AttackPieceInSquare(TargetSquareIndex, EPieceAction::FrontAttack);
+		Process_AttackPieceInSquare(TargetSquareIndex);
 	}
 	else // Move forward
 	{
@@ -215,7 +215,7 @@ void APieceActor::ProcessTurn()
 	}
 }
 
-void APieceActor::Process_MoveToSquare(const int32 TargetSquareIndex, const int32 ActionID)
+void APieceActor::Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID)
 {
 	TArray<uint8> Payload;
 	Payload.SetNum(sizeof(int32));
@@ -226,18 +226,36 @@ void APieceActor::Process_MoveToSquare(const int32 TargetSquareIndex, const int3
 	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
 }
 
-void APieceActor::Process_AttackPieceInSquare(const int32 TargetSquareIndex, const int32 ActionID)
+void APieceActor::Process_AttackPieceInSquare(int32 TargetSquareIndex)
 {
 	APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 
-	if (PieceToAttack && PieceToAttack->GetOwnerPlayer() != DavidPlayerOwner)
+	if (PieceToAttack)
 	{
-		TArray<uint8> Payload;
-		Payload.SetNum(sizeof(int32));
-		FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
-		RegisterPieceAction(ActionID, Payload);
+		RegisterPieceAction(EPieceAction::FrontAttack);
 
-		BoardManager->Process_AttackPieceInSquare(PieceToAttack, this, ProcessAttack);
+		BoardManager->Process_AttackPiece(PieceToAttack, this, ProcessAttack);
+	}
+}
+
+void APieceActor::Process_AttackPiecesInSquares(const TArray<int32>& TargetSquareIndex)
+{
+	TArray<APieceActor*> PiecesToAttack;
+
+	// Gather pieces to attack
+	for(int i = 0; i < TargetSquareIndex.Num(); ++i)
+	{
+		APieceActor* Piece = BoardManager->GetPieceInSquare(TargetSquareIndex[i]);
+		if(Piece)
+		{
+			PiecesToAttack.Add(Piece);
+		}
+	}
+
+	if (PiecesToAttack.Num() > 0)
+	{
+		RegisterPieceAction(EPieceAction::FrontAttack);
+		BoardManager->Process_AttackMultiplePieces(PiecesToAttack, this, ProcessAttack);
 	}
 }
 

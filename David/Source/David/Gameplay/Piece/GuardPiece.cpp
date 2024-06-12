@@ -20,31 +20,34 @@ void AGuardPiece::ProcessTurn()
 	}
 }
 
-bool AGuardPiece::SearchAndAttackEnemies(const int32 FrontSquare)
+bool AGuardPiece::SearchAndAttackEnemies(int32 FrontSquare)
 {
 	bool HasAttacked = false;
 	const int32 AttackRow = FrontSquare / BoardManager->GetBoardWidth();
-	
+	TArray<int32> SquaresToAttack;
+
 	if (BoardManager->IsValidSquare(FrontSquare) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{
-		Process_AttackPieceInSquare(FrontSquare, EPieceAction::FrontAttack);
+		SquaresToAttack.Add(FrontSquare);
 		HasAttacked = true;
 	}
 
 	if ((FrontSquare - 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(FrontSquare - 1) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner) 
 	{
-		Process_AttackPieceInSquare(FrontSquare - 1, EPieceAction::FrontAttack);
+		SquaresToAttack.Add(FrontSquare - 1);
 		HasAttacked = true;
 	}
 
 	if ((FrontSquare + 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(FrontSquare + 1) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{
-		Process_AttackPieceInSquare(FrontSquare + 1, EPieceAction::FrontAttack);
+		SquaresToAttack.Add(FrontSquare + 1);
 		HasAttacked = true;
 	}
+
+	Process_AttackPiecesInSquares(SquaresToAttack, EPieceAction::FrontAttack);
 
 	return HasAttacked;
 }

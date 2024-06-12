@@ -21,5 +21,5 @@ public:
 	virtual void ProcessTurn();
 
 private:
-	bool SearchAndAttackEnemies(const int32 FrontSquare);
+	bool SearchAndAttackEnemies(int32 FrontSquare);
 };

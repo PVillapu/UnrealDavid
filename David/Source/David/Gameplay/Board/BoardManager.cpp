@@ -368,10 +368,31 @@ void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemo
 	ServerBoardPieces.Remove(PieceToRemove->GetPieceID());
 }
 
-void ABoardManager::Process_AttackPieceInSquare(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount)
+void ABoardManager::Process_AttackPiece(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount)
 {
 	PieceToAttack->Process_TakeDamage(AttackAmmount);
 	PieceToAttack->Process_HoldDamage(DamageCauser);
+}
+
+void ABoardManager::Process_AttackMultiplePieces(TArray<APieceActor *> &PiecesToAttack, APieceActor *DamageCauser, int32 AttackAmmount)
+{
+	// First deal the damage to each piece
+	for(APieceActor* Piece : PiecesToAttack)
+	{
+		if(Piece)
+		{
+			Piece->Process_TakeDamage(AttackAmmount);
+		}
+	}
+
+	// Once the damage is been aplied and board updates, each piece reacts to itb
+	for(APieceActor* Piece : PiecesToAttack)
+	{
+		if(Piece)
+		{
+			Piece->Process_HoldDamage(DamageCauser);
+		}
+	}
 }
 
 void ABoardManager::RemoveActivePiece(APieceActor* Piece)
