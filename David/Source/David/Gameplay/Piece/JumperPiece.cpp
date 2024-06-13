@@ -39,6 +39,6 @@ void AJumperPiece::ProcessTurn()
 	// Attack the front piece
 	if (BoardManager->IsSquareOccupied(FrontSquare)) // Attack
 	{
-		Process_AttackPieceInSquare(FrontSquare, EPieceAction::FrontAttack);
+		Process_AttackPieceInSquare(FrontSquare);
 	}
 }

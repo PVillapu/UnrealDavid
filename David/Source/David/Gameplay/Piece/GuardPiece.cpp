@@ -14,7 +14,7 @@ void AGuardPiece::ProcessTurn()
 
 	if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
 
-	if (!SearchAndAttackEnemies(TargetSquareIndex))
+	if (!SearchAndAttackEnemies(TargetSquareIndex) && !BoardManager->IsSquareOccupied(TargetSquareIndex))
 	{
 		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
 	}
@@ -47,7 +47,7 @@ bool AGuardPiece::SearchAndAttackEnemies(int32 FrontSquare)
 		HasAttacked = true;
 	}
 
-	Process_AttackPiecesInSquares(SquaresToAttack, EPieceAction::FrontAttack);
+	Process_AttackPiecesInSquares(SquaresToAttack);
 
 	return HasAttacked;
 }

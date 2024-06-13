@@ -31,7 +31,7 @@ bool ADiagonalAttackerPiece::Process_AttackPieceInDiagonals()
 	{
 		for (int32 Target : SquaresToAttack) 
 		{
-			Process_AttackPieceInSquare(Target, EPieceAction::FrontAttack);
+			Process_AttackPieceInSquare(Target);
 		}
 		return true;
 	}

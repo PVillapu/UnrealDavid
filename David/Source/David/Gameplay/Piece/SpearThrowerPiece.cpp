@@ -70,7 +70,7 @@ bool ASpearThrowerPiece::AttackEnemyInRange()
 		APieceActor* TargetPiece = BoardManager->GetPieceInSquare(ForwardSquareIndex);
 		if (TargetPiece->GetOwnerPlayer() != DavidPlayerOwner) 
 		{
-			Process_AttackPieceInSquare(ForwardSquareIndex, EPieceAction::FrontAttack);
+			Process_AttackPieceInSquare(ForwardSquareIndex);
 			return true;
 		}
 	}
@@ -79,7 +79,7 @@ bool ASpearThrowerPiece::AttackEnemyInRange()
 		APieceActor* TargetPiece = BoardManager->GetPieceInSquare(ForwardSecondSquareIndex);
 		if (TargetPiece->GetOwnerPlayer() != DavidPlayerOwner)
 		{
-			Process_AttackPieceInSquare(ForwardSecondSquareIndex, EPieceAction::FrontAttack);
+			Process_AttackPieceInSquare(ForwardSecondSquareIndex);
 			return true;
 		}
 	}

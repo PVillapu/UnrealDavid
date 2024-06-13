@@ -23,7 +23,7 @@ void ADancerPiece::ProcessTurn()
 
 	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
 	{
-		Process_AttackPieceInSquare(TargetSquareIndex, EPieceAction::FrontAttack);
+		Process_AttackPieceInSquare(TargetSquareIndex);
 	}
 	else // Move forward
 	{
