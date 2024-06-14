@@ -17,7 +17,7 @@ void ASpearThrowerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardD
 		if (BoardManager->IsValidSquare(NextSquare) && BoardManager->IsSquareOccupied(NextSquare)) 
 		{
 			APieceActor* PieceInSquare = BoardManager->GetPieceInSquare(NextSquare);
-			if (PieceInSquare->GetOwnerPlayer() == DavidPlayerOwner) continue;
+			if (IsPieceOfSameTeam(PieceInSquare)) continue;
 
 			bHasSpear = false;
 
@@ -54,11 +54,6 @@ void ASpearThrowerPiece::ProcessTurn()
 	}
 }
 
-void ASpearThrowerPiece::ProcessAction(const FPieceAction& Action)
-{
-	Super::ProcessAction(Action);
-}
-
 bool ASpearThrowerPiece::AttackEnemyInRange()
 {
 	const int32 FowardIndex = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? 1 : -1;
@@ -70,16 +65,16 @@ bool ASpearThrowerPiece::AttackEnemyInRange()
 		APieceActor* TargetPiece = BoardManager->GetPieceInSquare(ForwardSquareIndex);
 		if (TargetPiece->GetOwnerPlayer() != DavidPlayerOwner) 
 		{
-			Process_AttackPieceInSquare(ForwardSquareIndex);
+			Process_AttackPiece(ForwardSquareIndex);
 			return true;
 		}
 	}
 	else if (BoardManager->IsValidSquare(ForwardSecondSquareIndex) && BoardManager->IsSquareOccupied(ForwardSecondSquareIndex))
 	{
 		APieceActor* TargetPiece = BoardManager->GetPieceInSquare(ForwardSecondSquareIndex);
-		if (TargetPiece->GetOwnerPlayer() != DavidPlayerOwner)
+		if (!IsPieceOfSameTeam(TargetPiece))
 		{
-			Process_AttackPieceInSquare(ForwardSecondSquareIndex);
+			Process_AttackPiece(ForwardSecondSquareIndex);
 			return true;
 		}
 	}

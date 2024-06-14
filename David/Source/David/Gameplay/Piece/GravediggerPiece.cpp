@@ -9,11 +9,6 @@ void AGraveDiggerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardDa
 	OnAnyBoardPieceDestroyedHandler = BoardManager->OnPieceDestroyed.AddUObject(this, &AGraveDiggerPiece::OnAnyBoardPieceDestroyed);
 }
 
-void AGraveDiggerPiece::ProcessAction(const FPieceAction& Action)
-{
-	Super::ProcessAction(Action);
-}
-
 void AGraveDiggerPiece::OnPieceDestroyed(APieceActor* PieceInstigator)
 {
 	Super::OnPieceDestroyed(PieceInstigator);

@@ -68,6 +68,8 @@ public:
 
 	FORCEINLINE int32 GetPieceHealth() const { return CurrentHealth; }
 
+	FORCEINLINE bool IsPieceOfSameTeam(const APieceActor* OtherPiece) const { return OtherPiece->GetOwnerPlayer() == DavidPlayerOwner; }
+
 	/* Retrieves a PieceAction struct from the given Game Action */
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
 
@@ -97,9 +99,13 @@ protected:
 
 	void Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID);
 
-	void Process_AttackPieceInSquare(int32 TargetSquareIndex);
+	void Process_AttackPiece(int32 TargetSquareIndex);
 
-	void Process_AttackPiecesInSquares(const TArray<int32>& TargetSquaresIndex);
+	void Process_AttackPiece(APieceActor* TargetPiece);
+
+	void Process_AttackPieces(const TArray<int32>& TargetSquaresIndex);
+
+	void Process_AttackPieces(TArray<APieceActor*>& TargetPieces);
 
 	/* -------------------- Turn actions methods ------------------------ */
 

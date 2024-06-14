@@ -25,8 +25,6 @@ public:
 	/* Called by the server when the piece needs to be processed */
 	void ProcessTurn() override;
 
-	void ProcessAction(const FPieceAction& Action) override;
-
 private:
 	bool AttackEnemyInRange();
 

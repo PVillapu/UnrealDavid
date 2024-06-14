@@ -9,28 +9,6 @@ void ADancerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardData& _
 	OnPieceDestroyedOtherHandle = OnThisPieceDestroyedOtherDelegate.AddUObject(this, &ADancerPiece::Process_MoveHorizontal);
 }
 
-void ADancerPiece::ProcessTurn()
-{
-	bHasBeenProcessed = true;
-
-	if (Square == nullptr) return;
-
-	// Get the target square of the piece
-	const int32 FowardIndex = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? 1 : -1;
-	const int32 TargetSquareIndex = Square->GetSquareIndex() + BoardManager->GetBoardWidth() * FowardIndex;
-
-	if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
-
-	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
-	{
-		Process_AttackPieceInSquare(TargetSquareIndex);
-	}
-	else // Move forward
-	{
-		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
-	}
-}
-
 void ADancerPiece::OnPieceDestroyed(APieceActor* PieceInstigator)
 {
 	Super::OnPieceDestroyed(PieceInstigator);

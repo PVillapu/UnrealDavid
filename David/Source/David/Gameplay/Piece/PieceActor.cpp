@@ -205,11 +205,12 @@ void APieceActor::ProcessTurn()
 
 	if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
 
-	if (BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
+	const APieceActor* TargetPiece = BoardManager->GetPieceInSquare(TargetSquareIndex);
+	if (BoardManager->IsSquareOccupied(TargetSquareIndex) && !IsPieceOfSameTeam(TargetPiece)) // Attack
 	{
-		Process_AttackPieceInSquare(TargetSquareIndex);
+		Process_AttackPiece(TargetSquareIndex);
 	}
-	else // Move forward
+	else if(!BoardManager->IsSquareOccupied(TargetSquareIndex)) // Move forward
 	{
 		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
 	}
@@ -226,19 +227,24 @@ void APieceActor::Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID)
 	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
 }
 
-void APieceActor::Process_AttackPieceInSquare(int32 TargetSquareIndex)
+void APieceActor::Process_AttackPiece(int32 TargetSquareIndex)
 {
 	APieceActor* PieceToAttack = BoardManager->GetPieceInSquare(TargetSquareIndex);
 
 	if (PieceToAttack)
 	{
-		RegisterPieceAction(EPieceAction::FrontAttack);
-
-		BoardManager->Process_AttackPiece(PieceToAttack, this, ProcessAttack);
+		Process_AttackPiece(PieceToAttack);
 	}
 }
 
-void APieceActor::Process_AttackPiecesInSquares(const TArray<int32>& TargetSquareIndex)
+void APieceActor::Process_AttackPiece(APieceActor *TargetPiece)
+{
+	RegisterPieceAction(EPieceAction::FrontAttack);
+
+	BoardManager->Process_AttackPiece(TargetPiece, this, ProcessAttack);
+}
+
+void APieceActor::Process_AttackPieces(const TArray<int32>& TargetSquareIndex)
 {
 	TArray<APieceActor*> PiecesToAttack;
 
@@ -256,6 +262,15 @@ void APieceActor::Process_AttackPiecesInSquares(const TArray<int32>& TargetSquar
 	{
 		RegisterPieceAction(EPieceAction::FrontAttack);
 		BoardManager->Process_AttackMultiplePieces(PiecesToAttack, this, ProcessAttack);
+	}
+}
+
+void APieceActor::Process_AttackPieces(TArray<APieceActor*>& TargetPieces)
+{
+	if (TargetPieces.Num() > 0)
+	{
+		RegisterPieceAction(EPieceAction::FrontAttack);
+		BoardManager->Process_AttackMultiplePieces(TargetPieces, this, ProcessAttack);
 	}
 }
 

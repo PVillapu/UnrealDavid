@@ -36,9 +36,11 @@ void AJumperPiece::ProcessTurn()
 	}
 	else return;
 
+	const APieceActor* TargetPiece = BoardManager->GetPieceInSquare(FrontSquare);
+
 	// Attack the front piece
-	if (BoardManager->IsSquareOccupied(FrontSquare)) // Attack
+	if (TargetPiece && !IsPieceOfSameTeam(TargetPiece)) // Attack
 	{
-		Process_AttackPieceInSquare(FrontSquare);
+		Process_AttackPiece(FrontSquare);
 	}
 }

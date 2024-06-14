@@ -17,8 +17,6 @@ public:
 	/* Called when the piece is created by the BoardManager */
 	void SetupPiece(class ABoardManager* BoardManagerActor, struct FGameCardData& GameCardData, int32 ID, EDavidPlayer PieceOwner) override;
 
-	void ProcessAction(const FPieceAction& Action) override;
-
 	void OnPieceDestroyed(APieceActor* PieceInstigator) override;
 
 private:

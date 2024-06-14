@@ -47,7 +47,7 @@ bool AGuardPiece::SearchAndAttackEnemies(int32 FrontSquare)
 		HasAttacked = true;
 	}
 
-	Process_AttackPiecesInSquares(SquaresToAttack);
+	Process_AttackPieces(SquaresToAttack);
 
 	return HasAttacked;
 }

@@ -11,9 +11,6 @@ class DAVID_API ADancerPiece : public APieceActor
 
 public:	
 	void SetupPiece(class ABoardManager* BoardManagerActor, struct FGameCardData& GameCardData, int32 ID, EDavidPlayer PieceOwner) override;
-	
-	/* Called by the server when the piece needs to be processed */
-	void ProcessTurn() override;
 
 	void OnPieceDestroyed(APieceActor* PieceInstigator) override;
 
