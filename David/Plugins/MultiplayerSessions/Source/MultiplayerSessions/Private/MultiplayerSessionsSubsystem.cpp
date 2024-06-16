@@ -19,6 +19,26 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 	
 }
 
+void UMultiplayerSessionsSubsystem::Deinitialize()
+{
+	Super::Deinitialize();
+
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		if(IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		{
+			if(!IsLogged())
+			{
+				return;
+			}
+
+			UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Logging out..."));
+			Identity->Logout(0);
+		}
+	}
+}
+
 void UMultiplayerSessionsSubsystem::LogInToServices()
 {
 	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("LogInToServices..."));
@@ -28,6 +48,12 @@ void UMultiplayerSessionsSubsystem::LogInToServices()
 	{
 		if(IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
 		{
+			if(IsLogged())
+			{
+				UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Already logged in services"));
+				return;
+			}
+
 			FOnlineAccountCredentials Credentials;
 			Credentials.Id = FString();
 			Credentials.Token = FString(); 
@@ -36,6 +62,7 @@ void UMultiplayerSessionsSubsystem::LogInToServices()
 			Identity->OnLoginCompleteDelegates->AddUObject(this, &UMultiplayerSessionsSubsystem::OnLoginComplete);
 
 			UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Logging into OSS..."));
+			bIsTryingToLogIn = true;
 			Identity->Login(0, Credentials);
 		}
 	}
@@ -45,7 +72,7 @@ void UMultiplayerSessionsSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWa
 {
 	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnLoginComplete: bWasSuccessful = %d"), bWasSuccessful ? TEXT("True") : TEXT("True"));
 
-	bIsLogged = bWasSuccessful;
+	bIsTryingToLogIn = false;
 
 	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
 	if(OnlineSubsystem)
@@ -59,12 +86,32 @@ void UMultiplayerSessionsSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWa
 	MultiplayerOnLoggingComplete.Broadcast(bWasSuccessful, Error);
 }
 
+bool UMultiplayerSessionsSubsystem::IsLogged()
+{
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		if(IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		{
+			return Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn;
+		}
+	}
+
+    return false;
+}
+
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
 	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("CreateSession: NumPublicConnections = %d"), NumPublicConnections);
 
 	if (!IsValidSessionInterface())
 	{
+		return;
+	}
+
+	if(!IsLogged())
+	{
+		UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Cannot create a session if user is not logged"));
 		return;
 	}
 
@@ -111,6 +158,12 @@ void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 		return;
 	}
 
+	if(!IsLogged())
+	{
+		UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Cannot find sessions if user is not logged"));
+		return;
+	}
+
 	FindSessionsCompleteDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
 
 	LastSessionSearch = MakeShareable(new FOnlineSessionSearch());
@@ -119,7 +172,7 @@ void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 	LastSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (!SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), LastSessionSearch.ToSharedRef()))
+	if (!SessionInterface->FindSessions(0, LastSessionSearch.ToSharedRef()))
 	{
 		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
 
@@ -134,6 +187,12 @@ void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnJoinSessionComplete.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
+		return;
+	}
+
+	if(!IsLogged())
+	{
+		UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Cannot join a session if user is not logged"));
 		return;
 	}
 
@@ -155,6 +214,12 @@ void UMultiplayerSessionsSubsystem::DestroySession()
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnDestroySessionComplete.Broadcast(false);
+		return;
+	}
+
+	if(!IsLogged())
+	{
+		UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Cannot destroy a session if user is not logged"));
 		return;
 	}
 

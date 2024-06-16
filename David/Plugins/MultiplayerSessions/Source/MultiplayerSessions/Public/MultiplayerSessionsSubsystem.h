@@ -30,11 +30,13 @@ class MULTIPLAYERSESSIONS_API UMultiplayerSessionsSubsystem : public UGameInstan
 public:
 	UMultiplayerSessionsSubsystem();
 
+	virtual void Deinitialize() override;
+
 	// Performs the log in through OSS
 	void LogInToServices();
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
-	FORCEINLINE bool IsLogged() { return bIsLogged; };
+	bool IsLogged();
 
 	//
 	// To handle session functionality. The Menu class will call these
@@ -93,5 +95,5 @@ private:
 	int32 LastNumPublicConnections;
 	FString LastMatchType;
 
-	bool bIsLogged = false;
+	bool bIsTryingToLogIn = false;
 };

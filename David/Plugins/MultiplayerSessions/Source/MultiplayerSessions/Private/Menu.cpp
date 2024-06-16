@@ -16,9 +16,6 @@ void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
 	SetVisibility(ESlateVisibility::Visible);
 	bIsFocusable = true;
 
-	JoinButton->SetIsEnabled(false);
-	HostButton->SetIsEnabled(false);
-
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -47,7 +44,7 @@ void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
 		MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		MultiplayerSessionsSubsystem->MultiplayerOnStartSessionComplete.AddDynamic(this, &ThisClass::OnStartSession);
 		MultiplayerSessionsSubsystem->MultiplayerOnLoggingComplete.AddDynamic(this, &UMenu::OnLoggedIn);
-	
+
 		MultiplayerSessionsSubsystem->LogInToServices();
 	}
 }
@@ -173,34 +170,37 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 
 void UMenu::OnLoggedIn(bool bWasSuccessful, const FString& Error)
 {
-	JoinButton->SetIsEnabled(bWasSuccessful);
-	HostButton->SetIsEnabled(bWasSuccessful);
-
-	// Try to logging again if not successfull
-	if(!bWasSuccessful)
-	{
-		if (MultiplayerSessionsSubsystem)
-		{
-			MultiplayerSessionsSubsystem->LogInToServices();
-		}
-	}
 }
 
 void UMenu::HostButtonClicked()
 {
-	HostButton->SetIsEnabled(false);
 	if (MultiplayerSessionsSubsystem)
 	{
-		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
+		if(MultiplayerSessionsSubsystem->IsLogged())
+		{
+			HostButton->SetIsEnabled(false);
+			MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
+		}
+		else
+		{
+			UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Player is not logged"));
+		}
 	}
 }
 
 void UMenu::JoinButtonClicked()
 {
-	JoinButton->SetIsEnabled(false);
 	if (MultiplayerSessionsSubsystem)
 	{
-		MultiplayerSessionsSubsystem->FindSessions(10000);
+		if(MultiplayerSessionsSubsystem->IsLogged())
+		{
+			JoinButton->SetIsEnabled(false);
+			MultiplayerSessionsSubsystem->FindSessions(10000);
+		}
+		else
+		{
+			UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Player is not logged"));
+		}
 	}
 }
 
