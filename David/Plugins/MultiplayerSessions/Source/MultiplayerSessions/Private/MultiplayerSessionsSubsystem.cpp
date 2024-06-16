@@ -43,7 +43,7 @@ void UMultiplayerSessionsSubsystem::LogInToServices()
 
 void UMultiplayerSessionsSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
-	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnLoginComplete: bWasSuccessful = %d, Error = %s"), bWasSuccessful ? TEXT("True") : TEXT("True"), FText::FromString(Error));
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnLoginComplete: bWasSuccessful = %d"), bWasSuccessful ? TEXT("True") : TEXT("True"));
 
 	bIsLogged = bWasSuccessful;
 
@@ -56,7 +56,7 @@ void UMultiplayerSessionsSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWa
 		}
 	}
 
-	MultiplayerOnLoggingComplete.Broadcast(bWasSuccessful);
+	MultiplayerOnLoggingComplete.Broadcast(bWasSuccessful, Error);
 }
 
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)

@@ -35,7 +35,7 @@ protected:
 	UFUNCTION()
 	void OnStartSession(bool bWasSuccessful);
 	UFUNCTION()
-	void OnLoggedIn(bool bWasSuccessful);
+	void OnLoggedIn(bool bWasSuccessful, const FString& Error);
 
 private:
 

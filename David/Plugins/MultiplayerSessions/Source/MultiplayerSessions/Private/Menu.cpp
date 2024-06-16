@@ -171,7 +171,7 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 {
 }
 
-void UMenu::OnLoggedIn(bool bWasSuccessful)
+void UMenu::OnLoggedIn(bool bWasSuccessful, const FString& Error)
 {
 	JoinButton->SetIsEnabled(bWasSuccessful);
 	HostButton->SetIsEnabled(bWasSuccessful);
