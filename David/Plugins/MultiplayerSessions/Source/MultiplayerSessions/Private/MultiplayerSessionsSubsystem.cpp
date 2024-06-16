@@ -5,6 +5,9 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
+#include "Interfaces/OnlineIdentityInterface.h"
+
+DEFINE_LOG_CATEGORY(DavidOnlineSubsystemLog);
 
 UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete)),
@@ -16,8 +19,50 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem():
 	
 }
 
+void UMultiplayerSessionsSubsystem::LogInToServices()
+{
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("LogInToServices..."));
+
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		if(IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		{
+			FOnlineAccountCredentials Credentials;
+			Credentials.Id = FString();
+			Credentials.Token = FString(); 
+			Credentials.Type = FString("accountportal");
+
+			Identity->OnLoginCompleteDelegates->AddUObject(this, &UMultiplayerSessionsSubsystem::OnLoginComplete);
+
+			UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("Logging into OSS..."));
+			Identity->Login(0, Credentials);
+		}
+	}
+}
+
+void UMultiplayerSessionsSubsystem::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+{
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnLoginComplete: bWasSuccessful = %d, Error = %s"), bWasSuccessful ? TEXT("True") : TEXT("True"), FText::FromString(Error));
+
+	bIsLogged = bWasSuccessful;
+
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		if(IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface())
+		{
+			Identity->ClearOnLoginCompleteDelegates(0, this);
+		}
+	}
+
+	MultiplayerOnLoggingComplete.Broadcast(bWasSuccessful);
+}
+
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("CreateSession: NumPublicConnections = %d"), NumPublicConnections);
+
 	if (!IsValidSessionInterface())
 	{
 		return;
@@ -48,7 +93,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 	LastSessionSettings->BuildUniqueId = 1;
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (!SessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *LastSessionSettings))
+	if (!SessionInterface->CreateSession(0, NAME_GameSession, *LastSessionSettings))
 	{
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
 
@@ -59,6 +104,8 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 
 void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("FindSessions: MaxSearchResults = %d"), MaxSearchResults);
+
 	if (!IsValidSessionInterface())
 	{
 		return;
@@ -82,6 +129,8 @@ void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 
 void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("JoinSession"));
+
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnJoinSessionComplete.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
@@ -101,6 +150,8 @@ void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult
 
 void UMultiplayerSessionsSubsystem::DestroySession()
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("DestroySession"));
+
 	if (!SessionInterface.IsValid())
 	{
 		MultiplayerOnDestroySessionComplete.Broadcast(false);
@@ -135,6 +186,8 @@ bool UMultiplayerSessionsSubsystem::IsValidSessionInterface()
 
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnCreateSessionComplete: bWasSuccessful = %s"), bWasSuccessful ? TEXT("True") : TEXT("False"));
+
 	if (SessionInterface)
 	{
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
@@ -145,6 +198,8 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnFindSessionsComplete: bWasSuccessful = %s"), bWasSuccessful ? TEXT("True") : TEXT("False"));
+
 	if (SessionInterface)
 	{
 		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
@@ -161,6 +216,8 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnJoinSessionComplete: Result = %d"), Result);
+
 	if (SessionInterface)
 	{
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
@@ -171,6 +228,8 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	UE_LOG(DavidOnlineSubsystemLog, Warning, TEXT("OnDestroySessionComplete: Result = %d"), bWasSuccessful ? TEXT("True") : TEXT("False"));
+
 	if (SessionInterface)
 	{
 		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);

@@ -9,14 +9,14 @@ struct FGameCardData
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY()
-    int32 CardDTIndex;
+    int32 CardDTIndex = -1;
 
     UPROPERTY()
-    int32 CardID;
+    int32 CardID = -1;
 
     UPROPERTY()
-    int32 PieceHealth;
+    int32 PieceHealth = 0;
 
     UPROPERTY()
-    int32 PieceAttack;
+    int32 PieceAttack = 0;
 };

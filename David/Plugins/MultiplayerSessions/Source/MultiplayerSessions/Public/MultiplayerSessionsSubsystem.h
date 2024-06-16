@@ -8,9 +8,12 @@
 
 #include "MultiplayerSessionsSubsystem.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(DavidOnlineSubsystemLog, Log, All);
+
 //
 // Delcaring our own custom delegates for the Menu class to bind callbacks to
 //
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnLoggingComplete, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerOnFindSessionsComplete, const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_OneParam(FMultiplayerOnJoinSessionComplete, EOnJoinSessionCompleteResult::Type Result);
@@ -27,6 +30,12 @@ class MULTIPLAYERSESSIONS_API UMultiplayerSessionsSubsystem : public UGameInstan
 public:
 	UMultiplayerSessionsSubsystem();
 
+	// Performs the log in through OSS
+	void LogInToServices();
+	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
+
+	FORCEINLINE bool IsLogged() { return bIsLogged; };
+
 	//
 	// To handle session functionality. The Menu class will call these
 	//
@@ -41,6 +50,7 @@ public:
 	//
 	// Our own custom delegates for the Menu class to bind callbacks to
 	//
+	FMultiplayerOnLoggingComplete MultiplayerOnLoggingComplete;
 	FMultiplayerOnCreateSessionComplete MultiplayerOnCreateSessionComplete;
 	FMultiplayerOnFindSessionsComplete MultiplayerOnFindSessionsComplete;
 	FMultiplayerOnJoinSessionComplete MultiplayerOnJoinSessionComplete;
@@ -82,4 +92,6 @@ private:
 	bool bCreateSessionOnDestroy{ false };
 	int32 LastNumPublicConnections;
 	FString LastMatchType;
+
+	bool bIsLogged = false;
 };

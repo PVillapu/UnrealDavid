@@ -34,6 +34,8 @@ protected:
 	void OnDestroySession(bool bWasSuccessful);
 	UFUNCTION()
 	void OnStartSession(bool bWasSuccessful);
+	UFUNCTION()
+	void OnLoggedIn(bool bWasSuccessful);
 
 private:
 
