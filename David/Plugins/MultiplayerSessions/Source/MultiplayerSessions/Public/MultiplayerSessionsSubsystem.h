@@ -13,7 +13,7 @@ DECLARE_LOG_CATEGORY_EXTERN(DavidOnlineSubsystemLog, Log, All);
 //
 // Delcaring our own custom delegates for the Menu class to bind callbacks to
 //
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMultiplayerOnLoggingComplete, bool, bWasSuccessful, const FString&, Error);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnLoggingComplete, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerOnFindSessionsComplete, const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful);
 DECLARE_MULTICAST_DELEGATE_OneParam(FMultiplayerOnJoinSessionComplete, EOnJoinSessionCompleteResult::Type Result);
