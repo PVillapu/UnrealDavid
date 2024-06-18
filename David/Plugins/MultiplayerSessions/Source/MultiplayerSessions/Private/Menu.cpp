@@ -16,9 +16,6 @@ void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
 	SetVisibility(ESlateVisibility::Visible);
 	bIsFocusable = true;
 
-	JoinButton->SetIsEnabled(false);
-	HostButton->SetIsEnabled(false);
-
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -46,9 +43,6 @@ void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
 		MultiplayerSessionsSubsystem->MultiplayerOnJoinSessionComplete.AddUObject(this, &ThisClass::OnJoinSession);
 		MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		MultiplayerSessionsSubsystem->MultiplayerOnStartSessionComplete.AddDynamic(this, &ThisClass::OnStartSession);
-		MultiplayerSessionsSubsystem->MultiplayerOnLoggingComplete.AddDynamic(this, &UMenu::OnLoggedIn);
-	
-		MultiplayerSessionsSubsystem->LogInToServices();
 	}
 }
 
@@ -169,21 +163,6 @@ void UMenu::OnDestroySession(bool bWasSuccessful)
 
 void UMenu::OnStartSession(bool bWasSuccessful)
 {
-}
-
-void UMenu::OnLoggedIn(bool bWasSuccessful)
-{
-	JoinButton->SetIsEnabled(bWasSuccessful);
-	HostButton->SetIsEnabled(bWasSuccessful);
-
-	// Try to logging again if not successfull
-	if(!bWasSuccessful)
-	{
-		if (MultiplayerSessionsSubsystem)
-		{
-			MultiplayerSessionsSubsystem->LogInToServices();
-		}
-	}
 }
 
 void UMenu::HostButtonClicked()

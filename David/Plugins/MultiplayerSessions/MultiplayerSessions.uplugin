@@ -27,7 +27,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "OnlineSubsystemEOS",
+			"Name": "OnlineSubsystemSteam",
 			"Enabled": true
 		}
 	]

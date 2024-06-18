@@ -7,7 +7,7 @@ public class MultiplayerSessions : ModuleRules
 	public MultiplayerSessions(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -26,12 +26,11 @@ public class MultiplayerSessions : ModuleRules
 			new string[]
 			{
 				"Core",
+				"OnlineSubsystem",
+				"OnlineSubsystemSteam",
 				"UMG",
 				"Slate",
-				"SlateCore",
-				"OnlineSubsystem",
-				"OnlineSubsystemUtils", 
-				"OnlineSubsystemEOS"
+				"SlateCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

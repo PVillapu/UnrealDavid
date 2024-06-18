@@ -29,10 +29,10 @@ struct FPieceAction
     }
 
     UPROPERTY()
-    int32 PieceID = -1;
+    int32 PieceID;
 
     UPROPERTY()
-    int32 ActionID = -1;
+    int32 ActionID;
     
     UPROPERTY()
     TArray<uint8> Payload;

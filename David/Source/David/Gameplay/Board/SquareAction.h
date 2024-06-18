@@ -30,10 +30,10 @@ struct FSquareAction
     }
 
     UPROPERTY()
-    int32 SquareIndex = -1;
+    int32 SquareIndex;
 
     UPROPERTY()
-    int32 ActionID = -1;
+    int32 ActionID;
 
     UPROPERTY()
     TArray<uint8> Payload;

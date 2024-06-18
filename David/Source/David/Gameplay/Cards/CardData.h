@@ -10,20 +10,20 @@ struct FCardData : public FTableRowBase
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    FText CardName = FText::FromString("");
+    FText CardName;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    TSubclassOf<class APieceActor> CardPieceActor = nullptr;
+    TSubclassOf<class APieceActor> CardPieceActor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    UTexture2D* CardImage = nullptr;
+    UTexture2D* CardImage;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    FText CardDescription = FText::FromString("");
+    FText CardDescription;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    int32 PieceHealth = 0;
+    int32 PieceHealth;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
-    int32 PieceAttack = 0;
+    int32 PieceAttack;
 };
