@@ -361,6 +361,7 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 
 void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemove)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Process_RemovePieceFromProcessBoard : Target: %d"), PieceToRemove->GetBoardSquare()->GetSquareIndex());
 	const ABoardSquare* BoardSquare = PieceToRemove->GetBoardSquare();
 	const int32 PieceLocation = BoardSquare->GetSquareIndex();
 
@@ -370,22 +371,26 @@ void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemo
 
 void ABoardManager::Process_AttackPiece(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPiece : Target: %d"), PieceToAttack->GetBoardSquare()->GetSquareIndex());
 	PieceToAttack->Process_TakeDamage(AttackAmmount);
 	PieceToAttack->Process_HoldDamage(DamageCauser);
 }
 
 void ABoardManager::Process_AttackMultiplePieces(TArray<APieceActor *> &PiecesToAttack, APieceActor *DamageCauser, int32 AttackAmmount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Process_AttackMultiplePieces : TargetCount: %d"), PiecesToAttack.Num());
+
 	// First deal the damage to each piece
 	for(APieceActor* Piece : PiecesToAttack)
 	{
 		if(Piece)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Process_AttackMultiplePieces : Target: %d"), Piece->GetBoardSquare()->GetSquareIndex());
 			Piece->Process_TakeDamage(AttackAmmount);
 		}
 	}
 
-	// Once the damage is been aplied and board updates, each piece reacts to itb
+	// Once the damage is been aplied and board updates, each piece reacts to it
 	for(APieceActor* Piece : PiecesToAttack)
 	{
 		if(Piece)

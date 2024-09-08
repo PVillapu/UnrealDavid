@@ -11,6 +11,11 @@
 #include "../UI/PlayerHUD.h"
 #include "../UI/PieceStats.h"
 #include "Curves/CurveVector.h"
+#include "UObject/ConstructorHelpers.h"
+
+#if WITH_EDITOR
+#include "DrawDebugHelpers.h" 
+#endif
 
 APieceActor::APieceActor()
 {
@@ -24,12 +29,39 @@ APieceActor::APieceActor()
 	SkeletalMeshComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SkeletalMeshComponent->SetupAttachment(RootComponent);
+	SkeletalMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, 20.f));
 
 	StatsWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatsWidget"));
 	StatsWidgetComponent->SetupAttachment(SkeletalMeshComponent);
 
 	SkeletalMeshComponent->OnBeginCursorOver.AddDynamic(this, &APieceActor::OnBeginCursorOverEvent);
 	SkeletalMeshComponent->OnEndCursorOver.AddDynamic(this, &APieceActor::OnEndCursorOverEvent);
+
+	// Default BP references
+
+	// static ConstructorHelpers::FObjectFinder<UClass> DefaultMovementCurveBP(TEXT("Class'/Game/Blueprints/Gameplay/Pieces/Curves/Movement/C_BasePieceMovement.C_BasePieceMovement_C'"));
+	// if(DefaultMovementCurveBP.Succeeded())
+	// {
+	// 	PieceMovementCurve = (UCurveVector*)DefaultMovementCurveBP.Object;
+	// }
+	
+	// static ConstructorHelpers::FObjectFinder<UClass> DefaultAttackCurveBP(TEXT("/Game/Blueprints/Gameplay/Pieces/Curves/Attack/C_BasePieceAttack'"));
+	// if(DefaultAttackCurveBP.Succeeded())
+	// {
+	// 	PieceAttackCurve = (UCurveVector*)DefaultAttackCurveBP.Object;
+	// }
+
+	// static ConstructorHelpers::FObjectFinder<UClass> DefaultReceiveDamagePositionCurveBP(TEXT("/Game/Blueprints/Gameplay/Pieces/Curves/ReceiveDamage/C_BasePieceReceiveDamageLocationOffset"));
+	// if(DefaultReceiveDamagePositionCurveBP.Succeeded())
+	// {
+	// 	PieceReceiveDamageCurvePosition = (UCurveVector*)DefaultReceiveDamagePositionCurveBP.Object;
+	// }
+
+	// static ConstructorHelpers::FObjectFinder<UClass> DefaultReceiveDamageRotationCurveBP(TEXT("/Game/Blueprints/Gameplay/Pieces/Curves/ReceiveDamage/C_BasePieceReceiveDamageRotation"));
+	// if(DefaultReceiveDamageRotationCurveBP.Succeeded())
+	// {
+	// 	PieceReceiveDamageCurveRotation = (UCurveVector*)DefaultReceiveDamageRotationCurveBP.Object;
+	// }
 }
 
 void APieceActor::Tick(float DeltaSeconds)
@@ -222,9 +254,11 @@ void APieceActor::Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID)
 	Payload.SetNum(sizeof(int32));
 	FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 
+	UE_LOG(LogTemp, Warning, TEXT("Process_MoveToSquare : Target: %d"), TargetSquareIndex);
 	RegisterPieceAction(ActionID, Payload);
 
 	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
+
 }
 
 void APieceActor::Process_AttackPiece(int32 TargetSquareIndex)
@@ -239,6 +273,7 @@ void APieceActor::Process_AttackPiece(int32 TargetSquareIndex)
 
 void APieceActor::Process_AttackPiece(APieceActor *TargetPiece)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPiece : Target: %d"), TargetPiece->GetBoardSquare()->GetSquareIndex());
 	RegisterPieceAction(EPieceAction::FrontAttack);
 
 	BoardManager->Process_AttackPiece(TargetPiece, this, ProcessAttack);
@@ -247,6 +282,8 @@ void APieceActor::Process_AttackPiece(APieceActor *TargetPiece)
 void APieceActor::Process_AttackPieces(const TArray<int32>& TargetSquareIndex)
 {
 	TArray<APieceActor*> PiecesToAttack;
+
+	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPieces : TargetCount: %d"), TargetSquareIndex.Num());
 
 	// Gather pieces to attack
 	for(int i = 0; i < TargetSquareIndex.Num(); ++i)
@@ -321,6 +358,21 @@ void APieceActor::Action_MoveToSquare(const TArray<uint8>& Payload)
 
 	if (Square && PieceMovementCurve) 
 	{
+		#if WITH_EDITOR
+
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_MoveToSquare | From %d to %d"), Square->GetSquareIndex(), TargetSquareIndex);
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+
+		#endif
+
 		bIsMoving = true;
 		MovementDelta = 0.f;
 		Action_OriginLocation = GetActorLocation();
@@ -339,6 +391,21 @@ void APieceActor::Action_AttackFrontPiece()
 {
 	if (Square && PieceAttackCurve) 
 	{
+		#if WITH_EDITOR
+
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_AttackFrontPiece"));
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+
+		#endif
+
 		bIsAttacking = true;
 		AttackDelta = 0.f;
 
@@ -363,6 +430,21 @@ void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 		int32 IncomingHealth;
 		FMemory::Memcpy(&IncomingHealth, Payload.GetData(), sizeof(int32));
 
+		#if WITH_EDITOR
+
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_TakeDamage | Left health: %d"), IncomingHealth);
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+
+		#endif
+
 		// Set current health
 		CurrentHealth = IncomingHealth;
 
@@ -378,6 +460,21 @@ void APieceActor::Action_TakeDamage(const TArray<uint8>& Payload)
 
 void APieceActor::Action_Die()
 {
+	#if WITH_EDITOR
+
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_Die"));
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+
+	#endif
+
 	APieceActor* Piece = this;
 	ABoardManager* BM = BoardManager;
 	FTimerDelegate TimerCallback;
@@ -393,6 +490,21 @@ void APieceActor::Action_Die()
 
 void APieceActor::Action_ReachedEndLine()
 {
+	#if WITH_EDITOR
+
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_ReachedEndLine"));
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+
+	#endif
+
 	BoardManager->RemoveActivePiece(this);
 	BoardManager->OnGameActionComplete();
 }
