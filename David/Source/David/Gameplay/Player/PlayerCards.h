@@ -53,4 +53,7 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
+
+	UPROPERTY(Transient, SkipSerialization)
+	class ADavidGameState* GameState;
 };

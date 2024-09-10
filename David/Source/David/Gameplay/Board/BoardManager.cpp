@@ -268,7 +268,7 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 	// Check for valid index
 	if (GameCardData.CardDTIndex < 0 || GameCardData.CardDTIndex > CardsArray.Num())
 	{
-		UE_LOG(LogDavid, Warning, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
+		UE_LOG(LogDavid, Error, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
 		return nullptr;
 	}
 
@@ -361,7 +361,7 @@ void ABoardManager::OnPieceDeath(APieceActor* Piece, APieceActor* InstigatorPiec
 
 void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemove)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Process_RemovePieceFromProcessBoard : Target: %d"), PieceToRemove->GetBoardSquare()->GetSquareIndex());
+	UE_LOG(LogDavidGameEvent, Log, TEXT("Process_RemovePieceFromProcessBoard | Target: %d"), PieceToRemove->GetBoardSquare()->GetSquareIndex());
 	const ABoardSquare* BoardSquare = PieceToRemove->GetBoardSquare();
 	const int32 PieceLocation = BoardSquare->GetSquareIndex();
 
@@ -371,21 +371,21 @@ void ABoardManager::Process_RemovePieceFromProcessBoard(APieceActor* PieceToRemo
 
 void ABoardManager::Process_AttackPiece(APieceActor* PieceToAttack, APieceActor* DamageCauser, int32 AttackAmmount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPiece : Target: %d"), PieceToAttack->GetBoardSquare()->GetSquareIndex());
+	UE_LOG(LogDavidGameEvent, Log, TEXT("Process_AttackPiece | Target: %d"), PieceToAttack->GetBoardSquare()->GetSquareIndex());
 	PieceToAttack->Process_TakeDamage(AttackAmmount);
 	PieceToAttack->Process_HoldDamage(DamageCauser);
 }
 
 void ABoardManager::Process_AttackMultiplePieces(TArray<APieceActor *> &PiecesToAttack, APieceActor *DamageCauser, int32 AttackAmmount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Process_AttackMultiplePieces : TargetCount: %d"), PiecesToAttack.Num());
+	UE_LOG(LogDavidGameEvent, Log, TEXT("Process_AttackMultiplePieces | TargetCount: %d"), PiecesToAttack.Num());
 
 	// First deal the damage to each piece
 	for(APieceActor* Piece : PiecesToAttack)
 	{
 		if(Piece)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Process_AttackMultiplePieces : Target: %d"), Piece->GetBoardSquare()->GetSquareIndex());
+			UE_LOG(LogDavidGameEvent, Log, TEXT("Process_AttackMultiplePieces | Target: %d"), Piece->GetBoardSquare()->GetSquareIndex());
 			Piece->Process_TakeDamage(AttackAmmount);
 		}
 	}

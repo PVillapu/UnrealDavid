@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "../DavidGameState.h"
 #include "../UI/PlayerHUD.h"
+#include "../Misc/GameRules.h"
 
 APlayerCards::APlayerCards()
 {
@@ -45,7 +46,7 @@ void APlayerCards::OnRep_Owner()
 
 void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 {
-	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	GameState = GetWorld()->GetGameState<ADavidGameState>();
 	if (GameState == nullptr) return;
 
 	UDataTable* DataTable = GameState->GetCardsDataTable();
@@ -79,7 +80,9 @@ void APlayerCards::PlayerDrawCards(int32 CardAmmount)
 {
 	for (int i = 0; i < CardAmmount; ++i) 
 	{
-		if (PlayerDeckCards.Num() <= 0) return;
+		if (PlayerDeckCards.Num() <= 0) break;
+
+		if(PlayerHandCards.Num() >= GameState->GetGameRules()->MaxPlayerHandSize) break;
 
 		FGameCardData DrawCard = PlayerDeckCards[0];
 		PlayerDeckCards.RemoveAt(0);
@@ -123,8 +126,6 @@ bool APlayerCards::CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const
 
 void APlayerCards::Client_DrawCard_Implementation(FGameCardData GameCardData)
 {
-	PlayerHandCards.Add(GameCardData);
-
 	OnPlayerDrawCard(GameCardData);
 }
 
@@ -141,6 +142,16 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 
 			// Accept the request and play the card
 			Client_CardRequestResponse(CardID, true);
+
+			for(int i = 0; i < PlayerHandCards.Num(); ++i)
+			{
+				if(PlayerHandCards[i].CardID == CardID)
+				{
+					PlayerHandCards.RemoveAt(i);
+					break;
+				}
+			}
+
 			BoardManager->PlayCardInSquare(*GameCardData, SquareID, Player);
 		}
 		else 

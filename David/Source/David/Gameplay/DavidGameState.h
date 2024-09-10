@@ -52,6 +52,8 @@ public:
 
 	FORCEINLINE class UDataTable* GetCardsDataTable() const { return CardsDataTable; }	// TODO: Maybe move to GameInstance?
 
+	FORCEINLINE class UDavidGameRules* GetGameRules() const { return GameRules; }
+
 private:
 	/* Called on Server to update the turns time left */
 	void UpdateTurnCountdownTime();
@@ -112,20 +114,8 @@ public:
 	int32 CurrentTurnTimeLeft;
 
 private:
-	/* Player turn time */
 	UPROPERTY(EditDefaultsOnly, Category = "David")
-	int32 PlayerTurnTime = 30;
-
-	/* Total rounds until endgame */
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	int32 GameTotalRounds = 20;
-
-	/* Ammount of gold earned by a player at the start of the turn */
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	int32 BaseGoldEarnedAtTurnBegin = 2;
-
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	int32 InitialCardsDrawAmmount = 3;
+	UDavidGameRules* GameRules;
 
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	UDataTable* CardsDataTable;

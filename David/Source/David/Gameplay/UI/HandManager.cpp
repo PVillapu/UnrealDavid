@@ -34,7 +34,7 @@ void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
 
 	CardsDataTable->GetAllRows("", CardsArray);
 
-	if (GameCardData.CardDTIndex < 0 && GameCardData.CardDTIndex < 0) 
+	if (GameCardData.CardDTIndex < 0) 
 	{
 		UE_LOG(LogDavid, Warning, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
 		return;

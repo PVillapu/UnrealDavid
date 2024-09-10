@@ -7,6 +7,7 @@
 #include "DavidPlayerState.h"
 #include "Player/PlayerCards.h"
 #include "Misc/CustomDavidLogs.h"
+#include "Misc/GameRules.h"
 
 ADavidGameState::ADavidGameState()
 {
@@ -57,7 +58,7 @@ void ADavidGameState::StartTurnsCycle()
 	OnMatchStateChange();
 
 	// Start the turn time timer
-	CurrentTurnTimeLeft = PlayerTurnTime;
+	CurrentTurnTimeLeft = GameRules->TurnDuration;
 	GetWorld()->GetTimerManager().SetTimer(TurnTimeLeftTimerHandler, this, &ADavidGameState::UpdateTurnCountdownTime, 1.0f, true);
 
 	ScorePlayer1 = ScorePlayer2 = 0;
@@ -67,14 +68,14 @@ void ADavidGameState::StartTurnsCycle()
 	if (PlayerController)
 	{
 		APlayerCards* PlayerCards = PlayerController->GetPlayerCards();
-		PlayerCards->PlayerDrawCards(InitialCardsDrawAmmount);
+		PlayerCards->PlayerDrawCards(GameRules->InitialCardsDrawAmmount);
 	}
 
 	PlayerController = GetPlayerController(EDavidPlayer::PLAYER_2);
 	if (PlayerController)
 	{
 		APlayerCards* PlayerCards = PlayerController->GetPlayerCards();
-		PlayerCards->PlayerDrawCards(InitialCardsDrawAmmount);
+		PlayerCards->PlayerDrawCards(GameRules->InitialCardsDrawAmmount);
 	}
 }
 
@@ -174,7 +175,7 @@ void ADavidGameState::ChangeMatchState()
 			NetMulticast_CurrentRoundUpdated(RoundsPlayed);
 
 			// Endgame
-			if (RoundsPlayed >= GameTotalRounds) 
+			if (RoundsPlayed >= GameRules->GameTotalRounds) 
 			{
 				OnGameFinished();
 				return;
@@ -188,7 +189,7 @@ void ADavidGameState::ChangeMatchState()
 		StartPlayerTurn(LastTurnPlayer == EDavidPlayer::PLAYER_1 ? EDavidPlayer::PLAYER_2 : EDavidPlayer::PLAYER_1);
 
 		// Set round time
-		CurrentTurnTimeLeft = PlayerTurnTime;
+		CurrentTurnTimeLeft = GameRules->TurnDuration;
 		GetWorld()->GetTimerManager().UnPauseTimer(TurnTimeLeftTimerHandler);
 		OnTurnTimeUpdated();
 	}
@@ -239,8 +240,8 @@ void ADavidGameState::StartPlayerTurn(EDavidPlayer Player)
 		if (DavidPlayerController->GetDavidPlayer() == Player) 
 		{
 			// Increase the player gold
-			ADavidPlayerState* PlayerGameState = DavidPlayerController->GetPlayerState<ADavidPlayerState>();
-			PlayerGameState->IncreasePlayerGold(BaseGoldEarnedAtTurnBegin);
+			ADavidPlayerState* PlayerState = DavidPlayerController->GetPlayerState<ADavidPlayerState>();
+			PlayerState->IncreasePlayerGold(GameRules->StartTurnGoldEarned);
 			
 			// Draw 1 card
 			APlayerCards* PlayerCards = DavidPlayerController->GetPlayerCards();

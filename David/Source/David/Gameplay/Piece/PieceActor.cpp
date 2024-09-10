@@ -13,10 +13,6 @@
 #include "Curves/CurveVector.h"
 #include "UObject/ConstructorHelpers.h"
 
-#if WITH_EDITOR
-#include "DrawDebugHelpers.h" 
-#endif
-
 APieceActor::APieceActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -195,6 +191,11 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 	return FPieceAction(PieceID, ActionID, Payload);
 }
 
+void APieceActor::LogPieceEvent(FString& Message)
+{
+	UE_LOG(LogDavidGameEvent, Log, TEXT("[Piece event] Piece: %s, BoardIndex: %d | %s"), *GetName(), Square->GetSquareIndex(), *Message);
+}
+
 void APieceActor::OnDeployPieceInSquareAction(int32 SquareIndex)
 {
 	SetActorLocation(BoardManager->GetSquarePieceLocation(SquareIndex));
@@ -254,7 +255,7 @@ void APieceActor::Process_MoveToSquare(int32 TargetSquareIndex, int32 ActionID)
 	Payload.SetNum(sizeof(int32));
 	FMemory::Memcpy(Payload.GetData(), &TargetSquareIndex, sizeof(int32));
 
-	UE_LOG(LogTemp, Warning, TEXT("Process_MoveToSquare : Target: %d"), TargetSquareIndex);
+	UE_LOG(LogDavid, Warning, TEXT("Process_MoveToSquare : Target: %d"), TargetSquareIndex);
 	RegisterPieceAction(ActionID, Payload);
 
 	BoardManager->MovePieceToSquare(this, TargetSquareIndex);
@@ -273,7 +274,7 @@ void APieceActor::Process_AttackPiece(int32 TargetSquareIndex)
 
 void APieceActor::Process_AttackPiece(APieceActor *TargetPiece)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPiece : Target: %d"), TargetPiece->GetBoardSquare()->GetSquareIndex());
+	UE_LOG(LogDavid, Warning, TEXT("Process_AttackPiece : Target: %d"), TargetPiece->GetBoardSquare()->GetSquareIndex());
 	RegisterPieceAction(EPieceAction::FrontAttack);
 
 	BoardManager->Process_AttackPiece(TargetPiece, this, ProcessAttack);
@@ -283,7 +284,7 @@ void APieceActor::Process_AttackPieces(const TArray<int32>& TargetSquareIndex)
 {
 	TArray<APieceActor*> PiecesToAttack;
 
-	UE_LOG(LogTemp, Warning, TEXT("Process_AttackPieces : TargetCount: %d"), TargetSquareIndex.Num());
+	UE_LOG(LogDavid, Warning, TEXT("Process_AttackPieces : TargetCount: %d"), TargetSquareIndex.Num());
 
 	// Gather pieces to attack
 	for(int i = 0; i < TargetSquareIndex.Num(); ++i)

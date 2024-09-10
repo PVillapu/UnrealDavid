@@ -74,6 +74,8 @@ public:
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
 
 protected:
+	void LogPieceEvent(FString& Message);
+
 	/* ----------------------- Piece delegates ------------------------- */
 
 	DECLARE_MULTICAST_DELEGATE(FOnThisPieceDestroyedOther)
