@@ -1,0 +1,21 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/CheatManager.h"
+#include "DavidCheatManager.generated.h"
+
+/**
+ * UDavidCheatManager class that extends the default UCheatManager
+ * for adding custom cheats for development or testing purposes.
+ */
+UCLASS()
+class DAVID_API UDavidCheatManager : public UCheatManager
+{
+	GENERATED_BODY()
+
+public:
+	// Constructor
+	UDavidCheatManager();
+
+	// Add your custom cheat function declarations here
+};
