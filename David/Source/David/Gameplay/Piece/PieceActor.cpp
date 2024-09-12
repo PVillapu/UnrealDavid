@@ -191,7 +191,7 @@ FPieceAction APieceActor::GetPieceAction(const FTurnAction& GameAction)
 	return FPieceAction(PieceID, ActionID, Payload);
 }
 
-void APieceActor::LogPieceEvent(FString& Message)
+void APieceActor::LogPieceEvent(const FString& Message) const
 {
 	UE_LOG(LogDavidGameEvent, Log, TEXT("[Piece event] Piece: %s, BoardIndex: %d | %s"), *GetName(), Square->GetSquareIndex(), *Message);
 }

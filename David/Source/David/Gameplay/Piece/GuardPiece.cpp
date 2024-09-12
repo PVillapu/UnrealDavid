@@ -26,29 +26,36 @@ bool AGuardPiece::SearchAndAttackEnemies(int32 FrontSquare)
 	const int32 AttackRow = FrontSquare / BoardManager->GetBoardWidth();
 	TArray<int32> SquaresToAttack;
 
+	LogPieceEvent(FString::Printf(TEXT("Searching for enemies | FrontSquare: %d"), FrontSquare));
+
 	if (BoardManager->IsValidSquare(FrontSquare) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{
-		SquaresToAttack.Add(FrontSquare);
+		LogPieceEvent(FString::Printf(TEXT("Found enemy in square index: %d"), FrontSquare));
 		HasAttacked = true;
 	}
 
 	if ((FrontSquare - 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(FrontSquare - 1) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner) 
 	{
-		SquaresToAttack.Add(FrontSquare - 1);
+		LogPieceEvent(FString::Printf(TEXT("Found enemy in square index: %d"), FrontSquare - 1));
 		HasAttacked = true;
 	}
 
 	if ((FrontSquare + 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(FrontSquare + 1) && BoardManager->IsSquareOccupied(FrontSquare)
 		&& BoardManager->GetBoardSquare(FrontSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{
-		SquaresToAttack.Add(FrontSquare + 1);
+		LogPieceEvent(FString::Printf(TEXT("Found enemy in square index: %d"), FrontSquare - 1));
 		HasAttacked = true;
 	}
 
+	LogPieceEvent(FString::Printf(TEXT("HasAttacked: %s"), HasAttacked ? "True" : "False"));
+
 	if(HasAttacked)
 	{
+		SquaresToAttack.Add(FrontSquare);
+		SquaresToAttack.Add(FrontSquare + 1);
+		SquaresToAttack.Add(FrontSquare - 1);
 		Process_AttackPieces(SquaresToAttack);
 	}
 

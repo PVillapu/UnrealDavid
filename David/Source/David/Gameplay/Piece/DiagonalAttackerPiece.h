@@ -22,4 +22,7 @@ protected:
 	bool Process_AttackPieceInDiagonals();
 
 	bool SearchDiagonalTargets(int32 TargetSquare, bool LeftSide, TArray<int32>& SquaresToAttack);
+
+private:
+	int32 AttackRange = 2;
 };

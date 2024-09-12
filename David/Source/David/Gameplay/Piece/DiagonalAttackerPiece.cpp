@@ -16,7 +16,7 @@ void ADiagonalAttackerPiece::ProcessTurn()
 
 		if (!BoardManager->IsValidSquare(TargetSquareIndex)) return;
 
-		if (!BoardManager->IsSquareOccupied(TargetSquareIndex)) // Attack
+		if (!BoardManager->IsSquareOccupied(TargetSquareIndex))
 		{
 			Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
 		}
@@ -41,27 +41,7 @@ bool ADiagonalAttackerPiece::Process_AttackPieceInDiagonals()
 
 bool ADiagonalAttackerPiece::SearchDiagonalTargets(int32 TargetSquare, bool LeftSide, TArray<int32>& SquaresToAttack)
 {
-	// Out of board
-	if (!BoardManager->IsValidSquare(TargetSquare)) return false;
-
-	if (BoardManager->IsSquareOccupied(TargetSquare))
-	{
-		APieceActor* PieceInTarget = BoardManager->GetPieceInSquare(TargetSquare);
-		if (PieceInTarget->GetOwnerPlayer() != DavidPlayerOwner)
-		{
-			SquaresToAttack.Add(TargetSquare);
-			return true;
-		}
-	}
-	
-	const int32 ForwardIndex = DavidPlayerOwner == EDavidPlayer::PLAYER_1 ? 1 : -1;
-
-	if (LeftSide)
-	{
-		return SearchDiagonalTargets(TargetSquare + ForwardIndex * (BoardManager->GetBoardWidth() - 1), LeftSide, SquaresToAttack);
-	}
-	else
-	{
-		return SearchDiagonalTargets(TargetSquare + ForwardIndex * (BoardManager->GetBoardWidth() + 1), LeftSide, SquaresToAttack);
-	}
+	// TODO
+	LogPieceEvent(FString::Printf(TEXT("TODO implementation")));
+	return false;
 }

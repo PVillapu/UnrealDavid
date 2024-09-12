@@ -27,6 +27,8 @@ bool AHorizontalAttacker::SearchAndAttackArea()
 
     TArray<int32> SquaresToAttack;
 
+    LogPieceEvent(FString::Printf(TEXT("Searching enemies:")));
+
     for(int i = 1; i < BoardManager->GetBoardWidth(); ++i)
     {
         int32 HorizontalSquare = Square->GetSquareIndex() + i;
@@ -35,6 +37,7 @@ bool AHorizontalAttacker::SearchAndAttackArea()
             APieceActor* PieceInSquare = BoardManager->GetPieceInSquare(HorizontalSquare);
             if(!HasAttacked && PieceInSquare && PieceInSquare->GetOwnerPlayer() != DavidPlayerOwner)
             {
+                LogPieceEvent(FString::Printf(TEXT("Found enemy in square index: %d"), HorizontalSquare));
                 HasAttacked = true;
             }
             
@@ -50,12 +53,15 @@ bool AHorizontalAttacker::SearchAndAttackArea()
             APieceActor* PieceInSquare = BoardManager->GetPieceInSquare(HorizontalSquare);
             if(!HasAttacked && PieceInSquare && PieceInSquare->GetOwnerPlayer() != DavidPlayerOwner)
             {
+                LogPieceEvent(FString::Printf(TEXT("Found enemy in square index: %d"), HorizontalSquare));
                 HasAttacked = true;
             }
 
             SquaresToAttack.Add(HorizontalSquare);
         }
     }
+
+    LogPieceEvent(FString::Printf(TEXT("HasAttacked: %s"), HasAttacked ? "True" : "False"));
 
     if(HasAttacked)
     {

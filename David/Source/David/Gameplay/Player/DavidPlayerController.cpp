@@ -15,6 +15,12 @@
 #include "../Misc/CustomDavidLogs.h"
 #include "../DavidPlayerState.h"
 #include "../UI/PlayerHUD.h"
+#include "DavidCheatManager.h"
+
+ADavidPlayerController::ADavidPlayerController()
+{
+	CheatClass = UDavidCheatManager::StaticClass();
+}
 
 void ADavidPlayerController::SetupPlayer()
 {
@@ -74,7 +80,7 @@ void ADavidPlayerController::CreatePlayerHUD()
 	bShowMouseCursor = true;
 }
 
-void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ADavidPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 

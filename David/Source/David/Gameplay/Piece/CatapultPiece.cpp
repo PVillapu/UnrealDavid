@@ -23,6 +23,7 @@ bool ACatapultPiece::SearchAndAttackArea(int32 TargetMiddleSquare)
 {
     bool HasAttacked = false;
 	const int32 AttackRow = TargetMiddleSquare / BoardManager->GetBoardWidth();
+    LogPieceEvent(FString::Printf(TEXT("Searching enemies | TargetMiddleSquare: %d"), TargetMiddleSquare));
 
     if(!BoardManager->IsValidSquare(TargetMiddleSquare)) return false;
 
@@ -32,20 +33,25 @@ bool ACatapultPiece::SearchAndAttackArea(int32 TargetMiddleSquare)
 	if (BoardManager->IsSquareOccupied(TargetMiddleSquare)
 		&& BoardManager->GetBoardSquare(TargetMiddleSquare)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner)
 	{
+        LogPieceEvent(FString::Printf(TEXT("Enemy found in mid square | Index: %d"), TargetMiddleSquare));
 		HasAttacked = true;
 	}
 
     // Side square 1
 	if (!HasAttacked && (TargetMiddleSquare - 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(TargetMiddleSquare - 1))
     {
+        LogPieceEvent(FString::Printf(TEXT("Enemy found in mid square | Index: %d"), (TargetMiddleSquare - 1)));
         HasAttacked = BoardManager->IsSquareOccupied(TargetMiddleSquare - 1) && BoardManager->GetBoardSquare(TargetMiddleSquare - 1)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner; 
     } 
         
     // Side square 2
 	if (!HasAttacked && (TargetMiddleSquare + 1) / BoardManager->GetBoardWidth() == AttackRow && BoardManager->IsValidSquare(TargetMiddleSquare + 1))
 	{
+        LogPieceEvent(FString::Printf(TEXT("Enemy found in mid square | Index: %d"), (TargetMiddleSquare + 1)));
 		HasAttacked = BoardManager->IsSquareOccupied(TargetMiddleSquare + 1) && BoardManager->GetBoardSquare(TargetMiddleSquare + 1)->GetPieceInSquare()->GetOwnerPlayer() != DavidPlayerOwner;
 	}
+
+    LogPieceEvent(FString::Printf(TEXT("Has attacked: %s"), HasAttacked ? "True" : "False"));
 
     if(HasAttacked)
     {
@@ -54,7 +60,6 @@ bool ACatapultPiece::SearchAndAttackArea(int32 TargetMiddleSquare)
         SquaresToAttack.Add(TargetMiddleSquare - 1);
 	    Process_AttackPieces(SquaresToAttack);
     }
-
 
 	return HasAttacked;
 }

@@ -74,7 +74,7 @@ public:
 	static FPieceAction GetPieceAction(const FTurnAction& GameAction);
 
 protected:
-	void LogPieceEvent(FString& Message);
+	void LogPieceEvent(const FString& Message) const;
 
 	/* ----------------------- Piece delegates ------------------------- */
 

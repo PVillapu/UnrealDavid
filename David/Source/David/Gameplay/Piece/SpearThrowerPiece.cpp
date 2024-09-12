@@ -21,6 +21,8 @@ void ASpearThrowerPiece::SetupPiece(ABoardManager* BoardManagerActor, FGameCardD
 
 			bHasSpear = false;
 
+			LogPieceEvent(FString::Printf(TEXT("Throwed spear to: %d"), NextSquare));
+
 			// Throw the spear 
 			TArray<uint8> Payload;
 			Payload.SetNum(sizeof(int32));

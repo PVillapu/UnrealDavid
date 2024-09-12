@@ -14,6 +14,8 @@ class DAVID_API ADavidPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+	ADavidPlayerController();
+
 	// Replication setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

@@ -12,4 +12,6 @@ void AGargoylePiece::OnPieceDestroyed(APieceActor* PieceInstigator)
 	// Update game card data
 	GameCardData.PieceAttack += 2;
 	GameCardData.PieceHealth += 2;
+
+	LogPieceEvent(FString::Printf(TEXT("Stats incremented | Attack: %d, Health: %d"), GameCardData.PieceAttack, GameCardData.PieceHealth));
 }

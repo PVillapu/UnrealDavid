@@ -34,19 +34,25 @@ void ADancerPiece::Process_MoveHorizontal()
 
 	if (RightAvailable && LeftAvailable) 
 	{
-		if (FMath::RandBool()) {
+		if (FMath::RandBool()) 
+		{
+    		LogPieceEvent(FString::Printf(TEXT("Moved to left square: %d"), LeftIndex));
 			Process_MoveToSquare(LeftIndex, EPieceAction::MoveToSquare);
 		}
-		else {
+		else 
+		{
+			LogPieceEvent(FString::Printf(TEXT("Moved to right square: %d"), RightIndex));
 			Process_MoveToSquare(RightIndex, EPieceAction::MoveToSquare);
 		}
 	}
 	else if (RightAvailable) 
 	{
+		LogPieceEvent(FString::Printf(TEXT("Moved to right square: %d"), RightIndex));
 		Process_MoveToSquare(RightIndex, EPieceAction::MoveToSquare);
 	}
 	else if (LeftAvailable) 
 	{
+		LogPieceEvent(FString::Printf(TEXT("Moved to right square: %d"), LeftIndex));
 		Process_MoveToSquare(LeftIndex, EPieceAction::MoveToSquare);
 	}
 }

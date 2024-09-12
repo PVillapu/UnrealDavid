@@ -28,6 +28,10 @@ void AGraveDiggerPiece::OnAnyBoardPieceDestroyed(APieceActor* DestroyedPiece, AP
 
 	if (!BoardManager->IsSquareOccupied(TargetSquareIndex)) // Move forward
 	{
+		LogPieceEvent(FString::Printf(TEXT("Piece destroyed, moving forward")));
 		Process_MoveToSquare(TargetSquareIndex, EPieceAction::MoveToSquare);
+		return;
 	}
+
+	LogPieceEvent(FString::Printf(TEXT("Piece destroyed, cannot moving forward")));
 }
