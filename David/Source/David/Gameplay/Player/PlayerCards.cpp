@@ -9,6 +9,7 @@
 #include "../DavidGameState.h"
 #include "../UI/PlayerHUD.h"
 #include "../Misc/GameRules.h"
+#include "../DavidPlayerState.h"
 
 APlayerCards::APlayerCards()
 {
@@ -130,11 +131,29 @@ void APlayerCards::Client_DrawCard_Implementation(FGameCardData GameCardData)
 }
 
 void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 SquareID)
-{	
+{		
 	if (CheckIfCardCanBePlayed(CardID, SquareID)) {
 
 		// Get Cards data to complete the request
 		FGameCardData* GameCardData = PlayerHandCards.FindByPredicate([CardID](FGameCardData& HandCard) { return HandCard.CardID == CardID; });
+
+		// Check if player has enough gold to play the card
+		ADavidPlayerState* PlayerState = PlayerController->GetPlayerState<ADavidPlayerState>();
+		if(PlayerState) 
+		{
+			bool CheatCheck = false;
+
+#if UE_WITH_CHEAT_MANAGER
+			CheatCheck = GameState->GetInfiniteGoldStatus();
+#endif
+
+			const int32 PlayerGold = PlayerState->GetPlayerGold();
+			if(!CheatCheck && PlayerGold < GameCardData->CardCost)
+			{
+				Client_CardRequestResponse(CardID, false);
+				return;
+			}
+		}
 
 		if (GameCardData) 
 		{

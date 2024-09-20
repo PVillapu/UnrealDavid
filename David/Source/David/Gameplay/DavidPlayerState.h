@@ -18,6 +18,8 @@ public:
 
 	FORCEINLINE void IncreasePlayerGold(int32 Ammount) { PlayerGold += Ammount; OnPlayerGoldUpdated(); }
 
+	FORCEINLINE int32 GetPlayerGold() { return PlayerGold; }
+
 private:
 	UFUNCTION()
 	void OnRep_PlayerGold();

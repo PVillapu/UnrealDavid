@@ -148,6 +148,9 @@ void ADavidGameState::NetMulticast_CurrentRoundUpdated_Implementation(int32 Roun
 
 void ADavidGameState::UpdateTurnCountdownTime()
 {
+#if UE_WITH_CHEAT_MANAGER
+	if(bInfiniteTurnDurationCheat) return;
+#endif
 	if (--CurrentTurnTimeLeft <= 0) 
 	{
 		GetWorld()->GetTimerManager().PauseTimer(TurnTimeLeftTimerHandler);

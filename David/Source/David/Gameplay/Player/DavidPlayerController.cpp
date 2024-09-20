@@ -201,3 +201,37 @@ void ADavidPlayerController::OnRep_PlayerIndex()
 {
 	SetupPlayer();
 }
+
+void ADavidPlayerController::Server_InfiniteGoldCheat_Implementation()
+{
+	#if UE_WITH_CHEAT_MANAGER
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+	if (DavidGameState == nullptr) return;
+
+	DavidGameState->ToggleInfiniteGoldCheat();
+	#endif
+}
+
+void ADavidPlayerController::Server_InfiniteTurnTimeCheat_Implementation()
+{
+	#if UE_WITH_CHEAT_MANAGER
+
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
+	if (DavidGameState == nullptr) return;
+
+	DavidGameState->ToggleInfiniteTurnDuration();
+
+	#endif
+}
+
+void ADavidPlayerController::Server_GiveCardToPlayerCheat_Implementation(int32 CardId)
+{
+	#if UE_WITH_CHEAT_MANAGER
+	#endif
+}

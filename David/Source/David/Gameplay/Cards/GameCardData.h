@@ -19,4 +19,7 @@ struct FGameCardData
 
     UPROPERTY()
     int32 PieceAttack;
+
+    UPROPERTY()
+    int32 CardCost;
 };

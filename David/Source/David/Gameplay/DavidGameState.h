@@ -5,6 +5,11 @@
 #include "Misc/Enums.h"
 #include "DavidGameState.generated.h"
 
+/** If set to 0, cheat manager functionality will be entirely disabled. If cheats are desired in shipping mode this can be overridden in the target definitions */
+#ifndef UE_WITH_CHEAT_MANAGER
+#define UE_WITH_CHEAT_MANAGER (1 && !UE_BUILD_SHIPPING)
+#endif
+
 /**
  * Class that handles the Turns management and players gold
  */
@@ -151,4 +156,17 @@ private:
 	int32 CurrentPlayer2Score;
 
 	int32 ClientActionsProcessed = 0;
+
+#if UE_WITH_CHEAT_MANAGER
+public:
+	FORCEINLINE void ToggleInfiniteGoldCheat() { bInfiniteGoldCheat = !bInfiniteGoldCheat; };
+
+	FORCEINLINE void ToggleInfiniteTurnDuration() { bInfiniteTurnDurationCheat = !bInfiniteTurnDurationCheat; };
+
+	FORCEINLINE bool GetInfiniteGoldStatus() { return bInfiniteGoldCheat; }
+
+private:
+	bool bInfiniteGoldCheat = false;
+	bool bInfiniteTurnDurationCheat = false;
+#endif
 };

@@ -10,6 +10,7 @@
 #include "../Player/PlayerCards.h"
 #include "Kismet/GameplayStatics.h"
 #include "SquareAction.h"
+#include "../DavidPlayerState.h"
 
 ABoardManager::ABoardManager()
 {

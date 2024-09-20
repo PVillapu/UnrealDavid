@@ -60,6 +60,19 @@ private:
 
 	void CreatePlayerHUD();
 
+public:
+	/* Gives each player infinite gold */
+	UFUNCTION(Server, reliable)
+	void Server_InfiniteGoldCheat();
+
+	/* Gives each player infinite turn duration */
+	UFUNCTION(Server, reliable)
+	void Server_InfiniteTurnTimeCheat();
+
+	/* Give to a player a card */
+	UFUNCTION(Server, reliable)
+	void Server_GiveCardToPlayerCheat(int32 CardId);
+
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	TEnumAsByte<ECollisionChannel> ActionsTraceChannel = ECC_Pawn;
