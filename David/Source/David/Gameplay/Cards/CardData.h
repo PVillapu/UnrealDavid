@@ -26,4 +26,7 @@ struct FCardData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
     int32 PieceAttack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "David")
+    int32 CardCost;
 };

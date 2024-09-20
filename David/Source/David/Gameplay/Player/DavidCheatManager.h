@@ -23,5 +23,5 @@ class DAVID_API UDavidCheatManager : public UCheatManager
 	virtual void InfiniteTurnDuration();
 
 	UFUNCTION(exec)
-	virtual void GiveCardToPlayer(int32 CardId);
+	virtual void GiveCardToPlayer(int32 CardId, int32 Player);
 };

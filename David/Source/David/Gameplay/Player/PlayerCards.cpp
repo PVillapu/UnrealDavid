@@ -47,15 +47,6 @@ void APlayerCards::OnRep_Owner()
 
 void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 {
-	GameState = GetWorld()->GetGameState<ADavidGameState>();
-	if (GameState == nullptr) return;
-
-	UDataTable* DataTable = GameState->GetCardsDataTable();
-	if (DataTable == nullptr) return;
-
-	int32 CardIdCount = 0;
-	TArray<FCardData*> CardsArray;
-	DataTable->GetAllRows("", CardsArray);
 	for(int32 CardIndex : PlayerCards) 
 	{
 		if (CardIndex < 0 || CardIndex > CardsArray.Num())
@@ -64,16 +55,11 @@ void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 			continue;
 		}
 
-		// Get card
-		FCardData* CardData = CardsArray[CardIndex];
-		if (CardData == nullptr) continue;
-
-		FGameCardData GameCardData;
-		GameCardData.CardID = CardIdCount++;
-		GameCardData.CardDTIndex = CardIndex;
-		GameCardData.PieceAttack = CardData->PieceAttack;
-		GameCardData.PieceHealth = CardData->PieceHealth;
-		PutCardOnDeck(GameCardData);
+		FGameCardData* NewGameCardData = CreateNewCardForPlayer(CardIndex);
+		if(NewGameCardData)
+		{
+			PutCardOnDeck(*NewGameCardData);
+		}
 	}
 }
 
@@ -85,17 +71,50 @@ void APlayerCards::PlayerDrawCards(int32 CardAmmount)
 
 		if(PlayerHandCards.Num() >= GameState->GetGameRules()->MaxPlayerHandSize) break;
 
-		FGameCardData DrawCard = PlayerDeckCards[0];
+		FGameCardData CardDrawn = PlayerDeckCards[0];
 		PlayerDeckCards.RemoveAt(0);
-		PlayerHandCards.Add(DrawCard);
+		PlayerHandCards.Add(CardDrawn);
 
-		Client_DrawCard(DrawCard);
+		Client_DrawCard(CardDrawn);
 	}
 }
 
 void APlayerCards::PutCardOnDeck(const FGameCardData& Card)
 {
 	PlayerDeckCards.Add(Card);
+}
+
+void APlayerCards::AddCardToPlayerHand(int32 CardId)
+{
+	FGameCardData* NewPlayerCard = CreateNewCardForPlayer(CardId);
+
+	Client_AddCardToHand(*NewPlayerCard);
+}
+
+void APlayerCards::CacheGameCards()
+{
+	if(CardsArray.Num() > 0) return;
+
+	GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if (GameState == nullptr) return;
+
+	UDataTable* DataTable = GameState->GetCardsDataTable();
+	if (DataTable == nullptr) return;
+
+	DataTable->GetAllRows("", CardsArray);
+}
+
+FGameCardData APlayerCards::CreateNewCardForPlayer(int32 CardId)
+{
+	CacheGameCards();
+
+	FCardData* CardData = CardsArray[CardId];
+
+	if(CardData == nullptr) return nullptr;
+
+	FGameCardData NewGameCardData(*CardData);
+	NewGameCardData.CardID = CardsIndexCount++;
+	NewGameCardData.CardDTIndex = CardId;
 }
 
 void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)

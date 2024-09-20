@@ -20,9 +20,9 @@ void UDavidCheatManager::InfiniteTurnDuration()
 #endif
 }
 
-void UDavidCheatManager::GiveCardToPlayer(int32 CardId)
+void UDavidCheatManager::GiveCardToPlayer(int32 CardId, int32 Player)
 {
 #if UE_WITH_CHEAT_MANAGER
-    DavidPC->Server_GiveCardToPlayerCheat(CardId);
+    DavidPC->Server_GiveCardToPlayerCheat(CardId, Player);
 #endif
 }

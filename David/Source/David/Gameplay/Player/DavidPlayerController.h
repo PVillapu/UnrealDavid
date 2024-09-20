@@ -71,7 +71,7 @@ public:
 
 	/* Give to a player a card */
 	UFUNCTION(Server, reliable)
-	void Server_GiveCardToPlayerCheat(int32 CardId);
+	void Server_GiveCardToPlayerCheat(int32 CardId, int32 PlayerId);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")

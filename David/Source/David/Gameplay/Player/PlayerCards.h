@@ -21,8 +21,17 @@ public:
 
 	void PutCardOnDeck(const FGameCardData& Card);
 
+	void AddCardToPlayerHand(int32 CardId);
+
+	void CacheGameCards();
+
+	FGameCardData CreateNewCardForPlayer(int32 CardId);
+
 	UFUNCTION(Client, reliable)
 	void Client_DrawCard(FGameCardData GameCardData);
+
+	UFUNCTION(Client, reliable)
+	void Client_AddCardToHand(FGameCardData GameCardData);
 
 	UFUNCTION(Server, reliable)
 	void Server_PlayCardRequest(int32 CardID, int32 SquareID);
@@ -56,4 +65,8 @@ private:
 
 	UPROPERTY(Transient, SkipSerialization)
 	class ADavidGameState* GameState;
+
+	TArray<struct FCardData*> CardsArray;
+
+	int32 CardsIndexCount = 0;
 };
