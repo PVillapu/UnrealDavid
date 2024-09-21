@@ -55,10 +55,10 @@ void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 			continue;
 		}
 
-		FGameCardData* NewGameCardData = CreateNewCardForPlayer(CardIndex);
-		if(NewGameCardData)
+		FGameCardData NewGameCardData;
+		if(CreateNewCardForPlayer(CardIndex, NewGameCardData))
 		{
-			PutCardOnDeck(*NewGameCardData);
+			PutCardOnDeck(NewGameCardData);
 		}
 	}
 }
@@ -86,9 +86,14 @@ void APlayerCards::PutCardOnDeck(const FGameCardData& Card)
 
 void APlayerCards::AddCardToPlayerHand(int32 CardId)
 {
-	FGameCardData* NewPlayerCard = CreateNewCardForPlayer(CardId);
+	if(PlayerHandCards.Num() >= GameState->GetGameRules()->MaxPlayerHandSize) return;
 
-	Client_AddCardToHand(*NewPlayerCard);
+	FGameCardData NewPlayerCard;
+	if(CreateNewCardForPlayer(CardId, NewPlayerCard))
+	{
+		PlayerHandCards.Add(NewPlayerCard);
+		Client_AddCardToHand(NewPlayerCard);
+	}
 }
 
 void APlayerCards::CacheGameCards()
@@ -104,17 +109,19 @@ void APlayerCards::CacheGameCards()
 	DataTable->GetAllRows("", CardsArray);
 }
 
-FGameCardData APlayerCards::CreateNewCardForPlayer(int32 CardId)
+bool APlayerCards::CreateNewCardForPlayer(int32 CardId, FGameCardData& NewGameCardData)
 {
 	CacheGameCards();
 
 	FCardData* CardData = CardsArray[CardId];
 
-	if(CardData == nullptr) return nullptr;
+	if(CardData == nullptr) return false;
 
-	FGameCardData NewGameCardData(*CardData);
+	NewGameCardData = FGameCardData(*CardData);
 	NewGameCardData.CardID = CardsIndexCount++;
 	NewGameCardData.CardDTIndex = CardId;
+
+	return true;
 }
 
 void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)
@@ -136,12 +143,23 @@ void APlayerCards::OnPlayerDrawCard(const FGameCardData& GameCardData)
 		PlayerHandManager->AddCardToHand(GameCardData);
 }
 
-bool APlayerCards::CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const
+void APlayerCards::OnPlayerAddCardToHand(const FGameCardData &GameCardData)
 {
-	// Check if it is the player turn
-	if (!PlayerController->IsPlayerTurn()) return false;
+	UE_LOG(LogDavid, Display, TEXT("[%s] APlayerCards::OnPlayerAddCardToHand"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
 
-	return BoardManager->CanPlayerPlayCardInSquare(PlayerController->GetDavidPlayer(), SquareID);
+	// Catch the PlayerHandManager
+	if (PlayerHandManager == nullptr) 
+	{
+		if (APlayerHUD* PlayerHUD = PlayerController->GetHUD<APlayerHUD>())
+		{
+			if(UGameHUD* GameHUD = PlayerHUD->GetGameHUDWidget())
+				PlayerHandManager = GameHUD->GetPlayerHandManager();
+		}
+	}
+
+	// Add card
+	if(PlayerHandManager)
+		PlayerHandManager->AddCardToHand(GameCardData);
 }
 
 void APlayerCards::Client_DrawCard_Implementation(FGameCardData GameCardData)
@@ -156,22 +174,32 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 		// Get Cards data to complete the request
 		FGameCardData* GameCardData = PlayerHandCards.FindByPredicate([CardID](FGameCardData& HandCard) { return HandCard.CardID == CardID; });
 
+		if(GameCardData == nullptr)
+		{
+			UE_LOG(LogDavid, Display, TEXT("[%s] Cannot play card because CardID was not found"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+			Client_CardRequestResponse(CardID, false);
+			return;
+		}
+
 		// Check if player has enough gold to play the card
 		ADavidPlayerState* PlayerState = PlayerController->GetPlayerState<ADavidPlayerState>();
 		if(PlayerState) 
 		{
-			bool CheatCheck = false;
-
 #if UE_WITH_CHEAT_MANAGER
-			CheatCheck = GameState->GetInfiniteGoldStatus();
+			if(!GameState->GetInfiniteGoldStatus())
+			{
 #endif
 
 			const int32 PlayerGold = PlayerState->GetPlayerGold();
-			if(!CheatCheck && PlayerGold < GameCardData->CardCost)
+			if(PlayerGold < GameCardData->CardCost)
 			{
 				Client_CardRequestResponse(CardID, false);
 				return;
 			}
+
+#if UE_WITH_CHEAT_MANAGER
+			}
+#endif
 		}
 
 		if (GameCardData) 
@@ -208,4 +236,17 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 void APlayerCards::Client_CardRequestResponse_Implementation(int32 CardID, bool Response)
 {
 	PlayerHandManager->OnPlayCardResponse(CardID, Response);
+}
+
+void APlayerCards::Client_AddCardToHand_Implementation(FGameCardData GameCardData)
+{
+	OnPlayerAddCardToHand(GameCardData);
+}
+
+bool APlayerCards::CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const
+{
+	// Check if it is the player turn
+	if (!PlayerController->IsPlayerTurn()) return false;
+
+	return BoardManager->CanPlayerPlayCardInSquare(PlayerController->GetDavidPlayer(), SquareID);
 }

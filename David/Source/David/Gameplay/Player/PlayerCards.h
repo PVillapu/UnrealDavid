@@ -25,7 +25,7 @@ public:
 
 	void CacheGameCards();
 
-	FGameCardData CreateNewCardForPlayer(int32 CardId);
+	bool CreateNewCardForPlayer(int32 CardId, FGameCardData& NewGameCardData);
 
 	UFUNCTION(Client, reliable)
 	void Client_DrawCard(FGameCardData GameCardData);
@@ -44,6 +44,8 @@ protected:
 
 private:
 	void OnPlayerDrawCard(const FGameCardData& GameCardData);
+
+	void OnPlayerAddCardToHand(const FGameCardData& GameCardData);
 
 	bool CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const;
 

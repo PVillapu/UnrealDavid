@@ -230,7 +230,7 @@ void ADavidPlayerController::Server_InfiniteTurnTimeCheat_Implementation()
 	#endif
 }
 
-void ADavidPlayerController::Server_GiveCardToPlayerCheat_Implementation(int32 CardId, int32 Player)
+void ADavidPlayerController::Server_GiveCardToPlayerCheat_Implementation(int32 CardId, int32 PlayerId)
 {
 	#if UE_WITH_CHEAT_MANAGER
 	
@@ -240,7 +240,7 @@ void ADavidPlayerController::Server_GiveCardToPlayerCheat_Implementation(int32 C
 	ADavidGameState* DavidGameState = Cast<ADavidGameState>(World->GetGameState());
 	if (DavidGameState == nullptr) return;
 
-	ADavidPlayerController* PC = DavidGameState->GetPlayerController((EDavidPlayer)Player);
+	ADavidPlayerController* PC = DavidGameState->GetPlayerController((EDavidPlayer)PlayerId);
 	if(PC)
 	{
 		PC->GetPlayerCards()->AddCardToPlayerHand(CardId);
