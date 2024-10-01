@@ -13,7 +13,9 @@ class DAVID_API UCardWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void SetupCard(const struct FCardData& CardData, int32 GameCardID = 0);
+	void SetupCard(const struct FCardData& CardData, const struct FGameCardData& GameCardData, int32 GameCardID);
+
+	void SetupInfoCard(const struct FCardData& CardData, const class APieceActor* PieceActor);
 
 	void StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed);
 
@@ -46,6 +48,10 @@ private:
 	bool HasCardSizeBeenStablished();
 
 	void MoveCardToTarget();
+
+	void SetupPieceCard(const FGameCardData& CardData);
+
+	void SetupSpellCard(const FGameCardData& CardData);
 
 public:
 	// Delegate called when player is hovering this card

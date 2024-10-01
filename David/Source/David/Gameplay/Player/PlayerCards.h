@@ -47,7 +47,7 @@ private:
 
 	void OnPlayerAddCardToHand(const FGameCardData& GameCardData);
 
-	bool CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const;
+	bool CheckIfCardCanBePlayed(int32 CardID) const;
 
 private:
 	UPROPERTY(Transient, SkipSerialization)
@@ -65,10 +65,7 @@ private:
 	UPROPERTY(Transient, SkipSerialization)
 	class ABoardManager* BoardManager;
 
-	UPROPERTY(Transient, SkipSerialization)
-	class ADavidGameState* GameState;
+	TArray<struct FCardData>* CardsArray;
 
-	TArray<struct FCardData*> CardsArray;
-
-	int32 CardsIndexCount = 0;
+	int32 GameCardsIndexCount = 0;
 };

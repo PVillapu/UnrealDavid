@@ -8,17 +8,39 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "CardDragDropOperation.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "../Cards/CardData.h"
+#include "../Cards/GameCardData.h"
+#include "../Piece/PieceActor.h"
 
-void UCardWidget::SetupCard(const FCardData& Data, int32 GameCardID)
+void UCardWidget::SetupCard(const struct FCardData& CardData, const FGameCardData& GameCardData, int32 GameCardID)
 {
-	PieceImage->SetBrushFromTexture(Data.CardImage);
-	CardNameText->SetText(Data.CardName);
-	HealthText->SetText(FText::AsNumber(Data.PieceHealth));
-	AttackText->SetText(FText::AsNumber(Data.PieceAttack));
-	CardDescriptionText->SetText(Data.CardDescription);
+	if(CardData.bIsPiece)
+	{
+		SetupPieceCard(GameCardData);
+	}
+	else
+	{
+		SetupSpellCard(GameCardData);
+	}
 
+	// TODO: Set card cost text 
+	PieceImage->SetBrushFromTexture(CardData.CardImage);
+	CardNameText->SetText(CardData.CardName);
+	CardDescriptionText->SetText(CardData.CardDescription);
 	CardID = GameCardID;
+}
+
+void UCardWidget::SetupInfoCard(const FCardData &CardData, const APieceActor *PieceActor)
+{
+	// TODO: Set card cost text 
+	PieceImage->SetBrushFromTexture(CardData.CardImage);
+	CardNameText->SetText(CardData.CardName);
+	CardDescriptionText->SetText(CardData.CardDescription);
+
+	HealthText->SetText(FText::AsNumber(PieceActor->GetPieceHealth()));
+	HealthText->SetVisibility(ESlateVisibility::Visible);
+
+	AttackText->SetText(FText::AsNumber(PieceActor->GetPieceAttack()));
+	AttackText->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UCardWidget::StartRepositioning(const FWidgetTransform& TargetTransform, float InterpSpeed)
@@ -140,4 +162,19 @@ void UCardWidget::MoveCardToTarget()
 
 	FWidgetTransform newTransform(NewPosition, GetRenderTransform().Scale, GetRenderTransform().Shear, NewRotation);
 	SetRenderTransform(newTransform);
+}
+
+void UCardWidget::SetupPieceCard(const FGameCardData &CardData)
+{
+	HealthText->SetText(FText::AsNumber(CardData.PieceHealth));
+	HealthText->SetVisibility(ESlateVisibility::Visible);
+
+	AttackText->SetText(FText::AsNumber(CardData.PieceAttack));
+	AttackText->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UCardWidget::SetupSpellCard(const FGameCardData &CardData)
+{
+	HealthText->SetVisibility(ESlateVisibility::Hidden);
+	AttackText->SetVisibility(ESlateVisibility::Hidden);
 }

@@ -11,25 +11,31 @@ struct FGameCardData
 
     FGameCardData() { }
 
-    FGameCardData(FCardData& CardData)
+    FGameCardData(const FCardData& CardData)
     {
         PieceHealth = CardData.PieceHealth;
         PieceAttack = CardData.PieceAttack;
+        bIsPieceCard = CardData.bIsPiece;
         CardCost = CardData.CardCost;
     }
 
     UPROPERTY()
-    int32 CardDTIndex;
+    int32 CardDTIndex = -1;
 
     UPROPERTY()
-    int32 CardID;
+    int32 GameCardID = -1;
 
     UPROPERTY()
-    int32 PieceHealth;
+    int32 CardCost = 0;
 
     UPROPERTY()
-    int32 PieceAttack;
+    bool bIsPieceCard = true;
+
+    // Piece data
 
     UPROPERTY()
-    int32 CardCost;
+    int32 PieceHealth = 0;
+
+    UPROPERTY()
+    int32 PieceAttack = 0;
 };

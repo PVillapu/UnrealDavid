@@ -44,6 +44,8 @@ public:
 	/* Returns the player controller of the current player turn */
 	class ADavidPlayerController* GetPlayerController(EDavidPlayer Player);
 
+	TArray<struct FCardData>* GetGameCards();
+
 	UFUNCTION(NetMulticast, reliable)
 	void NetMulticast_SetFinalTurnScore(int32 Player1Score, int32 Player2Score);
 
@@ -54,8 +56,6 @@ public:
 	void NetMulticast_CurrentRoundUpdated(int32 Round);
 	
 	FORCEINLINE EDavidMatchState GetMatchState() const { return MatchState; }
-
-	FORCEINLINE class UDataTable* GetCardsDataTable() const { return CardsDataTable; }	// TODO: Maybe move to GameInstance?
 
 	FORCEINLINE class UDavidGameRules* GetGameRules() const { return GameRules; }
 
@@ -122,9 +122,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "David")
 	UDavidGameRules* GameRules;
 
-	UPROPERTY(EditDefaultsOnly, Category = "David")
-	UDataTable* CardsDataTable;
-
 	/* Timer handle for turn time */
 	UPROPERTY(Transient, SkipSerialization)
 	FTimerHandle TurnTimeLeftTimerHandler;
@@ -156,6 +153,9 @@ private:
 	int32 CurrentPlayer2Score;
 
 	int32 ClientActionsProcessed = 0;
+
+	/* Game cards array */
+	TArray<FCardData*> GameCards; 
 
 #if UE_WITH_CHEAT_MANAGER
 public:

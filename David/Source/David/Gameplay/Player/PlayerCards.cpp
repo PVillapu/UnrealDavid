@@ -6,10 +6,11 @@
 #include "../Misc/CustomDavidLogs.h"
 #include "../Board/BoardManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "../DavidGameState.h"
 #include "../UI/PlayerHUD.h"
 #include "../Misc/GameRules.h"
 #include "../DavidPlayerState.h"
+#include "../DavidGameState.h"
+#include "../Cards/GameCardData.h"
 
 APlayerCards::APlayerCards()
 {
@@ -36,6 +37,8 @@ void APlayerCards::SetupPlayerCards()
 		BoardManager = Cast<ABoardManager>(OutActors[0]);
 	}
 
+	CacheGameCards();
+
 	// End Initialization
 	PlayerController->InitializationPartDone(EDavidPreMatchInitialization::PLAYER_CARDS_INITIALIZED);
 }
@@ -49,9 +52,9 @@ void APlayerCards::SetPlayerDeck(const TArray<int32>& PlayerCards)
 {
 	for(int32 CardIndex : PlayerCards) 
 	{
-		if (CardIndex < 0 || CardIndex > CardsArray.Num())
+		if (CardIndex < 0 || CardIndex > CardsArray->Num())
 		{
-			UE_LOG(LogDavid, Warning, TEXT("Invalid card index of the player deck"));
+			UE_LOG(LogDavid, Warning, TEXT("Invalid card index: %d"), CardIndex);
 			continue;
 		}
 
@@ -69,6 +72,9 @@ void APlayerCards::PlayerDrawCards(int32 CardAmmount)
 	{
 		if (PlayerDeckCards.Num() <= 0) break;
 
+		ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+		if(GameState == nullptr) return;
+		
 		if(PlayerHandCards.Num() >= GameState->GetGameRules()->MaxPlayerHandSize) break;
 
 		FGameCardData CardDrawn = PlayerDeckCards[0];
@@ -86,40 +92,39 @@ void APlayerCards::PutCardOnDeck(const FGameCardData& Card)
 
 void APlayerCards::AddCardToPlayerHand(int32 CardId)
 {
+	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if(GameState == nullptr) return;
+
 	if(PlayerHandCards.Num() >= GameState->GetGameRules()->MaxPlayerHandSize) return;
 
 	FGameCardData NewPlayerCard;
 	if(CreateNewCardForPlayer(CardId, NewPlayerCard))
 	{
 		PlayerHandCards.Add(NewPlayerCard);
+
 		Client_AddCardToHand(NewPlayerCard);
 	}
 }
 
 void APlayerCards::CacheGameCards()
 {
-	if(CardsArray.Num() > 0) return;
+	if(CardsArray && CardsArray->Num() > 0) return;
 
-	GameState = GetWorld()->GetGameState<ADavidGameState>();
-	if (GameState == nullptr) return;
+	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+	if(GameState == nullptr) return;
 
-	UDataTable* DataTable = GameState->GetCardsDataTable();
-	if (DataTable == nullptr) return;
-
-	DataTable->GetAllRows("", CardsArray);
+	CardsArray = GameState->GetGameCards();
 }
 
-bool APlayerCards::CreateNewCardForPlayer(int32 CardId, FGameCardData& NewGameCardData)
+bool APlayerCards::CreateNewCardForPlayer(int32 CardDTId, FGameCardData& NewGameCardData)
 {
 	CacheGameCards();
 
-	FCardData* CardData = CardsArray[CardId];
+	const FCardData& CardData = (*CardsArray)[CardDTId];
 
-	if(CardData == nullptr) return false;
-
-	NewGameCardData = FGameCardData(*CardData);
-	NewGameCardData.CardID = CardsIndexCount++;
-	NewGameCardData.CardDTIndex = CardId;
+	NewGameCardData = FGameCardData(CardData);
+	NewGameCardData.GameCardID = GameCardsIndexCount++;
+	NewGameCardData.CardDTIndex = CardDTId;
 
 	return true;
 }
@@ -167,33 +172,44 @@ void APlayerCards::Client_DrawCard_Implementation(FGameCardData GameCardData)
 	OnPlayerDrawCard(GameCardData);
 }
 
-void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 SquareID)
+void APlayerCards::Server_PlayCardRequest_Implementation(int32 GameCardID, int32 SquareID)
 {		
-	if (CheckIfCardCanBePlayed(CardID, SquareID)) {
+	UE_LOG(LogDavid, Display, TEXT("[%s] Server_PlayCardRequest_Implementation | GameCardID = %d"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"), GameCardID);
+
+	if (CheckIfCardCanBePlayed(SquareID)) {
 
 		// Get Cards data to complete the request
-		FGameCardData* GameCardData = PlayerHandCards.FindByPredicate([CardID](FGameCardData& HandCard) { return HandCard.CardID == CardID; });
+		FGameCardData* GameCardDataPtr = PlayerHandCards.FindByPredicate([GameCardID](FGameCardData& HandCard) { return HandCard.GameCardID == GameCardID; });
 
-		if(GameCardData == nullptr)
+		if(GameCardDataPtr == nullptr)
 		{
-			UE_LOG(LogDavid, Display, TEXT("[%s] Cannot play card because CardID was not found"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
-			Client_CardRequestResponse(CardID, false);
+			UE_LOG(LogDavid, Display, TEXT("[%s] Cannot play card because GameCardID was not found"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+			Client_CardRequestResponse(GameCardID, false);
 			return;
 		}
+
+		// Copy struct to avoid pointer issues in next operations
+		FGameCardData GameCardData = *GameCardDataPtr;
 
 		// Check if player has enough gold to play the card
 		ADavidPlayerState* PlayerState = PlayerController->GetPlayerState<ADavidPlayerState>();
 		if(PlayerState) 
 		{
 #if UE_WITH_CHEAT_MANAGER
+			ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
+			if(GameState == nullptr)
+			{
+				Client_CardRequestResponse(GameCardID, false);
+				return;
+			}
 			if(!GameState->GetInfiniteGoldStatus())
 			{
 #endif
 
 			const int32 PlayerGold = PlayerState->GetPlayerGold();
-			if(PlayerGold < GameCardData->CardCost)
+			if(PlayerGold < GameCardData.CardCost)
 			{
-				Client_CardRequestResponse(CardID, false);
+				Client_CardRequestResponse(GameCardID, false);
 				return;
 			}
 
@@ -202,34 +218,28 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 CardID, int32 Squ
 #endif
 		}
 
-		if (GameCardData) 
+		for(int i = 0; i < PlayerHandCards.Num(); ++i)
 		{
-			EDavidPlayer Player = PlayerController->GetDavidPlayer();
-
-			// Accept the request and play the card
-			Client_CardRequestResponse(CardID, true);
-
-			for(int i = 0; i < PlayerHandCards.Num(); ++i)
+			if(PlayerHandCards[i].GameCardID == GameCardID)
 			{
-				if(PlayerHandCards[i].CardID == CardID)
-				{
-					PlayerHandCards.RemoveAt(i);
-					break;
-				}
+				PlayerHandCards.RemoveAt(i);
+				break;
 			}
+		}
 
-			BoardManager->PlayCardInSquare(*GameCardData, SquareID, Player);
-		}
-		else 
-		{
-			// Reject the request
-			Client_CardRequestResponse(CardID, false);
-		}
+		// Take the gold from the player
+		PlayerState->DecreasePlayerGold(GameCardData.CardCost);
+
+		// Accept the request and play the card
+		Client_CardRequestResponse(GameCardID, true);
+
+		EDavidPlayer Player = PlayerController->GetDavidPlayer();
+		BoardManager->PlayCardInSquare(GameCardData, SquareID, Player);
 	}
 	else 
 	{
 		// Reject the request
-		Client_CardRequestResponse(CardID, false);
+		Client_CardRequestResponse(GameCardID, false);
 	}
 }
 
@@ -243,7 +253,7 @@ void APlayerCards::Client_AddCardToHand_Implementation(FGameCardData GameCardDat
 	OnPlayerAddCardToHand(GameCardData);
 }
 
-bool APlayerCards::CheckIfCardCanBePlayed(int32 CardID, int32 SquareID) const
+bool APlayerCards::CheckIfCardCanBePlayed(int32 SquareID) const
 {
 	// Check if it is the player turn
 	if (!PlayerController->IsPlayerTurn()) return false;

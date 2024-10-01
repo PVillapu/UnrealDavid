@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "Misc/GameRules.h"
 #include "DavidPlayerState.generated.h"
 
 /**
@@ -16,7 +17,11 @@ public:
 	// Replication setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	FORCEINLINE void IncreasePlayerGold(int32 Ammount) { PlayerGold += Ammount; OnPlayerGoldUpdated(); }
+	void IncreasePlayerGold(int32 Ammount);
+
+	void DecreasePlayerGold(int32 Ammount);
+
+	void CatchGameRules();
 
 	FORCEINLINE int32 GetPlayerGold() { return PlayerGold; }
 
@@ -34,4 +39,7 @@ public:
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_PlayerGold)
 	int32 PlayerGold;
+
+	UPROPERTY(Transient, SkipSerialization)
+	UDavidGameRules* GameRules;
 };

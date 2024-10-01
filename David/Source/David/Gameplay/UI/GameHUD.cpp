@@ -12,6 +12,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "HandManager.h"
+#include "../DavidGameInstance.h"
 
 void UGameHUD::OnCursorOverPiece(APieceActor* PieceSelected)
 {
@@ -211,19 +212,18 @@ void UGameHUD::PlaceInfoCardInViewport()
 {
 	int32 CardDataIndex = CurrentInspectedPiece->GetCardDataIndex();
 
-	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
-	if (GameState == nullptr) return;
+	UDavidGameInstance* GameInstance = Cast<UDavidGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if(GameInstance == nullptr) return;
 
-	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
+	UDataTable* CardsDataTable = GameInstance->GetPieceCardsDataTable();
 	if (CardsDataTable == nullptr) return;
 
-	TArray<FCardData*> CardsArray;
-	CardsDataTable->GetAllRows("", CardsArray);
-	if (CardDataIndex < 0 && CardDataIndex >= CardsArray.Num()) return;
+	const TArray<FCardData>& CardsArray = GameInstance->GetGameCards();
+	if (CardDataIndex < 0 || CardDataIndex >= CardsArray.Num()) return;
 
-	FCardData& CardData = *CardsArray[CardDataIndex];
+	const FCardData& CardData = CardsArray[CardDataIndex];
 
-	PieceInfoCard->SetupCard(CardData);
+	PieceInfoCard->SetupInfoCard(CardData, CurrentInspectedPiece);
 	PieceInfoCard->SetVisibility(ESlateVisibility::HitTestInvisible);
 
 	if (UWorld* World = GetWorld())

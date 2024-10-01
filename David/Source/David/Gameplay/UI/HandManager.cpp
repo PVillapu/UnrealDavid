@@ -14,6 +14,8 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/CanvasPanel.h"
 #include "../Misc/CustomDavidLogs.h"
+#include "../DavidGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "../DavidGameState.h"
 
 void UHandManager::InitializeHandManager()
@@ -22,33 +24,29 @@ void UHandManager::InitializeHandManager()
 }
 
 void UHandManager::AddCardToHand(const FGameCardData& GameCardData)
-{
-	// Get CardData associated with the GameCard
-	TArray<FCardData*> CardsArray;
-	
+{	
 	ADavidGameState* GameState = GetWorld()->GetGameState<ADavidGameState>();
-	if (GameState == nullptr) return;
+	if(GameState == nullptr) return;
 
-	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
-	if (CardsDataTable == nullptr) return;
+	// Get CardData associated with the GameCard
+	const TArray<FCardData>* CardsArray = GameState->GetGameCards();
 
-	CardsDataTable->GetAllRows("", CardsArray);
+	if(CardsArray == nullptr) return;
 
-	if (GameCardData.CardDTIndex < 0) 
+	if (GameCardData.CardDTIndex < 0 || GameCardData.CardDTIndex >= CardsArray->Num()) 
 	{
 		UE_LOG(LogDavid, Warning, TEXT("Invalid card index received to instantiate: %d"), GameCardData.CardDTIndex);
 		return;
 	}
 
-	FCardData* CardData = CardsArray[GameCardData.CardDTIndex];
-	if (CardData == nullptr) return;
+	const FCardData& CardData = (*CardsArray)[GameCardData.CardDTIndex];
 
 	// Create Card widget
 	UCardWidget* NewCard = GetAvailableCardWidget();
 	if (NewCard == nullptr) return;
 
 	// Setup Card Widget
-	NewCard->SetupCard(*CardData, GameCardData.CardID);
+	NewCard->SetupCard(CardData, GameCardData, GameCardData.GameCardID);
 
 	// Add to hand cards array
 	HandCards.Add(NewCard);

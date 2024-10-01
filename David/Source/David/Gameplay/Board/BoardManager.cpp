@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SquareAction.h"
 #include "../DavidPlayerState.h"
+#include "../DavidGameInstance.h"
 
 ABoardManager::ABoardManager()
 {
@@ -187,7 +188,7 @@ void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID
 
 	RegisterGameAction(GameAction);
 
-	InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);
+	InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);                               
 }
 
 void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
@@ -255,16 +256,11 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 
 APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
 {
-	UWorld* World = GetWorld();
-	if (World == nullptr) return nullptr;
-
-	ADavidGameState* GameState = World->GetGameState<ADavidGameState>();
-	if (GameState == nullptr) return nullptr;
+	UDavidGameInstance* GameInstance = Cast<UDavidGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if(GameInstance == nullptr) return nullptr;
 	
 	// Get Card data
-	UDataTable* CardsDataTable = GameState->GetCardsDataTable();
-	TArray<FCardData*> CardsArray;
-	CardsDataTable->GetAllRows("", CardsArray);
+	TArray<FCardData>& CardsArray = GameInstance->GetGameCards();
 	
 	// Check for valid index
 	if (GameCardData.CardDTIndex < 0 || GameCardData.CardDTIndex > CardsArray.Num())
@@ -273,10 +269,10 @@ APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardD
 		return nullptr;
 	}
 
-	FCardData* CardData = CardsArray[GameCardData.CardDTIndex];
+	FCardData& CardData = CardsArray[GameCardData.CardDTIndex];
 
 	// Spawn the piece actor
-	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData->CardPieceActor);	// Crash in client
+	APieceActor* PieceInstance = GetWorld()->SpawnActor<APieceActor>(CardData.CardPieceClass);	// Crash in client
 
 	// Register piece
 	ActiveBoardPieces.Add(PieceID, PieceInstance);

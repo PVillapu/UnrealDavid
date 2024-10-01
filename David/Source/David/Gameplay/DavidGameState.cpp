@@ -8,6 +8,7 @@
 #include "Player/PlayerCards.h"
 #include "Misc/CustomDavidLogs.h"
 #include "Misc/GameRules.h"
+#include "DavidGameInstance.h"
 
 ADavidGameState::ADavidGameState()
 {
@@ -271,6 +272,14 @@ ADavidPlayerController* ADavidGameState::GetPlayerController(EDavidPlayer Player
 	
 	// Not found
 	return nullptr;
+}
+
+TArray<struct FCardData>* ADavidGameState::GetGameCards()
+{
+	UDavidGameInstance* GameInstance = Cast<UDavidGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if(GameInstance == nullptr) return nullptr;
+	
+    return &GameInstance->GetGameCards();
 }
 
 void ADavidGameState::OnGameFinished()
