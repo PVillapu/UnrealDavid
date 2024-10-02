@@ -99,6 +99,10 @@ private:
 
 	void PlayCardInSquareAction(const FTurnAction& TurnAction);
 
+	void PlaySpellAction(const FTurnAction& TurnAction);
+
+	bool CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance);
+
 	APieceActor* InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
 
 	UFUNCTION(NetMulticast, reliable)
@@ -140,4 +144,9 @@ private:
 
 	int32 PieceIdCounter;
 	bool bProcessingAction;
+
+	// Spells
+
+	UPROPERTY(Transient, SkipSerialization)
+	TMap<int32, UDavidSpell*> GameSpellInstances;
 };

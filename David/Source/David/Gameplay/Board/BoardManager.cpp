@@ -12,6 +12,8 @@
 #include "SquareAction.h"
 #include "../DavidPlayerState.h"
 #include "../DavidGameInstance.h"
+#include "../Spells/DavidSpell.h"
+#include "../Spells/SpellAction.h"
 
 ABoardManager::ABoardManager()
 {
@@ -175,20 +177,35 @@ void ABoardManager::NetMulticast_SendGameAction_Implementation(FTurnAction TurnA
 
 void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID, EDavidPlayer Player)
 {
-	// Create piece ID
-	int32 PieceID = PieceIdCounter++;
+	if(GameCardData.bIsPieceCard)
+	{
+		// Create piece ID
+		int32 PieceID = PieceIdCounter++;
 
-	FTurnAction GameAction;
-	GameAction.ActionType = EDavidGameAction::PLAY_CARD;
-	GameAction.Payload.SetNum(sizeof(FGameCardData) + 2 * sizeof(int32) + sizeof(EDavidPlayer));
-	FMemory::Memcpy(GameAction.Payload.GetData(), &PieceID, sizeof(int32));
-	FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
-	FMemory::Memcpy(&GameAction.Payload[8], &Player, sizeof(EDavidPlayer));
-	FMemory::Memcpy(&GameAction.Payload[8 + sizeof(EDavidPlayer)], &GameCardData, sizeof(FGameCardData));
+		FTurnAction GameAction;
+		GameAction.ActionType = EDavidGameAction::PLAY_CARD;
+		GameAction.Payload.SetNum(sizeof(FGameCardData) + 2 * sizeof(int32) + sizeof(EDavidPlayer));
+		FMemory::Memcpy(GameAction.Payload.GetData(), &PieceID, sizeof(int32));
+		FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
+		FMemory::Memcpy(&GameAction.Payload[8], &Player, sizeof(EDavidPlayer));
+		FMemory::Memcpy(&GameAction.Payload[8 + sizeof(EDavidPlayer)], &GameCardData, sizeof(FGameCardData));
 
-	RegisterGameAction(GameAction);
+		RegisterGameAction(GameAction);
 
-	InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);                               
+		InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);  
+	}
+	else
+	{
+		FTurnAction GameAction;
+		GameAction.ActionType = EDavidGameAction::SPELL_ACTION;
+		
+		GameAction.Payload.SetNum(2 * sizeof(int32));
+		FMemory::Memcpy(GameAction.Payload.GetData(), &GameCardData.CardDTIndex, sizeof(int32));
+		FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
+
+		RegisterGameAction(GameAction);
+	}
+	                             
 }
 
 void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
@@ -252,6 +269,42 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	{
 		OnGameActionComplete();
 	}
+}
+
+void ABoardManager::PlaySpellAction(const FTurnAction &TurnAction)
+{
+	FSpellAction SpellAction = UDavidSpell::GetSpellAction(TurnAction);
+
+	UDavidSpell* SpellInstance = nullptr;
+	if(!GameSpellInstances.Contains(SpellAction.SpellID) && !CreateAndCatchSpellInstance(SpellAction.SpellID, SpellInstance))
+	{
+		UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to instantiate: %d"), SpellAction.SpellID);
+		return;	
+	}
+
+	SpellInstance->ProcessSpellAction(SpellAction);
+}
+
+bool ABoardManager::CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance)
+{
+	if(GameSpellInstances.Contains(SpellID)) return false;
+
+	UDavidGameInstance* GameInstance = Cast<UDavidGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if(GameInstance == nullptr) return nullptr;
+	
+	// Get Card data
+	TArray<FCardData>& CardsArray = GameInstance->GetGameCards();
+
+	if(SpellID < 0 || SpellID >= CardsArray.Num()) return false;
+
+	const FCardData& SpellCard = CardsArray[SpellID];
+
+	SpellInstance = NewObject<UDavidSpell>(SpellCard.CardSpellClass);
+	SpellInstance->SetupSpell(this);
+
+	GameSpellInstances.Add(SpellID, SpellInstance);
+
+    return true;
 }
 
 APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
@@ -328,6 +381,11 @@ void ABoardManager::PlayNextGameAction()
 		case EDavidGameAction::SQUARE_ACTION:
 		{
 			PlaySquareAction(TurnAction);
+			break;
+		}
+		case EDavidGameAction::SPELL_ACTION:
+		{
+			PlaySpellAction(TurnAction);
 			break;
 		}
 		default: break;
