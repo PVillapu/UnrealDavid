@@ -112,7 +112,7 @@ void ABoardManager::CalculatePlayersScore(int32& Player1Score, int32& Player2Sco
 	}
 }
 
-bool ABoardManager::CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID)
+bool ABoardManager::CanPlayerPlayPieceCardInSquare(EDavidPlayer Player, int32 SquareID)
 {
 	// Check for invalid SquareID
 	if (SquareID < 0 || SquareID >= BoardHeight * BoardWidth) return false;
@@ -123,6 +123,22 @@ bool ABoardManager::CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareI
 	// Check if the square is in the deployment line of the player
 	return (Player == EDavidPlayer::PLAYER_1 && SquareID < BoardWidth) ||
 		(Player == EDavidPlayer::PLAYER_2 && SquareID >= BoardHeight * (BoardWidth - 1));
+}
+
+bool ABoardManager::CanPlayerPlaySpellCardInSquare(int32 SpellID, int32 SquareID, EDavidPlayer Player)
+{
+	UDavidSpell* SpellInstance = nullptr;
+	if(GameSpellInstances.Contains(SpellID))
+	{
+		SpellInstance = GameSpellInstances[SpellID];
+	}
+	else if(!CreateAndCatchSpellInstance(SpellID, SpellInstance))
+	{
+		UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to instantiate: %d"), SpellID);
+		return;	
+	}
+
+	return SpellInstance->CanSpellBePlayedInSquare(SquareID, Player);
 }
 
 APieceActor* FindNextPieceToProcess(const TArray<ABoardSquare*>& BoardSquares, EDavidPlayer Player)
@@ -197,15 +213,39 @@ void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID
 	else
 	{
 		FTurnAction GameAction;
-		GameAction.ActionType = EDavidGameAction::SPELL_ACTION;
+		GameAction.ActionType = EDavidGameAction::PLAY_CARD;
 		
 		GameAction.Payload.SetNum(2 * sizeof(int32));
 		FMemory::Memcpy(GameAction.Payload.GetData(), &GameCardData.CardDTIndex, sizeof(int32));
 		FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
 
 		RegisterGameAction(GameAction);
+
+		UDavidSpell* SpellInstance = nullptr;
+		if(GameSpellInstances.Contains(GameCardData.CardDTIndex))
+		{
+			SpellInstance = GameSpellInstances[GameCardData.CardDTIndex];
+		}
+		else if(!CreateAndCatchSpellInstance(GameCardData.CardDTIndex, SpellInstance))
+		{
+			UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to play: %d"), GameCardData.CardDTIndex);
+			return;	
+		}
+
+		// Play spell Process
+		SpellInstance->Process_PlaySpell(SquareID, Player);
 	}
 	                             
+}
+
+void ABoardManager::PlaySquareAction(const FTurnAction TurnAction)
+{
+	const FSquareAction SquareAction = ABoardSquare::GetSquareAction(TurnAction);
+
+	if (SquareAction.SquareIndex >= 0 && SquareAction.SquareIndex < BoardSquares.Num())
+	{
+		BoardSquares[SquareAction.SquareIndex]->ProcessAction(SquareAction);
+	}
 }
 
 void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
@@ -224,65 +264,66 @@ void ABoardManager::PlayPieceAction(const FTurnAction& TurnAction)
 	}
 }
 
-void ABoardManager::PlaySquareAction(const FTurnAction TurnAction)
-{
-	const FSquareAction SquareAction = ABoardSquare::GetSquareAction(TurnAction);
-
-	if (SquareAction.SquareIndex >= 0 && SquareAction.SquareIndex < BoardSquares.Num())
-	{
-		BoardSquares[SquareAction.SquareIndex]->ProcessAction(SquareAction);
-	}
-}
-
-void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
-{
-	int32 PieceID;
-	int32 SquareID;
-	EDavidPlayer Player;
-	FGameCardData GameCardData;
-
-	FMemory::Memcpy(&PieceID, GameAction.Payload.GetData(), sizeof(int32));
-	FMemory::Memcpy(&SquareID, &GameAction.Payload[4], sizeof(int32));
-	FMemory::Memcpy(&Player, &GameAction.Payload[8], sizeof(EDavidPlayer));
-
-	APieceActor* PieceInstance;
-
-	// Instantiate if im the client
-	if (!HasAuthority())
-	{
-		FMemory::Memcpy(&GameCardData, &GameAction.Payload[8 + sizeof(EDavidPlayer)], sizeof(FGameCardData));
-
-		PieceInstance = InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);
-	}
-	else
-	{
-		// Get piece reference
-		PieceInstance = *ActiveBoardPieces.Find(PieceID);
-	}
-
-	// Deploy the new piece in the square
-	if (PieceInstance) 
-	{
-		PieceInstance->OnDeployPieceInSquareAction(SquareID);
-	}
-	else 
-	{
-		OnGameActionComplete();
-	}
-}
-
 void ABoardManager::PlaySpellAction(const FTurnAction &TurnAction)
 {
 	FSpellAction SpellAction = UDavidSpell::GetSpellAction(TurnAction);
 
 	UDavidSpell* SpellInstance = nullptr;
-	if(!GameSpellInstances.Contains(SpellAction.SpellID) && !CreateAndCatchSpellInstance(SpellAction.SpellID, SpellInstance))
+	if(GameSpellInstances.Contains(SpellAction.SpellID))
+	{
+		SpellInstance = GameSpellInstances[SpellAction.SpellID];
+	}
+	else if(!CreateAndCatchSpellInstance(SpellAction.SpellID, SpellInstance))
 	{
 		UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to instantiate: %d"), SpellAction.SpellID);
 		return;	
 	}
 
-	SpellInstance->ProcessSpellAction(SpellAction);
+	SpellInstance->PlaySpellAction(SpellAction);
+}
+
+void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
+{
+	int32 SquareID;
+	EDavidPlayer Player;
+	FGameCardData GameCardData;
+
+	FMemory::Memcpy(&SquareID, &GameAction.Payload[4], sizeof(int32));
+	FMemory::Memcpy(&Player, &GameAction.Payload[8], sizeof(EDavidPlayer));
+	FMemory::Memcpy(&GameCardData, &GameAction.Payload[8 + sizeof(EDavidPlayer)], sizeof(FGameCardData));
+
+	if(GameCardData.bIsPieceCard)
+	{
+		int32 PieceID;
+
+		FMemory::Memcpy(&PieceID, GameAction.Payload.GetData(), sizeof(int32));
+		APieceActor* PieceInstance;
+
+		// Instantiate if im the client
+		if (!HasAuthority())
+		{
+			PieceInstance = InstantiateAndRegisterPiece(GameCardData, SquareID, PieceID, Player);
+		}
+		else
+		{
+			// Get piece reference
+			PieceInstance = *ActiveBoardPieces.Find(PieceID);
+		}
+
+		// Deploy the new piece in the square
+		if (PieceInstance) 
+		{
+			PieceInstance->OnDeployPieceInSquareAction(SquareID);
+		}
+		else 
+		{
+			OnGameActionComplete();
+		}
+	}
+	else
+	{
+		// Play spell card action TODO
+	}
 }
 
 bool ABoardManager::CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance)

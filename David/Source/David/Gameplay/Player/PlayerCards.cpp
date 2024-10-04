@@ -176,18 +176,18 @@ void APlayerCards::Server_PlayCardRequest_Implementation(int32 GameCardID, int32
 {		
 	UE_LOG(LogDavid, Display, TEXT("[%s] Server_PlayCardRequest_Implementation | GameCardID = %d"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"), GameCardID);
 
-	if (CheckIfCardCanBePlayed(SquareID)) {
+	// Get Cards data to complete the request
+	FGameCardData* GameCardDataPtr = PlayerHandCards.FindByPredicate([GameCardID](FGameCardData& HandCard) { return HandCard.GameCardID == GameCardID; });
 
-		// Get Cards data to complete the request
-		FGameCardData* GameCardDataPtr = PlayerHandCards.FindByPredicate([GameCardID](FGameCardData& HandCard) { return HandCard.GameCardID == GameCardID; });
+	if(GameCardDataPtr == nullptr)
+	{
+		UE_LOG(LogDavid, Display, TEXT("[%s] Cannot play card because GameCardID was not found"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
+		Client_CardRequestResponse(GameCardID, false);
+		return;
+	}
 
-		if(GameCardDataPtr == nullptr)
-		{
-			UE_LOG(LogDavid, Display, TEXT("[%s] Cannot play card because GameCardID was not found"), GetLocalRole() == ROLE_Authority ? *FString("Server") : *FString("Client"));
-			Client_CardRequestResponse(GameCardID, false);
-			return;
-		}
-
+	if (CheckIfCardCanBePlayed(SquareID, *GameCardDataPtr)) 
+	{
 		// Copy struct to avoid pointer issues in next operations
 		FGameCardData GameCardData = *GameCardDataPtr;
 
@@ -253,10 +253,17 @@ void APlayerCards::Client_AddCardToHand_Implementation(FGameCardData GameCardDat
 	OnPlayerAddCardToHand(GameCardData);
 }
 
-bool APlayerCards::CheckIfCardCanBePlayed(int32 SquareID) const
+bool APlayerCards::CheckIfCardCanBePlayed(int32 SquareID, const FGameCardData& GameCardData) const
 {
 	// Check if it is the player turn
 	if (!PlayerController->IsPlayerTurn()) return false;
 
-	return BoardManager->CanPlayerPlayCardInSquare(PlayerController->GetDavidPlayer(), SquareID);
+	if(GameCardData.bIsPieceCard)
+	{
+		return BoardManager->CanPlayerPlayPieceCardInSquare(PlayerController->GetDavidPlayer(), SquareID);
+	}
+	else
+	{
+		return BoardManager->CanPlayerPlaySpellCardInSquare(GameCardData.CardDTIndex, SquareID, PlayerController->GetDavidPlayer());
+	}
 }

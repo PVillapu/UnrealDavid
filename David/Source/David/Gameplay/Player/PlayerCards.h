@@ -47,7 +47,7 @@ private:
 
 	void OnPlayerAddCardToHand(const FGameCardData& GameCardData);
 
-	bool CheckIfCardCanBePlayed(int32 CardID) const;
+	bool CheckIfCardCanBePlayed(int32 CardID, const FGameCardData& GameCardData) const;
 
 private:
 	UPROPERTY(Transient, SkipSerialization)

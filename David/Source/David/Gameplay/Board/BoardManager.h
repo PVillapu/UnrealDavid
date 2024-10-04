@@ -45,7 +45,9 @@ public:
 
 	FVector GetSquarePieceLocation(int32 SquareIndex);
 
-	bool CanPlayerPlayCardInSquare(EDavidPlayer Player, int32 SquareID);
+	bool CanPlayerPlayPieceCardInSquare(EDavidPlayer Player, int32 SquareID);
+
+	bool CanPlayerPlaySpellCardInSquare(int32 SpellID, int32 SquareID, EDavidPlayer Player);
 
 	bool IsSquareOccupied(int32 TargetSquare) const;
 
@@ -97,9 +99,9 @@ private:
 
 	void PlaySquareAction(const FTurnAction TurnAction);
 
-	void PlayCardInSquareAction(const FTurnAction& TurnAction);
-
 	void PlaySpellAction(const FTurnAction& TurnAction);
+
+	void PlayCardInSquareAction(const FTurnAction& TurnAction);
 
 	bool CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance);
 

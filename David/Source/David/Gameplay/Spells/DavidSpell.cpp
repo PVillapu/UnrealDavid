@@ -24,17 +24,22 @@ FSpellAction UDavidSpell::GetSpellAction(const FTurnAction &TurnAction)
     return FSpellAction(SpellID, SquareID, Payload);
 }
 
-void UDavidSpell::ProcessSpellAction(const FSpellAction& SpellAction)
+bool UDavidSpell::CanSpellBePlayedInSquare(int32 SquareID, EDavidPlayer Player)
+{
+    return false;
+}
+
+void UDavidSpell::PlaySpellAction(const FSpellAction& SpellAction)
 {
 #if WITH_EDITOR
 
 	if (GEngine)
 	{
-		FString Message = FString::Printf(TEXT("NOT IMPLEMENTED! -- UDavidSpell::ProcessSpellAction | SpellID: %d, SquareID: %d"), SpellAction.SpellID, SpellAction.SquareID);
+		FString Message = FString::Printf(TEXT("NOT IMPLEMENTED! -- UDavidSpell::PlaySpellAction | SpellID: %d, SquareID: %d"), SpellAction.SpellID, SpellAction.SquareID);
 		GEngine->AddOnScreenDebugMessage(
 			-1,
 			15.f,
-			FColor::Blue,
+			FColor::Red,
 			FString(Message)
 		);
 	}
@@ -42,4 +47,22 @@ void UDavidSpell::ProcessSpellAction(const FSpellAction& SpellAction)
 #endif
 
 	BoardManager->OnGameActionComplete();
+}
+
+void UDavidSpell::Process_PlaySpell(int32 SquareID, EDavidPlayer Player)
+{
+#if WITH_EDITOR
+
+	if (GEngine)
+	{
+		FString Message = FString::Printf(TEXT("NOT IMPLEMENTED! -- UDavidSpell::Process_PlaySpell | SquareID: %d, Player: %d"), SquareID, (int32)Player);
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.f,
+			FColor::Red,
+			FString(Message)
+		);
+	}
+
+#endif
 }

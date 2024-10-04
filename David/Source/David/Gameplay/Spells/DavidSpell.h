@@ -19,7 +19,11 @@ public:
 	/* Returns a spell action struct from a given turn action */
 	static struct FSpellAction GetSpellAction(const struct FTurnAction& TurnAction);
 
-	virtual void ProcessSpellAction(const FSpellAction& SpellAction);
+	virtual bool CanSpellBePlayedInSquare(int32 SquareID, enum EDavidPlayer Player) const;
+
+	virtual void PlaySpellAction(const FSpellAction& SpellAction);
+
+	virtual void Process_PlaySpell(int32 SquareID, enum EDavidPlayer Player);
 
 protected:
 	UPROPERTY(Transient, SkipSerialization)
