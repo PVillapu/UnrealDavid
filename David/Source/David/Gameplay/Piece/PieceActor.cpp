@@ -356,7 +356,7 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 		}
 		case EPieceAction::HealPiece:
 		{
-
+			Action_HealPiece(Action.Payload);
 		}
 		default: 
 		{
@@ -544,6 +544,9 @@ void APieceActor::Action_HealPiece(const TArray<uint8> &Payload)
 	#endif
 
 	CurrentHealth = ActionPieceHealth;
+
+	if (StatsWidget)
+		StatsWidget->SetHealthValue(CurrentHealth);
 }
 
 void APieceActor::HandlePieceMovement(float DeltaSeconds)
