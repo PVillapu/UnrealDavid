@@ -120,8 +120,12 @@ bool APlayerCards::CreateNewCardForPlayer(int32 CardDTId, FGameCardData& NewGame
 {
 	CacheGameCards();
 
-	const FCardData& CardData = (*CardsArray)[CardDTId];
+	if(CardDTId < 0 || CardDTId >= (*CardsArray).Num())
+	{
+		return false;
+	}
 
+	const FCardData& CardData = (*CardsArray)[CardDTId];
 	NewGameCardData = FGameCardData(CardData);
 	NewGameCardData.GameCardID = GameCardsIndexCount++;
 	NewGameCardData.CardDTIndex = CardDTId;

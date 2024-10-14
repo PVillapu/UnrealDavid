@@ -101,9 +101,9 @@ private:
 
 	void PlaySpellAction(const FTurnAction& TurnAction);
 
-	void PlayCardInSquareAction(const FTurnAction& TurnAction);
+	void PlayCardAction(const FTurnAction& TurnAction);
 
-	bool CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance);
+	class UDavidSpell* CreateAndCatchSpellInstance(int32 SpellID);
 
 	APieceActor* InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player);
 

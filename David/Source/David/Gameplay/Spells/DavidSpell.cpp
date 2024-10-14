@@ -1,6 +1,7 @@
 #include "DavidSpell.h"
 #include "SpellAction.h"
 #include "../Board/BoardManager.h"
+#include "../Misc/Enums.h"
 
 void UDavidSpell::SetupSpell(ABoardManager* _BoardManager)
 {
@@ -24,7 +25,7 @@ FSpellAction UDavidSpell::GetSpellAction(const FTurnAction &TurnAction)
     return FSpellAction(SpellID, SquareID, Payload);
 }
 
-bool UDavidSpell::CanSpellBePlayedInSquare(int32 SquareID, EDavidPlayer Player)
+bool UDavidSpell::CanSpellBePlayedInSquare(int32 SquareID, EDavidPlayer Player) const
 {
     return false;
 }

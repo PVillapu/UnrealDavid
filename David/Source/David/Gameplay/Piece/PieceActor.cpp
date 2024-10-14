@@ -150,7 +150,7 @@ void APieceActor::Process_HoldDamage(AActor *DamageCauser)
 {
 	// Register action
 	TArray<uint8> Payload;
-	Payload.SetNum(sizeof(float));
+	Payload.SetNum(sizeof(int32));
 	FMemory::Memcpy(Payload.GetData(), &ProcessHealth, sizeof(int32));
 	RegisterPieceAction(EPieceAction::TakePieceDamage, Payload);
 
@@ -161,6 +161,17 @@ void APieceActor::Process_HoldDamage(AActor *DamageCauser)
 		BoardManager->OnPieceDeath(this, InstigatorPiece);
 		InstigatorPiece->OnThisPieceDestroyedOther();
 	}
+}
+
+void APieceActor::Process_HealPiece(int32 HealAmmount)
+{
+	ProcessHealth = FMath::Clamp(ProcessHealth + HealAmmount, 0, BaseHealth);
+	
+	// Register health action
+	TArray<uint8> Payload;
+	Payload.SetNum(sizeof(int32));
+	FMemory::Memcpy(Payload.GetData(), &ProcessHealth, sizeof(int32));
+	RegisterPieceAction(EPieceAction::HealPiece, Payload);
 }
 
 void APieceActor::OnPieceDestroyed(APieceActor* PieceInstigator)
@@ -343,6 +354,10 @@ void APieceActor::ProcessAction(const FPieceAction& Action)
 			Action_ReachedEndLine();
 			break;
 		}
+		case EPieceAction::HealPiece:
+		{
+
+		}
 		default: 
 		{
 			BoardManager->OnGameActionComplete();
@@ -508,6 +523,27 @@ void APieceActor::Action_ReachedEndLine()
 
 	BoardManager->RemoveActivePiece(this);
 	BoardManager->OnGameActionComplete();
+}
+
+void APieceActor::Action_HealPiece(const TArray<uint8> &Payload)
+{
+	int32 ActionPieceHealth = CurrentHealth;
+	FMemory::Memcpy(&ActionPieceHealth, Payload.GetData(), sizeof(int32));
+
+	#if WITH_EDITOR
+			if (GEngine)
+			{
+				FString Message = FString::Printf(TEXT("Action_HealPiece | PieceHealth: %d"), ActionPieceHealth);
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Blue,
+					FString(Message)
+				);
+			}
+	#endif
+
+	CurrentHealth = ActionPieceHealth;
 }
 
 void APieceActor::HandlePieceMovement(float DeltaSeconds)

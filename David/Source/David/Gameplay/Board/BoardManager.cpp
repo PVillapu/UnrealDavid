@@ -127,15 +127,11 @@ bool ABoardManager::CanPlayerPlayPieceCardInSquare(EDavidPlayer Player, int32 Sq
 
 bool ABoardManager::CanPlayerPlaySpellCardInSquare(int32 SpellID, int32 SquareID, EDavidPlayer Player)
 {
-	UDavidSpell* SpellInstance = nullptr;
-	if(GameSpellInstances.Contains(SpellID))
-	{
-		SpellInstance = GameSpellInstances[SpellID];
-	}
-	else if(!CreateAndCatchSpellInstance(SpellID, SpellInstance))
+	UDavidSpell* SpellInstance = CreateAndCatchSpellInstance(SpellID);
+	if(SpellInstance == nullptr)
 	{
 		UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to instantiate: %d"), SpellID);
-		return;	
+		return false;	
 	}
 
 	return SpellInstance->CanSpellBePlayedInSquare(SquareID, Player);
@@ -215,18 +211,15 @@ void ABoardManager::PlayCardInSquare(FGameCardData& GameCardData, int32 SquareID
 		FTurnAction GameAction;
 		GameAction.ActionType = EDavidGameAction::PLAY_CARD;
 		
-		GameAction.Payload.SetNum(2 * sizeof(int32));
+		GameAction.Payload.SetNum(sizeof(FGameCardData) + 2 * sizeof(int32) + sizeof(EDavidPlayer));
 		FMemory::Memcpy(GameAction.Payload.GetData(), &GameCardData.CardDTIndex, sizeof(int32));
 		FMemory::Memcpy(&GameAction.Payload[4], &SquareID, sizeof(int32));
+		FMemory::Memcpy(&GameAction.Payload[8 + sizeof(EDavidPlayer)], &GameCardData, sizeof(FGameCardData));
 
 		RegisterGameAction(GameAction);
 
-		UDavidSpell* SpellInstance = nullptr;
-		if(GameSpellInstances.Contains(GameCardData.CardDTIndex))
-		{
-			SpellInstance = GameSpellInstances[GameCardData.CardDTIndex];
-		}
-		else if(!CreateAndCatchSpellInstance(GameCardData.CardDTIndex, SpellInstance))
+		UDavidSpell* SpellInstance = CreateAndCatchSpellInstance(GameCardData.CardDTIndex);
+		if(SpellInstance == nullptr)
 		{
 			UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to play: %d"), GameCardData.CardDTIndex);
 			return;	
@@ -268,12 +261,8 @@ void ABoardManager::PlaySpellAction(const FTurnAction &TurnAction)
 {
 	FSpellAction SpellAction = UDavidSpell::GetSpellAction(TurnAction);
 
-	UDavidSpell* SpellInstance = nullptr;
-	if(GameSpellInstances.Contains(SpellAction.SpellID))
-	{
-		SpellInstance = GameSpellInstances[SpellAction.SpellID];
-	}
-	else if(!CreateAndCatchSpellInstance(SpellAction.SpellID, SpellInstance))
+	UDavidSpell* SpellInstance = CreateAndCatchSpellInstance(SpellAction.SpellID);
+	if(SpellInstance == nullptr)
 	{
 		UE_LOG(LogDavid, Error, TEXT("Invalid spell index received to instantiate: %d"), SpellAction.SpellID);
 		return;	
@@ -282,7 +271,7 @@ void ABoardManager::PlaySpellAction(const FTurnAction &TurnAction)
 	SpellInstance->PlaySpellAction(SpellAction);
 }
 
-void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
+void ABoardManager::PlayCardAction(const FTurnAction& GameAction)
 {
 	int32 SquareID;
 	EDavidPlayer Player;
@@ -306,6 +295,8 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 		}
 		else
 		{
+			if(!ActiveBoardPieces.Contains(PieceID)) return;
+
 			// Get piece reference
 			PieceInstance = *ActiveBoardPieces.Find(PieceID);
 		}
@@ -322,13 +313,18 @@ void ABoardManager::PlayCardInSquareAction(const FTurnAction& GameAction)
 	}
 	else
 	{
-		// Play spell card action TODO
+		PlaySpellAction(GameAction);
 	}
 }
 
-bool ABoardManager::CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell* SpellInstance)
+UDavidSpell* ABoardManager::CreateAndCatchSpellInstance(int32 SpellID)
 {
-	if(GameSpellInstances.Contains(SpellID)) return false;
+	UDavidSpell* SpellInstance = nullptr;
+	if(GameSpellInstances.Contains(SpellID))
+	{
+		SpellInstance = GameSpellInstances[SpellID];
+		return SpellInstance;
+	}
 
 	UDavidGameInstance* GameInstance = Cast<UDavidGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if(GameInstance == nullptr) return nullptr;
@@ -340,12 +336,12 @@ bool ABoardManager::CreateAndCatchSpellInstance(int32 SpellID, class UDavidSpell
 
 	const FCardData& SpellCard = CardsArray[SpellID];
 
-	SpellInstance = NewObject<UDavidSpell>(SpellCard.CardSpellClass);
+	SpellInstance = NewObject<UDavidSpell>(this, SpellCard.CardSpellClass);
 	SpellInstance->SetupSpell(this);
 
 	GameSpellInstances.Add(SpellID, SpellInstance);
 
-    return true;
+    return SpellInstance;
 }
 
 APieceActor* ABoardManager::InstantiateAndRegisterPiece(FGameCardData& GameCardData, const int32 SquareID, const int32 PieceID, const EDavidPlayer Player)
@@ -401,7 +397,7 @@ void ABoardManager::PlayNextGameAction()
 	{
 		case EDavidGameAction::PLAY_CARD:
 		{
-			PlayCardInSquareAction(TurnAction);
+			PlayCardAction(TurnAction);
 			break;
 		}
 		case EDavidGameAction::PIECE_ACTION:
@@ -422,11 +418,6 @@ void ABoardManager::PlayNextGameAction()
 		case EDavidGameAction::SQUARE_ACTION:
 		{
 			PlaySquareAction(TurnAction);
-			break;
-		}
-		case EDavidGameAction::SPELL_ACTION:
-		{
-			PlaySpellAction(TurnAction);
 			break;
 		}
 		default: break;

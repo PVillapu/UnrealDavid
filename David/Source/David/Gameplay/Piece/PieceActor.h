@@ -18,7 +18,7 @@ class DAVID_API APieceActor : public AActor
 	GENERATED_BODY()
 	
 protected:
-	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die, ReachedEndSquare, MAX_VALUE};
+	enum EPieceAction : int32 { MoveToSquare = 0, FrontAttack, TakePieceDamage, Die, ReachedEndSquare, HealPiece, MAX_VALUE};
 
 public:	
 	APieceActor();
@@ -38,6 +38,8 @@ public:
 	virtual void Process_TakeDamage(int32 DamageAmmount);
 
 	virtual void Process_HoldDamage(AActor* DamageCauser);
+
+	void Process_HealPiece(int32 HealAmmount);
 
 	virtual void OnPieceDestroyed(APieceActor* PieceInstigator);
 
@@ -120,6 +122,8 @@ protected:
 	virtual void Action_Die();
 
 	virtual void Action_ReachedEndLine();
+
+	virtual void Action_HealPiece(const TArray<uint8>& Payload);
 
 	void HandlePieceMovement(float DeltaSeconds);
 
